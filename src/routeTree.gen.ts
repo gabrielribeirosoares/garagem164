@@ -16,6 +16,7 @@ import { Route as AuthenticatedRecompensasRouteImport } from './routes/_authenti
 import { Route as AuthenticatedGaragemRouteImport } from './routes/_authenticated/garagem'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
+import { Route as AuthenticatedAdminResgatesRouteImport } from './routes/_authenticated/admin.resgates'
 import { Route as AuthenticatedAdminRecompensasRouteImport } from './routes/_authenticated/admin.recompensas'
 import { Route as AuthenticatedAdminCarrosRouteImport } from './routes/_authenticated/admin.carros'
 
@@ -54,6 +55,12 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminResgatesRoute =
+  AuthenticatedAdminResgatesRouteImport.update({
+    id: '/resgates',
+    path: '/resgates',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminRecompensasRoute =
   AuthenticatedAdminRecompensasRouteImport.update({
     id: '/recompensas',
@@ -75,6 +82,7 @@ export interface FileRoutesByFullPath {
   '/recompensas': typeof AuthenticatedRecompensasRoute
   '/admin/carros': typeof AuthenticatedAdminCarrosRoute
   '/admin/recompensas': typeof AuthenticatedAdminRecompensasRoute
+  '/admin/resgates': typeof AuthenticatedAdminResgatesRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRoutesByTo {
@@ -84,6 +92,7 @@ export interface FileRoutesByTo {
   '/recompensas': typeof AuthenticatedRecompensasRoute
   '/admin/carros': typeof AuthenticatedAdminCarrosRoute
   '/admin/recompensas': typeof AuthenticatedAdminRecompensasRoute
+  '/admin/resgates': typeof AuthenticatedAdminResgatesRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRoutesById {
@@ -96,6 +105,7 @@ export interface FileRoutesById {
   '/_authenticated/recompensas': typeof AuthenticatedRecompensasRoute
   '/_authenticated/admin/carros': typeof AuthenticatedAdminCarrosRoute
   '/_authenticated/admin/recompensas': typeof AuthenticatedAdminRecompensasRoute
+  '/_authenticated/admin/resgates': typeof AuthenticatedAdminResgatesRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRouteTypes {
@@ -108,6 +118,7 @@ export interface FileRouteTypes {
     | '/recompensas'
     | '/admin/carros'
     | '/admin/recompensas'
+    | '/admin/resgates'
     | '/admin/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -117,6 +128,7 @@ export interface FileRouteTypes {
     | '/recompensas'
     | '/admin/carros'
     | '/admin/recompensas'
+    | '/admin/resgates'
     | '/admin'
   id:
     | '__root__'
@@ -128,6 +140,7 @@ export interface FileRouteTypes {
     | '/_authenticated/recompensas'
     | '/_authenticated/admin/carros'
     | '/_authenticated/admin/recompensas'
+    | '/_authenticated/admin/resgates'
     | '/_authenticated/admin/'
   fileRoutesById: FileRoutesById
 }
@@ -188,6 +201,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/resgates': {
+      id: '/_authenticated/admin/resgates'
+      path: '/resgates'
+      fullPath: '/admin/resgates'
+      preLoaderRoute: typeof AuthenticatedAdminResgatesRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/recompensas': {
       id: '/_authenticated/admin/recompensas'
       path: '/recompensas'
@@ -208,12 +228,14 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminCarrosRoute: typeof AuthenticatedAdminCarrosRoute
   AuthenticatedAdminRecompensasRoute: typeof AuthenticatedAdminRecompensasRoute
+  AuthenticatedAdminResgatesRoute: typeof AuthenticatedAdminResgatesRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminCarrosRoute: AuthenticatedAdminCarrosRoute,
   AuthenticatedAdminRecompensasRoute: AuthenticatedAdminRecompensasRoute,
+  AuthenticatedAdminResgatesRoute: AuthenticatedAdminResgatesRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
 }
 
