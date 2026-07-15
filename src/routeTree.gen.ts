@@ -16,6 +16,7 @@ import { Route as AuthenticatedRecompensasRouteImport } from './routes/_authenti
 import { Route as AuthenticatedGaragemRouteImport } from './routes/_authenticated/garagem'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
+import { Route as AuthenticatedAdminCarrosRouteImport } from './routes/_authenticated/admin.carros'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -52,6 +53,12 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminCarrosRoute =
+  AuthenticatedAdminCarrosRouteImport.update({
+    id: '/carros',
+    path: '/carros',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -59,6 +66,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/garagem': typeof AuthenticatedGaragemRoute
   '/recompensas': typeof AuthenticatedRecompensasRoute
+  '/admin/carros': typeof AuthenticatedAdminCarrosRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRoutesByTo {
@@ -66,6 +74,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/garagem': typeof AuthenticatedGaragemRoute
   '/recompensas': typeof AuthenticatedRecompensasRoute
+  '/admin/carros': typeof AuthenticatedAdminCarrosRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRoutesById {
@@ -76,13 +85,21 @@ export interface FileRoutesById {
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/garagem': typeof AuthenticatedGaragemRoute
   '/_authenticated/recompensas': typeof AuthenticatedRecompensasRoute
+  '/_authenticated/admin/carros': typeof AuthenticatedAdminCarrosRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/admin' | '/garagem' | '/recompensas' | '/admin/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/admin'
+    | '/garagem'
+    | '/recompensas'
+    | '/admin/carros'
+    | '/admin/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/garagem' | '/recompensas' | '/admin'
+  to: '/' | '/auth' | '/garagem' | '/recompensas' | '/admin/carros' | '/admin'
   id:
     | '__root__'
     | '/'
@@ -91,6 +108,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin'
     | '/_authenticated/garagem'
     | '/_authenticated/recompensas'
+    | '/_authenticated/admin/carros'
     | '/_authenticated/admin/'
   fileRoutesById: FileRoutesById
 }
@@ -151,14 +169,23 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/carros': {
+      id: '/_authenticated/admin/carros'
+      path: '/carros'
+      fullPath: '/admin/carros'
+      preLoaderRoute: typeof AuthenticatedAdminCarrosRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
   }
 }
 
 interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminCarrosRoute: typeof AuthenticatedAdminCarrosRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminCarrosRoute: AuthenticatedAdminCarrosRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
 }
 
