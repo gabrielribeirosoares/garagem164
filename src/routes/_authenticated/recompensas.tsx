@@ -1,0 +1,172 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useSession, useProfile } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { toast } from "sonner";
+import { Ticket, Truck, Star, Gift, Sparkles, Clock, CheckCircle2 } from "lucide-react";
+
+export const Route = createFileRoute("/_authenticated/recompensas")({
+  component: RecompensasPage,
+});
+
+const CATEGORY_META = {
+  coupon: { label: "Cupons de Desconto", icon: Ticket, gradient: "hw-gradient-orange" },
+  shipping: { label: "Frete Grátis", icon: Truck, gradient: "hw-gradient-blue" },
+  miniature: { label: "Miniaturas Exclusivas", icon: Star, gradient: "hw-gradient-orange" },
+} as const;
+
+type Category = keyof typeof CATEGORY_META;
+
+function RecompensasPage() {
+  const user = useSession();
+  const { data: profile } = useProfile();
+  const qc = useQueryClient();
+
+  const { data: rewards } = useQuery({
+    queryKey: ["rewards"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("rewards").select("*").eq("active", true).order("cost");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: myRedemptions } = useQuery({
+    queryKey: ["my-redemptions", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("redemptions")
+        .select("*")
+        .eq("user_id", user!.id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const redeem = useMutation({
+    mutationFn: async (reward: { id: string; title: string; category: Category; cost: number }) => {
+      const { error } = await supabase.from("redemptions").insert({
+        user_id: user!.id,
+        reward_id: reward.id,
+        reward_title: reward.title,
+        reward_category: reward.category,
+        cost: reward.cost,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Resgate solicitado! Aguardando aprovação do lojista.");
+      qc.invalidateQueries({ queryKey: ["my-redemptions", user?.id] });
+      qc.invalidateQueries({ queryKey: ["profile", user?.id] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const points = profile?.points ?? 0;
+  const grouped = (cat: Category) => rewards?.filter((r) => r.category === cat) ?? [];
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-3xl border border-border p-6 bg-card flex items-center justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-black">Central de Recompensas</h1>
+          <p className="text-sm text-muted-foreground mt-1">Troque seus pontos por benefícios exclusivos.</p>
+        </div>
+        <div className="rounded-full hw-gradient-orange px-4 py-2 text-primary-foreground font-black text-lg hw-glow-orange flex items-center gap-2">
+          <Sparkles className="h-5 w-5" /> {points} pts
+        </div>
+      </div>
+
+      <Tabs defaultValue="catalog">
+        <TabsList>
+          <TabsTrigger value="catalog">Catálogo</TabsTrigger>
+          <TabsTrigger value="mine">Meus resgates</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="catalog" className="space-y-8 mt-6">
+          {(Object.keys(CATEGORY_META) as Category[]).map((cat) => {
+            const meta = CATEGORY_META[cat];
+            const items = grouped(cat);
+            return (
+              <section key={cat}>
+                <div className="flex items-center gap-2 mb-3">
+                  <meta.icon className="h-5 w-5 text-primary" />
+                  <h2 className="font-black text-lg">{meta.label}</h2>
+                </div>
+                {items.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Nenhum benefício disponível nesta categoria.</p>
+                ) : (
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {items.map((r) => {
+                      const canRedeem = points >= r.cost;
+                      return (
+                        <div key={r.id} className="rounded-2xl border border-border bg-card overflow-hidden group hover:border-primary/60 transition-all">
+                          <div className={`h-32 ${meta.gradient} relative flex items-center justify-center overflow-hidden`}>
+                            {r.image_url ? (
+                              <img src={r.image_url} alt={r.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                            ) : (
+                              <meta.icon className="h-14 w-14 text-primary-foreground opacity-80" />
+                            )}
+                          </div>
+                          <div className="p-4 space-y-3">
+                            <div>
+                              <h3 className="font-bold">{r.title}</h3>
+                              {r.description && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{r.description}</p>}
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <div className="font-black text-primary flex items-center gap-1">
+                                <Sparkles className="h-4 w-4" /> {r.cost} pts
+                              </div>
+                              <Button
+                                size="sm"
+                                disabled={!canRedeem || redeem.isPending}
+                                onClick={() => redeem.mutate({ id: r.id, title: r.title, category: r.category as Category, cost: r.cost })}
+                                className={canRedeem ? "hw-gradient-orange text-primary-foreground font-bold" : ""}
+                              >
+                                {canRedeem ? "Resgatar" : "Sem pontos"}
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </section>
+            );
+          })}
+        </TabsContent>
+
+        <TabsContent value="mine" className="mt-6 space-y-3">
+          {!myRedemptions?.length ? (
+            <p className="text-sm text-muted-foreground">Você ainda não fez nenhum resgate.</p>
+          ) : (
+            myRedemptions.map((r) => (
+              <div key={r.id} className="rounded-xl border border-border bg-card p-4 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center">
+                    <Gift className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-sm">{r.reward_title}</div>
+                    <div className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleString("pt-BR")} · {r.cost} pts</div>
+                  </div>
+                </div>
+                <Badge variant={r.status === "completed" ? "default" : r.status === "cancelled" ? "destructive" : "secondary"} className="gap-1">
+                  {r.status === "pending" && <><Clock className="h-3 w-3" /> Pendente</>}
+                  {r.status === "completed" && <><CheckCircle2 className="h-3 w-3" /> Concluído</>}
+                  {r.status === "cancelled" && "Cancelado"}
+                </Badge>
+              </div>
+            ))
+          )}
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
