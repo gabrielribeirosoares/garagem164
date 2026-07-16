@@ -98,58 +98,63 @@ function RecompensasPage() {
           <TabsTrigger value="mine">Meus resgates</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="catalog" className="space-y-8 mt-6">
-          {(Object.keys(CATEGORY_META) as Category[]).map((cat) => {
-            const meta = CATEGORY_META[cat];
-            const items = grouped(cat);
-            return (
-              <section key={cat}>
-                <div className="flex items-center gap-2 mb-3">
-                  <meta.icon className="h-5 w-5 text-primary" />
-                  <h2 className="font-black text-lg">{meta.label}</h2>
-                </div>
-                {items.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Nenhum benefício disponível nesta categoria.</p>
-                ) : (
-                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {items.map((r) => {
-                      const canRedeem = points >= r.cost;
-                      return (
-                        <div key={r.id} className="rounded-2xl border border-border bg-card overflow-hidden group hover:border-primary/60 transition-all">
-                          <div className={`h-32 ${meta.gradient} relative flex items-center justify-center overflow-hidden`}>
-                            {r.image_url ? (
-                              <img src={r.image_url} alt={r.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                            ) : (
-                              <meta.icon className="h-14 w-14 text-primary-foreground opacity-80" />
-                            )}
-                          </div>
-                          <div className="p-4 space-y-3">
-                            <div>
-                              <h3 className="font-bold">{r.title}</h3>
-                              {r.description && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{r.description}</p>}
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <div className="font-black text-primary flex items-center gap-1">
-                                <Sparkles className="h-4 w-4" /> {r.cost} pts
-                              </div>
-                              <Button
-                                size="sm"
-                                disabled={!canRedeem || redeem.isPending}
-                                onClick={() => redeem.mutate({ id: r.id, title: r.title, category: r.category as Category, cost: r.cost })}
-                                className={canRedeem ? "hw-gradient-orange text-primary-foreground font-bold" : ""}
-                              >
-                                {canRedeem ? "Resgatar" : "Sem pontos"}
-                              </Button>
-                            </div>
-                          </div>
+        <TabsContent value="catalog" className="space-y-6 mt-6">
+          {!rewards?.length ? (
+            <p className="text-sm text-muted-foreground text-center py-8">Nenhum benefício disponível no catálogo.</p>
+          ) : (
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
+              {rewards.map((r) => {
+                const canRedeem = points >= r.cost;
+                const meta = CATEGORY_META[r.category as Category] || CATEGORY_META.coupon;
+                return (
+                  <div key={r.id} className="rounded-2xl border border-border bg-card overflow-hidden group hover:border-primary/60 transition-all flex flex-col justify-between">
+                    <div>
+                      <div className={`h-32 ${meta.gradient} relative flex items-center justify-center overflow-hidden`}>
+                        {r.image_url ? (
+                          <img src={r.image_url} alt={r.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                        ) : (
+                          <meta.icon className="h-14 w-14 text-primary-foreground opacity-80" />
+                        )}
+                        
+                        {/* Category Badge */}
+                        <div className="absolute top-2 left-2">
+                          <span className={`text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider text-white shadow-md ${
+                            r.category === 'coupon' 
+                              ? 'bg-[#ea580c]' 
+                              : r.category === 'shipping'
+                                ? 'bg-[#2563eb]'
+                                : 'bg-[#eab308] text-black'
+                          }`}>
+                            {r.category === 'coupon' ? 'Cupom' : r.category === 'shipping' ? 'Frete' : 'Miniatura'}
+                          </span>
                         </div>
-                      );
-                    })}
+                      </div>
+                      <div className="p-4 space-y-2">
+                        <div>
+                          <h3 className="font-bold text-white text-base">{r.title}</h3>
+                          {r.description && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{r.description}</p>}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="p-4 pt-0 flex items-center justify-between mt-auto">
+                      <div className="font-black text-primary flex items-center gap-1">
+                        <Sparkles className="h-4 w-4" /> {r.cost} pts
+                      </div>
+                      <Button
+                        size="sm"
+                        disabled={!canRedeem || redeem.isPending}
+                        onClick={() => redeem.mutate({ id: r.id, title: r.title, category: r.category as Category, cost: r.cost })}
+                        className={canRedeem ? "hw-gradient-orange text-primary-foreground font-bold" : ""}
+                      >
+                        {canRedeem ? "Resgatar" : "Sem pontos"}
+                      </Button>
+                    </div>
                   </div>
-                )}
-              </section>
-            );
-          })}
+                );
+              })}
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="mine" className="mt-6 space-y-3">
