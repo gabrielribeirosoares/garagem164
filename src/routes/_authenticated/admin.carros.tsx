@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Car, Trash2, PlusCircle } from "lucide-react";
+import { RAW } from "@/components/ui/data";
 
 export const Route = createFileRoute("/_authenticated/admin/carros")({
   component: AddCarros,
@@ -19,6 +20,9 @@ function AddCarros() {
   const [name, setName] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [points, setPoints] = useState<number>(10);
+  
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   const { data: customers } = useQuery({
     queryKey: ["admin-customers"],
@@ -74,6 +78,30 @@ function AddCarros() {
     },
   });
 
+  const handleNameChange = (val: string) => {
+    setName(val);
+    const trimmed = val.trim();
+    if (trimmed.length >= 2) {
+      const query = trimmed.toLowerCase();
+      const matches = [];
+      for (const car of RAW) {
+        if (
+          car.name.toLowerCase().includes(query) ||
+          car.series.toLowerCase().includes(query) ||
+          (car.part && car.part.toLowerCase().includes(query))
+        ) {
+          matches.push(car);
+          if (matches.length >= 10) break;
+        }
+      }
+      setSuggestions(matches);
+      setShowSuggestions(true);
+    } else {
+      setSuggestions([]);
+      setShowSuggestions(false);
+    }
+  };
+
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
       <form
@@ -99,9 +127,55 @@ function AddCarros() {
           </Select>
         </div>
 
-        <div className="space-y-2">
-          <Label>Nome do carro</Label>
-          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: '70 Dodge Charger R/T" required />
+        <div className="space-y-2 relative">
+          <Label htmlFor="car-name">Nome do carro</Label>
+          <Input
+            id="car-name"
+            value={name}
+            onChange={(e) => handleNameChange(e.target.value)}
+            onFocus={(e) => handleNameChange(e.target.value)}
+            onBlur={() => setShowSuggestions(false)}
+            placeholder="Ex: '70 Dodge Charger R/T"
+            required
+            autoComplete="off"
+          />
+          {showSuggestions && suggestions.length > 0 && (
+            <div className="absolute z-50 w-full mt-1 max-h-60 overflow-y-auto rounded-lg border border-border bg-card shadow-xl divide-y divide-border">
+              {suggestions.map((car, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  className="w-full text-left p-2 flex items-center gap-3 hover:bg-muted/50 transition-colors text-sm"
+                  onMouseDown={() => {
+                    setName(car.color ? `${car.name} (${car.color})` : car.name);
+                    setImageUrl(car.image || "");
+                    setShowSuggestions(false);
+                  }}
+                >
+                  {car.image ? (
+                    <img
+                      src={car.image}
+                      alt={car.name}
+                      className="w-10 h-10 rounded object-cover bg-muted shrink-0"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded bg-muted flex items-center justify-center shrink-0">
+                      <Car className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <div className="font-bold text-foreground truncate">{car.name}</div>
+                    <div className="text-xs text-muted-foreground truncate">
+                      {car.series} {car.color && `· ${car.color}`} {car.year && `· ${car.year}`}
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="space-y-2">
