@@ -9,21 +9,35 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as CreateStoreRouteImport } from './routes/create-store'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as StoreSlugRouteImport } from './routes/$storeSlug'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as StoreSlugIndexRouteImport } from './routes/$storeSlug.index'
 import { Route as AuthenticatedRecompensasRouteImport } from './routes/_authenticated/recompensas'
 import { Route as AuthenticatedGaragemRouteImport } from './routes/_authenticated/garagem'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as StoreSlugLoginRouteImport } from './routes/$storeSlug.login'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedAdminResgatesRouteImport } from './routes/_authenticated/admin.resgates'
 import { Route as AuthenticatedAdminRecompensasRouteImport } from './routes/_authenticated/admin.recompensas'
 import { Route as AuthenticatedAdminGaragensRouteImport } from './routes/_authenticated/admin.garagens'
 import { Route as AuthenticatedAdminCarrosRouteImport } from './routes/_authenticated/admin.carros'
 
+const CreateStoreRoute = CreateStoreRouteImport.update({
+  id: '/create-store',
+  path: '/create-store',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StoreSlugRoute = StoreSlugRouteImport.update({
+  id: '/$storeSlug',
+  path: '/$storeSlug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
@@ -34,6 +48,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const StoreSlugIndexRoute = StoreSlugIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => StoreSlugRoute,
 } as any)
 const AuthenticatedRecompensasRoute =
   AuthenticatedRecompensasRouteImport.update({
@@ -50,6 +69,11 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const StoreSlugLoginRoute = StoreSlugLoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => StoreSlugRoute,
 } as any)
 const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   id: '/',
@@ -83,10 +107,14 @@ const AuthenticatedAdminCarrosRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/$storeSlug': typeof StoreSlugRouteWithChildren
   '/auth': typeof AuthRoute
+  '/create-store': typeof CreateStoreRoute
+  '/$storeSlug/login': typeof StoreSlugLoginRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/garagem': typeof AuthenticatedGaragemRoute
   '/recompensas': typeof AuthenticatedRecompensasRoute
+  '/$storeSlug/': typeof StoreSlugIndexRoute
   '/admin/carros': typeof AuthenticatedAdminCarrosRoute
   '/admin/garagens': typeof AuthenticatedAdminGaragensRoute
   '/admin/recompensas': typeof AuthenticatedAdminRecompensasRoute
@@ -96,8 +124,11 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/create-store': typeof CreateStoreRoute
+  '/$storeSlug/login': typeof StoreSlugLoginRoute
   '/garagem': typeof AuthenticatedGaragemRoute
   '/recompensas': typeof AuthenticatedRecompensasRoute
+  '/$storeSlug': typeof StoreSlugIndexRoute
   '/admin/carros': typeof AuthenticatedAdminCarrosRoute
   '/admin/garagens': typeof AuthenticatedAdminGaragensRoute
   '/admin/recompensas': typeof AuthenticatedAdminRecompensasRoute
@@ -108,10 +139,14 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/$storeSlug': typeof StoreSlugRouteWithChildren
   '/auth': typeof AuthRoute
+  '/create-store': typeof CreateStoreRoute
+  '/$storeSlug/login': typeof StoreSlugLoginRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/garagem': typeof AuthenticatedGaragemRoute
   '/_authenticated/recompensas': typeof AuthenticatedRecompensasRoute
+  '/$storeSlug/': typeof StoreSlugIndexRoute
   '/_authenticated/admin/carros': typeof AuthenticatedAdminCarrosRoute
   '/_authenticated/admin/garagens': typeof AuthenticatedAdminGaragensRoute
   '/_authenticated/admin/recompensas': typeof AuthenticatedAdminRecompensasRoute
@@ -122,10 +157,14 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/$storeSlug'
     | '/auth'
+    | '/create-store'
+    | '/$storeSlug/login'
     | '/admin'
     | '/garagem'
     | '/recompensas'
+    | '/$storeSlug/'
     | '/admin/carros'
     | '/admin/garagens'
     | '/admin/recompensas'
@@ -135,8 +174,11 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/create-store'
+    | '/$storeSlug/login'
     | '/garagem'
     | '/recompensas'
+    | '/$storeSlug'
     | '/admin/carros'
     | '/admin/garagens'
     | '/admin/recompensas'
@@ -146,10 +188,14 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/$storeSlug'
     | '/auth'
+    | '/create-store'
+    | '/$storeSlug/login'
     | '/_authenticated/admin'
     | '/_authenticated/garagem'
     | '/_authenticated/recompensas'
+    | '/$storeSlug/'
     | '/_authenticated/admin/carros'
     | '/_authenticated/admin/garagens'
     | '/_authenticated/admin/recompensas'
@@ -160,16 +206,32 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  StoreSlugRoute: typeof StoreSlugRouteWithChildren
   AuthRoute: typeof AuthRoute
+  CreateStoreRoute: typeof CreateStoreRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/create-store': {
+      id: '/create-store'
+      path: '/create-store'
+      fullPath: '/create-store'
+      preLoaderRoute: typeof CreateStoreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$storeSlug': {
+      id: '/$storeSlug'
+      path: '/$storeSlug'
+      fullPath: '/$storeSlug'
+      preLoaderRoute: typeof StoreSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -185,6 +247,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/$storeSlug/': {
+      id: '/$storeSlug/'
+      path: '/'
+      fullPath: '/$storeSlug/'
+      preLoaderRoute: typeof StoreSlugIndexRouteImport
+      parentRoute: typeof StoreSlugRoute
     }
     '/_authenticated/recompensas': {
       id: '/_authenticated/recompensas'
@@ -206,6 +275,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin'
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/$storeSlug/login': {
+      id: '/$storeSlug/login'
+      path: '/login'
+      fullPath: '/$storeSlug/login'
+      preLoaderRoute: typeof StoreSlugLoginRouteImport
+      parentRoute: typeof StoreSlugRoute
     }
     '/_authenticated/admin/': {
       id: '/_authenticated/admin/'
@@ -279,21 +355,27 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface StoreSlugRouteChildren {
+  StoreSlugLoginRoute: typeof StoreSlugLoginRoute
+  StoreSlugIndexRoute: typeof StoreSlugIndexRoute
+}
+
+const StoreSlugRouteChildren: StoreSlugRouteChildren = {
+  StoreSlugLoginRoute: StoreSlugLoginRoute,
+  StoreSlugIndexRoute: StoreSlugIndexRoute,
+}
+
+const StoreSlugRouteWithChildren = StoreSlugRoute._addFileChildren(
+  StoreSlugRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  StoreSlugRoute: StoreSlugRouteWithChildren,
   AuthRoute: AuthRoute,
+  CreateStoreRoute: CreateStoreRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Car, Trash2, Sparkles, AlertCircle } from "lucide-react";
+import { useOwnedStore } from "@/hooks/useStore";
 
 export const Route = createFileRoute("/_authenticated/admin/garagens")({
   component: AdminGaragens,
@@ -14,25 +15,34 @@ export const Route = createFileRoute("/_authenticated/admin/garagens")({
 
 function AdminGaragens() {
   const qc = useQueryClient();
+  const { data: store } = useOwnedStore();
+  const storeId = store?.id;
   const [userId, setUserId] = useState<string>("");
 
   const { data: customers } = useQuery({
-    queryKey: ["admin-customers"],
+    queryKey: ["admin-customers", storeId],
+    enabled: !!storeId,
     queryFn: async () => {
-      const { data, error } = await supabase.from("profiles").select("id,full_name,email,points").order("full_name");
+      const { data, error } = await supabase
+        .from("customer_points")
+        .select("points, user_id, profiles:profiles!customer_points_user_id_fkey(id,full_name,email)")
+        .eq("store_id", storeId!);
       if (error) throw error;
-      return data;
+      return (data ?? [])
+        .map((r: any) => ({ id: r.profiles?.id ?? r.user_id, full_name: r.profiles?.full_name, email: r.profiles?.email, points: r.points }))
+        .sort((a, b) => (a.full_name || a.email || "").localeCompare(b.full_name || b.email || ""));
     },
   });
 
   const { data: customerCars } = useQuery({
-    queryKey: ["admin-customer-cars", userId],
-    enabled: !!userId,
+    queryKey: ["admin-customer-cars", userId, storeId],
+    enabled: !!userId && !!storeId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("cars")
         .select("*")
         .eq("user_id", userId)
+        .eq("store_id", storeId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
@@ -41,16 +51,16 @@ function AdminGaragens() {
 
   // Realtime subscription for customer cars
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || !storeId) return;
     const ch = supabase
-      .channel(`admin-cars-${userId}`)
+      .channel(`admin-cars-${userId}-${storeId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "cars", filter: `user_id=eq.${userId}` }, () => {
-        qc.invalidateQueries({ queryKey: ["admin-customer-cars", userId] });
-        qc.invalidateQueries({ queryKey: ["admin-customers"] });
+        qc.invalidateQueries({ queryKey: ["admin-customer-cars", userId, storeId] });
+        qc.invalidateQueries({ queryKey: ["admin-customers", storeId] });
       })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [userId, qc]);
+  }, [userId, storeId, qc]);
 
   const removeCar = useMutation({
     mutationFn: async (id: string) => {
@@ -59,8 +69,8 @@ function AdminGaragens() {
     },
     onSuccess: () => {
       toast.success("Carro removido com sucesso!");
-      qc.invalidateQueries({ queryKey: ["admin-customers"] });
-      qc.invalidateQueries({ queryKey: ["admin-customer-cars", userId] });
+      qc.invalidateQueries({ queryKey: ["admin-customers", storeId] });
+      qc.invalidateQueries({ queryKey: ["admin-customer-cars", userId, storeId] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -75,7 +85,7 @@ function AdminGaragens() {
     },
     onSuccess: () => {
       toast.success("Status atualizado com sucesso!");
-      qc.invalidateQueries({ queryKey: ["admin-customer-cars", userId] });
+      qc.invalidateQueries({ queryKey: ["admin-customer-cars", userId, storeId] });
     },
     onError: (e: Error) => {
       if (e.message.includes("column") || e.message.includes("schema cache") || e.message.includes("payment_status") || e.message.includes("shipping_status")) {

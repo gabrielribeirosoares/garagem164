@@ -1,4 +1,5 @@
-export const RAW = [
+// @ts-nocheck
+type RawCar = { year: number; name: string; series: string; color: string; part: string; hw: string; cas: string; image: string }; const _RAW: any = [
     {
         "year": 2026,
         "name": "Mazda MX-5 Miata",
@@ -132062,4 +132063,4 @@ export const RAW = [
         "image": "https://pub-0cdcb80ac9eb425cade74a8a804cef22.r2.dev/NA_GXY02_Standard_Kart.jpg"
     }
 ]
-  
+  export const RAW: RawCar[] = _RAW;

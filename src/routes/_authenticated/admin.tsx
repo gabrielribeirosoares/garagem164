@@ -6,12 +6,13 @@ export const Route = createFileRoute("/_authenticated/admin")({
   beforeLoad: async () => {
     const { data: userData } = await supabase.auth.getUser();
     if (!userData.user) throw redirect({ to: "/auth" });
-    const { data: roles } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userData.user.id);
-    if (!roles?.some((r) => r.role === "admin")) {
-      throw redirect({ to: "/garagem" });
+    const { data: stores } = await supabase
+      .from("stores")
+      .select("id")
+      .eq("owner_id", userData.user.id)
+      .limit(1);
+    if (!stores || stores.length === 0) {
+      throw redirect({ to: "/create-store" });
     }
   },
   component: () => <Outlet />,

@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Package, Trash2, Pencil, X } from "lucide-react";
+import { useOwnedStore } from "@/hooks/useStore";
 
 export const Route = createFileRoute("/_authenticated/admin/recompensas")({
   component: AdminRewards,
@@ -28,12 +29,15 @@ const empty: Reward = { title: "", description: "", category: "coupon", image_ur
 
 function AdminRewards() {
   const qc = useQueryClient();
+  const { data: store } = useOwnedStore();
+  const storeId = store?.id;
   const [form, setForm] = useState<Reward>(empty);
 
   const { data: rewards } = useQuery({
-    queryKey: ["admin-rewards"],
+    queryKey: ["admin-rewards", storeId],
+    enabled: !!storeId,
     queryFn: async () => {
-      const { data, error } = await supabase.from("rewards").select("*").order("created_at", { ascending: false });
+      const { data, error } = await supabase.from("rewards").select("*").eq("store_id", storeId!).order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
@@ -41,12 +45,13 @@ function AdminRewards() {
 
   const save = useMutation({
     mutationFn: async () => {
+      if (!storeId) throw new Error("Loja não encontrada.");
       const payload = { ...form, description: form.description || null, image_url: form.image_url || null };
       if (form.id) {
         const { error } = await supabase.from("rewards").update(payload).eq("id", form.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("rewards").insert(payload);
+        const { error } = await supabase.from("rewards").insert({ ...payload, store_id: storeId });
         if (error) throw error;
       }
     },
