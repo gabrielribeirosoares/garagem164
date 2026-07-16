@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession, useProfile } from "@/hooks/useAuth";
+import { useActiveClientStore, useCustomerPoints } from "@/hooks/useStore";
 import { Car, Trophy, Sparkles } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -13,16 +14,20 @@ export const Route = createFileRoute("/_authenticated/garagem")({
 function Garagem() {
   const user = useSession();
   const { data: profile } = useProfile();
+  const { data: store } = useActiveClientStore();
+  const storeId = store?.id;
+  const { data: pointsBalance } = useCustomerPoints(storeId);
   const qc = useQueryClient();
 
   const { data: cars, isLoading } = useQuery({
-    queryKey: ["cars", user?.id],
-    enabled: !!user,
+    queryKey: ["cars", user?.id, storeId],
+    enabled: !!user && !!storeId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("cars")
         .select("*")
         .eq("user_id", user!.id)
+        .eq("store_id", storeId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
@@ -30,16 +35,16 @@ function Garagem() {
   });
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !storeId) return;
     const ch = supabase
-      .channel(`cars-${user.id}`)
+      .channel(`cars-${user.id}-${storeId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "cars", filter: `user_id=eq.${user.id}` }, () => {
-        qc.invalidateQueries({ queryKey: ["cars", user.id] });
-        qc.invalidateQueries({ queryKey: ["profile", user.id] });
+        qc.invalidateQueries({ queryKey: ["cars", user.id, storeId] });
+        qc.invalidateQueries({ queryKey: ["customer-points", user.id, storeId] });
       })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [user, qc]);
+  }, [user, storeId, qc]);
 
   return (
     <div className="space-y-6">
@@ -52,7 +57,7 @@ function Garagem() {
             <div>
               <div className="text-xs opacity-80 uppercase tracking-wide">Saldo de pontos</div>
               <div className="flex items-center gap-2 text-3xl md:text-4xl font-black">
-                <Trophy className="h-7 w-7" /> {profile?.points ?? 0}
+                <Trophy className="h-7 w-7" /> {pointsBalance ?? 0}
               </div>
             </div>
             <div className="h-14 w-px bg-primary-foreground/30" />
