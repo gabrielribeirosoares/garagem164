@@ -22,12 +22,12 @@ export function useRole() {
     enabled: !!user,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user!.id);
+        .from("stores")
+        .select("id")
+        .eq("owner_id", user!.id)
+        .limit(1);
       if (error) throw error;
-      const roles = data.map((r) => r.role);
-      return roles.includes("admin") ? "admin" : "client";
+      return (data?.length ?? 0) > 0 ? "admin" : "client";
     },
   });
 }
