@@ -8,6 +8,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Gift, CheckCircle2, Clock, XCircle, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { useOwnedStore } from "@/hooks/useStore";
 
 export const Route = createFileRoute("/_authenticated/admin/resgates")({
   component: AdminRedemptions,
@@ -15,14 +16,18 @@ export const Route = createFileRoute("/_authenticated/admin/resgates")({
 
 function AdminRedemptions() {
   const qc = useQueryClient();
+  const { data: store } = useOwnedStore();
+  const storeId = store?.id;
   const [searchQuery, setSearchQuery] = useState("");
 
   const { data: redemptions } = useQuery({
-    queryKey: ["admin-redemptions-all"],
+    queryKey: ["admin-redemptions-all", storeId],
+    enabled: !!storeId,
     queryFn: async () => {
       const { data: redemptionsData, error: redemptionsError } = await supabase
         .from("redemptions")
         .select("*")
+        .eq("store_id", storeId!)
         .order("created_at", { ascending: false });
       
       if (redemptionsError) throw redemptionsError;
@@ -43,14 +48,15 @@ function AdminRedemptions() {
   });
 
   useEffect(() => {
+    if (!storeId) return;
     const ch = supabase
-      .channel("admin-resgates")
-      .on("postgres_changes", { event: "*", schema: "public", table: "redemptions" }, () => {
-        qc.invalidateQueries({ queryKey: ["admin-redemptions-all"] });
+      .channel(`admin-resgates-${storeId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "redemptions", filter: `store_id=eq.${storeId}` }, () => {
+        qc.invalidateQueries({ queryKey: ["admin-redemptions-all", storeId] });
       })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [qc]);
+  }, [qc, storeId]);
 
   const setStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: "completed" | "cancelled" }) => {
@@ -59,7 +65,7 @@ function AdminRedemptions() {
     },
     onSuccess: (_, v) => {
       toast.success(v.status === "completed" ? "Marcado como entregue" : "Resgate cancelado — pontos devolvidos");
-      qc.invalidateQueries({ queryKey: ["admin-redemptions-all"] });
+      qc.invalidateQueries({ queryKey: ["admin-redemptions-all", storeId] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
