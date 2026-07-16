@@ -36,6 +36,33 @@ function AuthedLayout() {
   const isAdmin = role === "admin";
   const path = location.pathname;
   const brand = isAdmin ? ownedStore : activeStore;
+  const primaryColor = brand?.primary_color || "#f97316";
+
+  useEffect(() => {
+    if (!brand) return;
+    const prevTitle = document.title;
+    let link = document.querySelector<HTMLLinkElement>("link[rel~='icon']");
+    const prevFavicon = link ? link.href : "/favicon.ico";
+
+    if (brand.name) {
+      document.title = `${brand.name} | ${isAdmin ? "Painel Admin" : "Minha Garagem"}`;
+    }
+    if (brand.favicon_url) {
+      if (!link) {
+        link = document.createElement("link");
+        link.rel = "icon";
+        document.head.appendChild(link);
+      }
+      link.href = brand.favicon_url;
+    }
+
+    return () => {
+      document.title = prevTitle;
+      if (link) {
+        link.href = prevFavicon;
+      }
+    };
+  }, [brand, isAdmin]);
 
   const clientNav = [
     { to: "/garagem", label: "Garagem", icon: Car },
@@ -53,7 +80,7 @@ function AuthedLayout() {
   const nav = isAdmin ? adminNav : clientNav;
 
   return (
-    <div className="min-h-screen pb-24 md:pb-8">
+    <div className="min-h-screen pb-24 md:pb-8" style={{ "--store-primary": primaryColor } as React.CSSProperties}>
       {/* Top bar */}
       <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur">
         <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between gap-4">
@@ -61,7 +88,7 @@ function AuthedLayout() {
             {brand?.logo_url ? (
               <img src={brand.logo_url} alt={brand.name} className="h-7 w-7 rounded object-cover" />
             ) : (
-              <Store className="h-5 w-5" style={{ color: brand?.primary_color || undefined }} />
+              <Store className="h-5 w-5" style={{ color: primaryColor }} />
             )}
             <span className="font-black tracking-tight truncate">{brand?.name ?? "Minha Loja"}</span>
           </Link>

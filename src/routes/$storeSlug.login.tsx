@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { useSession } from "@/hooks/useAuth";
+import { useSession, useRole } from "@/hooks/useAuth";
 import { useStoreBySlug } from "@/hooks/useStore";
 import { Store } from "lucide-react";
 
@@ -18,12 +18,19 @@ function StoreLogin() {
   const { data: store } = useStoreBySlug(storeSlug);
   const navigate = useNavigate();
   const user = useSession();
+  const { data: role } = useRole();
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
 
   useEffect(() => {
-    if (user) navigate({ to: "/garagem", replace: true });
-  }, [user, navigate]);
+    if (user && role) {
+      if (role === "admin") {
+        navigate({ to: "/admin", replace: true });
+      } else {
+        navigate({ to: "/garagem", replace: true });
+      }
+    }
+  }, [user, role, navigate]);
 
   const primary = store?.primary_color || "#f97316";
 
@@ -74,9 +81,22 @@ function StoreLogin() {
           {store?.logo_url ? (
             <img src={store.logo_url} alt={store.name} className="h-14 w-14 mx-auto rounded object-cover" />
           ) : (
-            <Store className="h-10 w-10 mx-auto" style={{ color: primary }} />
+            <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-xl bg-primary/10" style={{ color: primary }}>
+              <Store className="h-8 w-8" />
+            </div>
           )}
-          <h1 className="font-black text-2xl uppercase">{store?.name ?? storeSlug}</h1>
+          <h1 className="font-black text-2xl uppercase">
+            {store?.name ? (
+              <>
+                {store.name.split(" ")[0]}
+                {store.name.split(" ").slice(1).length > 0 && (
+                  <span style={{ color: primary }}> {store.name.split(" ").slice(1).join(" ")}</span>
+                )}
+              </>
+            ) : (
+              storeSlug
+            )}
+          </h1>
           <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
             {isSignUp ? "Crie sua conta" : "Acesse sua garagem"}
           </p>

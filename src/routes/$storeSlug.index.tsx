@@ -30,9 +30,22 @@ function StoreLanding() {
           {store?.logo_url ? (
             <img src={store.logo_url} alt={store.name} className="h-8 w-8 rounded object-cover" />
           ) : (
-            <Store className="h-6 w-6" style={{ color: primary }} />
+            <div className="flex items-center justify-center h-8 w-8 rounded bg-primary/10" style={{ color: primary }}>
+              <Store className="h-5 w-5" />
+            </div>
           )}
-          <span className="font-black tracking-tight text-lg truncate">{store?.name ?? storeSlug}</span>
+          <span className="font-black tracking-tight text-lg truncate uppercase">
+            {store?.name ? (
+              <>
+                {store.name.split(" ")[0]}
+                {store.name.split(" ").slice(1).length > 0 && (
+                  <span style={{ color: primary }}> {store.name.split(" ").slice(1).join(" ")}</span>
+                )}
+              </>
+            ) : (
+              storeSlug
+            )}
+          </span>
         </div>
         <Link to="/$storeSlug/login" params={{ storeSlug }}>
           <Button size="sm" style={{ background: primary, color: "#fff" }}>Entrar</Button>

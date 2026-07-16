@@ -18,9 +18,12 @@ function StoreLayout() {
   // Dynamic favicon + title
   useEffect(() => {
     if (!store) return;
+    const prevTitle = document.title;
+    let link = document.querySelector<HTMLLinkElement>("link[rel~='icon']");
+    const prevFavicon = link ? link.href : "/favicon.ico";
+
     if (store.name) document.title = store.name;
     if (store.favicon_url) {
-      let link = document.querySelector<HTMLLinkElement>("link[rel~='icon']");
       if (!link) {
         link = document.createElement("link");
         link.rel = "icon";
@@ -28,6 +31,13 @@ function StoreLayout() {
       }
       link.href = store.favicon_url;
     }
+
+    return () => {
+      document.title = prevTitle;
+      if (link) {
+        link.href = prevFavicon;
+      }
+    };
   }, [store]);
 
   if (isLoading) {
