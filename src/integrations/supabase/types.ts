@@ -23,6 +23,7 @@ export type Database = {
           payment_status: string
           points: number
           shipping_status: string
+          store_id: string
           user_id: string
         }
         Insert: {
@@ -33,6 +34,7 @@ export type Database = {
           payment_status?: string
           points?: number
           shipping_status?: string
+          store_id: string
           user_id: string
         }
         Update: {
@@ -43,9 +45,53 @@ export type Database = {
           payment_status?: string
           points?: number
           shipping_status?: string
+          store_id?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "cars_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_points: {
+        Row: {
+          created_at: string
+          id: string
+          points: number
+          store_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          points?: number
+          store_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          points?: number
+          store_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_points_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -81,6 +127,7 @@ export type Database = {
           reward_id: string | null
           reward_title: string
           status: Database["public"]["Enums"]["redemption_status"]
+          store_id: string
           user_id: string
         }
         Insert: {
@@ -92,6 +139,7 @@ export type Database = {
           reward_id?: string | null
           reward_title: string
           status?: Database["public"]["Enums"]["redemption_status"]
+          store_id: string
           user_id: string
         }
         Update: {
@@ -103,6 +151,7 @@ export type Database = {
           reward_id?: string | null
           reward_title?: string
           status?: Database["public"]["Enums"]["redemption_status"]
+          store_id?: string
           user_id?: string
         }
         Relationships: [
@@ -111,6 +160,13 @@ export type Database = {
             columns: ["reward_id"]
             isOneToOne: false
             referencedRelation: "rewards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "redemptions_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
             referencedColumns: ["id"]
           },
         ]
@@ -124,6 +180,7 @@ export type Database = {
           description: string | null
           id: string
           image_url: string | null
+          store_id: string
           title: string
         }
         Insert: {
@@ -134,6 +191,7 @@ export type Database = {
           description?: string | null
           id?: string
           image_url?: string | null
+          store_id: string
           title: string
         }
         Update: {
@@ -144,7 +202,52 @@ export type Database = {
           description?: string | null
           id?: string
           image_url?: string | null
+          store_id?: string
           title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rewards_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stores: {
+        Row: {
+          created_at: string
+          favicon_url: string | null
+          id: string
+          logo_url: string | null
+          name: string
+          owner_id: string
+          primary_color: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          favicon_url?: string | null
+          id?: string
+          logo_url?: string | null
+          name: string
+          owner_id: string
+          primary_color?: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          favicon_url?: string | null
+          id?: string
+          logo_url?: string | null
+          name?: string
+          owner_id?: string
+          primary_color?: string
+          slug?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -176,6 +279,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_store_owner: {
+        Args: { _store_id: string; _user_id: string }
         Returns: boolean
       }
     }
