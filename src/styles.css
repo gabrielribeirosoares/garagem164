@@ -161,13 +161,13 @@
   background-image: linear-gradient(135deg, oklch(0.65 0.2 45), oklch(0.55 0.22 25));
 }
 @utility hw-gradient-blue {
-  background-image: linear-gradient(135deg, oklch(0.55 0.22 25), oklch(0.45 0.25 25));
+  background-image: linear-gradient(135deg, oklch(0.55 0.15 250), oklch(0.40 0.18 260));
 }
 @utility hw-glow-orange {
   box-shadow: 0 0 30px oklch(0.65 0.2 45 / 0.4);
 }
 @utility hw-glow-blue {
-  box-shadow: 0 0 30px oklch(0.55 0.22 25 / 0.4);
+  box-shadow: 0 0 30px oklch(0.55 0.15 250 / 0.4);
 }
 @utility hw-text-flame {
   background-image: linear-gradient(135deg, oklch(0.55 0.22 25), oklch(0.65 0.2 45));
