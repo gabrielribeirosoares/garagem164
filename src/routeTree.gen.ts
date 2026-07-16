@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as CreateStoreRouteImport } from './routes/create-store'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
@@ -21,6 +22,11 @@ import { Route as AuthenticatedAdminRecompensasRouteImport } from './routes/_aut
 import { Route as AuthenticatedAdminGaragensRouteImport } from './routes/_authenticated/admin.garagens'
 import { Route as AuthenticatedAdminCarrosRouteImport } from './routes/_authenticated/admin.carros'
 
+const CreateStoreRoute = CreateStoreRouteImport.update({
+  id: '/create-store',
+  path: '/create-store',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -84,6 +90,7 @@ const AuthenticatedAdminCarrosRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/create-store': typeof CreateStoreRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/garagem': typeof AuthenticatedGaragemRoute
   '/recompensas': typeof AuthenticatedRecompensasRoute
@@ -96,6 +103,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/create-store': typeof CreateStoreRoute
   '/garagem': typeof AuthenticatedGaragemRoute
   '/recompensas': typeof AuthenticatedRecompensasRoute
   '/admin/carros': typeof AuthenticatedAdminCarrosRoute
@@ -109,6 +117,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/create-store': typeof CreateStoreRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/garagem': typeof AuthenticatedGaragemRoute
   '/_authenticated/recompensas': typeof AuthenticatedRecompensasRoute
@@ -123,6 +132,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/create-store'
     | '/admin'
     | '/garagem'
     | '/recompensas'
@@ -135,6 +145,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/create-store'
     | '/garagem'
     | '/recompensas'
     | '/admin/carros'
@@ -147,6 +158,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/create-store'
     | '/_authenticated/admin'
     | '/_authenticated/garagem'
     | '/_authenticated/recompensas'
@@ -161,10 +173,18 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  CreateStoreRoute: typeof CreateStoreRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/create-store': {
+      id: '/create-store'
+      path: '/create-store'
+      fullPath: '/create-store'
+      preLoaderRoute: typeof CreateStoreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -283,6 +303,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  CreateStoreRoute: CreateStoreRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
