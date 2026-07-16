@@ -93,10 +93,11 @@ function AddCarros() {
       const query = trimmed.toLowerCase();
       const matches = [];
       for (const car of RAW) {
+        if (!car) continue; // Safety null-check
         if (
-          car.name.toLowerCase().includes(query) ||
-          car.series.toLowerCase().includes(query) ||
-          (car.part && car.part.toLowerCase().includes(query))
+          String(car.name || "").toLowerCase().includes(query) ||
+          String(car.series || "").toLowerCase().includes(query) ||
+          (car.part && String(car.part).toLowerCase().includes(query))
         ) {
           matches.push(car);
           if (matches.length >= 10) break;
@@ -117,12 +118,13 @@ function AddCarros() {
     const lotes = new Set<string>();
 
     for (const car of RAW) {
-      if (car.year) years.add(car.year);
+      if (!car) continue; // Safety null-check
+      if (car.year) years.add(Number(car.year));
       if (car.series) {
-        const clean = car.series.replace(/\s*\(\d+\/\d+\)$/, "").trim();
+        const clean = String(car.series).replace(/\s*\(\d+\/\d+\)$/, "").trim();
         if (clean) seriesSet.add(clean);
       }
-      if (car.cas) lotes.add(car.cas.trim());
+      if (car.cas) lotes.add(String(car.cas).trim());
     }
 
     return {
@@ -134,47 +136,51 @@ function AddCarros() {
 
   // Filter cars list
   const filteredCarsList = useMemo(() => {
-    let result = [...RAW];
+    let result = RAW.filter(Boolean); // Filter out any null/undefined entries safely
 
     if (selectedYear !== "Todos") {
       const yr = Number(selectedYear);
-      result = result.filter(car => car.year === yr);
+      result = result.filter(car => Number(car.year) === yr);
     }
 
     if (selectedCollection !== "Todos") {
       result = result.filter(car => 
-        car.series && car.series.toLowerCase().includes(selectedCollection.toLowerCase())
+        car.series && String(car.series).toLowerCase().includes(selectedCollection.toLowerCase())
       );
     }
 
     if (selectedLote !== "Todos") {
-      result = result.filter(car => car.cas === selectedLote);
+      result = result.filter(car => String(car.cas) === selectedLote);
     }
 
     if (listSearchQuery.trim()) {
       const q = listSearchQuery.toLowerCase();
       result = result.filter(car => 
-        car.name.toLowerCase().includes(q) || 
-        (car.series && car.series.toLowerCase().includes(q)) ||
-        (car.part && car.part.toLowerCase().includes(q))
+        String(car.name || "").toLowerCase().includes(q) || 
+        (car.series && String(car.series).toLowerCase().includes(q)) ||
+        (car.part && String(car.part).toLowerCase().includes(q))
       );
     }
 
     // Sorting
     result.sort((a, b) => {
       if (sortBy === "year_desc") {
-        if (b.year !== a.year) return (b.year || 0) - (a.year || 0);
-        return a.name.localeCompare(b.name);
+        const aYr = Number(a.year || 0);
+        const bYr = Number(b.year || 0);
+        if (bYr !== aYr) return bYr - aYr;
+        return String(a.name || "").localeCompare(String(b.name || ""));
       }
       if (sortBy === "year_asc") {
-        if (a.year !== b.year) return (a.year || 0) - (b.year || 0);
-        return a.name.localeCompare(b.name);
+        const aYr = Number(a.year || 0);
+        const bYr = Number(b.year || 0);
+        if (aYr !== bYr) return aYr - bYr;
+        return String(a.name || "").localeCompare(String(b.name || ""));
       }
       if (sortBy === "name_asc") {
-        return a.name.localeCompare(b.name);
+        return String(a.name || "").localeCompare(String(b.name || ""));
       }
       if (sortBy === "cas_asc") {
-        return (a.cas || "").localeCompare(b.cas || "");
+        return String(a.cas || "").localeCompare(String(b.cas || ""));
       }
       return 0;
     });

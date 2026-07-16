@@ -1799,7 +1799,6 @@ export const RAW = [
         "cas": "D",
         "image": "https://pub-0cdcb80ac9eb425cade74a8a804cef22.r2.dev/2026_JJJ57_El_Segundo_Coupe.jpg"
     },
-    ,
     {
         "year": 2026,
         "name": "El Segundo Coupe (2nd Color)",
