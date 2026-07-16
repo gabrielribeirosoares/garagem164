@@ -1,8 +1,9 @@
 import { createFileRoute, Outlet, redirect, Link, useNavigate, useLocation } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { useSession, useRole, useProfile } from "@/hooks/useAuth";
+import { useSession, useRole } from "@/hooks/useAuth";
+import { useOwnedStore, useActiveClientStore, useCustomerPoints } from "@/hooks/useStore";
 import { Button } from "@/components/ui/button";
-import { Flame, Car, Gift, LayoutDashboard, Package, PlusCircle, LogOut, Trophy } from "lucide-react";
+import { Flame, Car, Gift, LayoutDashboard, Package, PlusCircle, LogOut, Trophy, Store } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -18,7 +19,9 @@ export const Route = createFileRoute("/_authenticated")({
 function AuthedLayout() {
   const user = useSession();
   const { data: role } = useRole();
-  const { data: profile } = useProfile();
+  const { data: ownedStore } = useOwnedStore();
+  const { data: activeStore } = useActiveClientStore();
+  const { data: clientPoints } = useCustomerPoints(activeStore?.id);
   const navigate = useNavigate();
   const location = useLocation();
   const qc = useQueryClient();
@@ -32,6 +35,7 @@ function AuthedLayout() {
 
   const isAdmin = role === "admin";
   const path = location.pathname;
+  const brand = isAdmin ? ownedStore : activeStore;
 
   const clientNav = [
     { to: "/garagem", label: "Garagem", icon: Car },
@@ -53,9 +57,13 @@ function AuthedLayout() {
       {/* Top bar */}
       <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur">
         <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between gap-4">
-          <Link to={isAdmin ? "/admin" : "/garagem"} className="flex items-center gap-2">
-            <Flame className="h-5 w-5 text-primary" />
-            <span className="font-black tracking-tight">GONZAGA<span className="hw-text-flame">MINIS</span></span>
+          <Link to={isAdmin ? "/admin" : "/garagem"} className="flex items-center gap-2 min-w-0">
+            {brand?.logo_url ? (
+              <img src={brand.logo_url} alt={brand.name} className="h-7 w-7 rounded object-cover" />
+            ) : (
+              <Store className="h-5 w-5" style={{ color: brand?.primary_color || undefined }} />
+            )}
+            <span className="font-black tracking-tight truncate">{brand?.name ?? "Minha Loja"}</span>
           </Link>
 
           {/* Desktop nav */}
@@ -73,10 +81,10 @@ function AuthedLayout() {
           </nav>
 
           <div className="flex items-center gap-3">
-            {!isAdmin && profile && (
-              <div className="flex items-center gap-2 rounded-full hw-gradient-orange px-3 py-1.5 text-primary-foreground font-bold text-sm hw-glow-orange">
+            {!isAdmin && activeStore && (
+              <div className="flex items-center gap-2 rounded-full px-3 py-1.5 text-white font-bold text-sm" style={{ background: activeStore.primary_color || "#f97316" }}>
                 <Trophy className="h-4 w-4" />
-                <span>{profile.points} pts</span>
+                <span>{clientPoints ?? 0} pts</span>
               </div>
             )}
             <Button onClick={signOut} variant="ghost" size="icon" title="Sair">
