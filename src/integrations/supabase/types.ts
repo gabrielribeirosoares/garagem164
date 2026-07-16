@@ -20,7 +20,9 @@ export type Database = {
           id: string
           image_url: string | null
           name: string
+          payment_status: string
           points: number
+          shipping_status: string
           user_id: string
         }
         Insert: {
@@ -28,7 +30,9 @@ export type Database = {
           id?: string
           image_url?: string | null
           name: string
+          payment_status?: string
           points?: number
+          shipping_status?: string
           user_id: string
         }
         Update: {
@@ -36,7 +40,9 @@ export type Database = {
           id?: string
           image_url?: string | null
           name?: string
+          payment_status?: string
           points?: number
+          shipping_status?: string
           user_id?: string
         }
         Relationships: []
