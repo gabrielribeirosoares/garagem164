@@ -250,7 +250,7 @@ function AddCarros() {
               id="car-name"
               value={name}
               onChange={(e) => handleNameChange(e.target.value)}
-              onFocus={(e) => handleNameChange(e.target.value)}
+              onFocus={() => { if (name.trim().length >= 2) setShowSuggestions(true); }}
               onBlur={() => setShowSuggestions(false)}
               placeholder="Ex: '70 Dodge Charger R/T"
               required
