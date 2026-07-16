@@ -70,6 +70,7 @@ function AddCarros() {
       setName(""); setImageUrl(""); setPoints(10);
       qc.invalidateQueries({ queryKey: ["admin-recent-cars"] });
       qc.invalidateQueries({ queryKey: ["admin-customers"] });
+      qc.invalidateQueries({ queryKey: ["admin-customer-cars"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -83,6 +84,21 @@ function AddCarros() {
       toast.success("Carro removido");
       qc.invalidateQueries({ queryKey: ["admin-recent-cars"] });
       qc.invalidateQueries({ queryKey: ["admin-customers"] });
+      qc.invalidateQueries({ queryKey: ["admin-customer-cars"] });
+    },
+  });
+
+  const { data: customerCars } = useQuery({
+    queryKey: ["admin-customer-cars", userId],
+    enabled: !!userId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("cars")
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
     },
   });
 
@@ -221,94 +237,157 @@ function AddCarros() {
   return (
     <div className="space-y-10">
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
-        <form
-          onSubmit={(e) => { e.preventDefault(); addCar.mutate(); }}
-          className="rounded-3xl border border-border bg-card p-6 space-y-4 h-fit"
-        >
-          <div className="flex items-center gap-2">
-            <PlusCircle className="h-5 w-5 text-primary" />
-            <h2 className="font-black text-lg">Adicionar Carro</h2>
-          </div>
+        <div className="space-y-6">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              addCar.mutate();
+            }}
+            className="rounded-3xl border border-border p-6 bg-card space-y-6"
+          >
+            <div className="flex items-center gap-2">
+              <PlusCircle className="h-5 w-5 text-primary animate-pulse" />
+              <h2 className="font-black text-lg">Adicionar Carro</h2>
+            </div>
 
-          <div className="space-y-2">
-            <Label>Cliente</Label>
-            <Select value={userId} onValueChange={setUserId}>
-              <SelectTrigger><SelectValue placeholder="Selecione um cliente" /></SelectTrigger>
-              <SelectContent>
-                {customers?.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.full_name || c.email} · {c.points} pts
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="customer-select">Cliente</Label>
+              <Select value={userId} onValueChange={setUserId}>
+                <SelectTrigger id="customer-select">
+                  <SelectValue placeholder="Selecione um cliente" />
+                </SelectTrigger>
+                <SelectContent>
+                  {customers?.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.full_name || c.email} · {c.points} pts
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-          <div className="space-y-2 relative">
-            <Label htmlFor="car-name">Nome do carro</Label>
-            <Input
-              id="car-name"
-              value={name}
-              onChange={(e) => handleNameChange(e.target.value)}
-              onFocus={() => { if (name.trim().length >= 2) setShowSuggestions(true); }}
-              onBlur={() => setShowSuggestions(false)}
-              placeholder="Ex: '70 Dodge Charger R/T"
-              required
-              autoComplete="off"
-            />
-            {showSuggestions && suggestions.length > 0 && (
-              <div className="absolute z-50 w-full mt-1 max-h-60 overflow-y-auto rounded-lg border border-border bg-card shadow-xl divide-y divide-border">
-                {suggestions.map((car, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    className="w-full text-left p-2 flex items-center gap-3 hover:bg-muted/50 transition-colors text-sm"
-                    onMouseDown={() => {
-                      setName(car.color ? `${car.name} (${car.color})` : car.name);
-                      setImageUrl(car.image || "");
-                      setShowSuggestions(false);
-                    }}
-                  >
-                    {car.image ? (
-                      <img
-                        src={car.image}
-                        alt={car.name}
-                        className="w-10 h-10 rounded object-cover bg-muted shrink-0"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
-                        }}
-                      />
-                    ) : (
-                      <div className="w-10 h-10 rounded bg-muted flex items-center justify-center shrink-0">
-                        <Car className="h-4 w-4 text-muted-foreground" />
+            <div className="space-y-2 relative">
+              <Label htmlFor="car-name">Nome do carro</Label>
+              <Input
+                id="car-name"
+                value={name}
+                onChange={(e) => handleNameChange(e.target.value)}
+                onFocus={() => { if (name.trim().length >= 2) setShowSuggestions(true); }}
+                onBlur={() => setShowSuggestions(false)}
+                placeholder="Ex: '70 Dodge Charger R/T"
+                required
+                autoComplete="off"
+              />
+              {showSuggestions && suggestions.length > 0 && (
+                <div className="absolute z-50 w-full mt-1 max-h-60 overflow-y-auto rounded-lg border border-border bg-card shadow-xl divide-y divide-border">
+                  {suggestions.map((car, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      className="w-full text-left p-2 flex items-center gap-3 hover:bg-muted/50 transition-colors text-sm"
+                      onMouseDown={() => {
+                        setName(car.color ? `${car.name} (${car.color})` : car.name);
+                        setImageUrl(car.image || "");
+                        setShowSuggestions(false);
+                      }}
+                    >
+                      {car.image ? (
+                        <img
+                          src={car.image}
+                          alt={car.name}
+                          className="w-10 h-10 rounded object-cover bg-muted shrink-0"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded bg-muted flex items-center justify-center shrink-0">
+                          <Car className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <div className="font-bold text-foreground truncate">{car.name}</div>
+                        <div className="text-xs text-muted-foreground truncate">
+                          {car.series} {car.color && `· ${car.color}`} {car.year && `· ${car.year}`}
+                        </div>
                       </div>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <div className="font-bold text-foreground truncate">{car.name}</div>
-                      <div className="text-xs text-muted-foreground truncate">
-                        {car.series} {car.color && `· ${car.color}`} {car.year && `· ${car.year}`}
-                      </div>
-                    </div>
-                  </button>
-                ))}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label>URL da imagem</Label>
+              <Input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://..." />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Pontuação</Label>
+              <Input type="number" min={0} value={points} onChange={(e) => setPoints(Number(e.target.value))} required />
+            </div>
+
+            <Button type="submit" disabled={addCar.isPending} className="w-full hw-gradient-orange text-primary-foreground font-bold">
+              {addCar.isPending ? "Salvando..." : "Adicionar à garagem"}
+            </Button>
+          </form>
+
+          {userId && (
+            <div className="rounded-3xl border border-border bg-card overflow-hidden shadow-lg">
+              <div className="p-5 border-b border-border flex items-center justify-between gap-4">
+                <div>
+                  <h2 className="font-black text-base flex items-center gap-1.5 text-white">
+                    <Car className="h-4 w-4 text-primary" />
+                    Garagem de {customers?.find(c => c.id === userId)?.full_name || "Cliente"}
+                  </h2>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    {customerCars?.length ?? 0} miniaturas · {customers?.find(c => c.id === userId)?.points ?? 0} pts acumulados
+                  </p>
+                </div>
               </div>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label>URL da imagem</Label>
-            <Input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://..." />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Pontuação</Label>
-            <Input type="number" min={0} value={points} onChange={(e) => setPoints(Number(e.target.value))} required />
-          </div>
-
-          <Button type="submit" disabled={addCar.isPending} className="w-full hw-gradient-orange text-primary-foreground font-bold">
-            {addCar.isPending ? "Salvando..." : "Adicionar à garagem"}
-          </Button>
-        </form>
+              <div className="divide-y divide-border max-h-[300px] overflow-y-auto">
+                {!customerCars?.length ? (
+                  <div className="p-8 text-sm text-muted-foreground text-center">
+                    Esta garagem está vazia.
+                  </div>
+                ) : (
+                  customerCars.map((c) => (
+                    <div key={c.id} className="p-3.5 flex items-center justify-between gap-3 hover:bg-[#070707] transition-all">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="h-10 w-10 rounded-lg bg-muted overflow-hidden flex items-center justify-center shrink-0 border border-border/50">
+                          {c.image_url ? (
+                            <img src={c.image_url} alt={c.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <Car className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="font-bold text-sm text-white truncate">{c.name}</div>
+                          <div className="text-[10px] text-muted-foreground mt-0.5">
+                            +{c.points} pts · {new Date(c.created_at).toLocaleDateString("pt-BR")}
+                          </div>
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        type="button"
+                        onClick={() => {
+                          if (confirm(`Deseja realmente remover o carro "${c.name}"? Isso também subtrairá os ${c.points} pontos do cliente.`)) {
+                            removeCar.mutate(c.id);
+                          }
+                        }}
+                        className="hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors shrink-0 h-8 w-8 rounded-lg"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+        </div>
 
         <div className="rounded-3xl border border-border bg-card overflow-hidden">
           <header className="p-5 border-b border-border">

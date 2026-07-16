@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Ticket, Truck, Star, Gift, Sparkles, Clock, CheckCircle2 } from "lucide-react";
+import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/_authenticated/recompensas")({
   component: RecompensasPage,
@@ -24,6 +26,7 @@ function RecompensasPage() {
   const user = useSession();
   const { data: profile } = useProfile();
   const qc = useQueryClient();
+  const [activeRedemptionCode, setActiveRedemptionCode] = useState<{ code: string; title: string; cost: number } | null>(null);
 
   const { data: rewards } = useQuery({
     queryKey: ["rewards"],
@@ -50,17 +53,24 @@ function RecompensasPage() {
 
   const redeem = useMutation({
     mutationFn: async (reward: { id: string; title: string; category: Category; cost: number }) => {
-      const { error } = await supabase.from("redemptions").insert({
-        user_id: user!.id,
-        reward_id: reward.id,
-        reward_title: reward.title,
-        reward_category: reward.category,
-        cost: reward.cost,
-      });
+      const { data, error } = await supabase
+        .from("redemptions")
+        .insert({
+          user_id: user!.id,
+          reward_id: reward.id,
+          reward_title: reward.title,
+          reward_category: reward.category,
+          cost: reward.cost,
+        })
+        .select("id")
+        .single();
       if (error) throw error;
+      return data;
     },
-    onSuccess: () => {
-      toast.success("Resgate solicitado! Aguardando aprovação do lojista.");
+    onSuccess: (data, variables) => {
+      const code = "GM-" + data.id.split("-")[0].toUpperCase();
+      setActiveRedemptionCode({ code, title: variables.title, cost: variables.cost });
+      toast.success("Resgate solicitado com sucesso!");
       qc.invalidateQueries({ queryKey: ["my-redemptions", user?.id] });
       qc.invalidateQueries({ queryKey: ["profile", user?.id] });
     },
@@ -154,7 +164,15 @@ function RecompensasPage() {
                   </div>
                   <div>
                     <div className="font-bold text-sm">{r.reward_title}</div>
-                    <div className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleString("pt-BR")} · {r.cost} pts</div>
+                    <div className="text-xs text-muted-foreground flex flex-wrap gap-2 items-center mt-0.5">
+                      <span>{new Date(r.created_at).toLocaleString("pt-BR")}</span>
+                      <span>·</span>
+                      <span>{r.cost} pts</span>
+                      <span>·</span>
+                      <span className="bg-[#181818] border border-border px-1.5 py-0.5 rounded font-mono text-[10px] text-white font-bold">
+                        Código: {"GM-" + r.id.split("-")[0].toUpperCase()}
+                      </span>
+                    </div>
                   </div>
                 </div>
                 <Badge variant={r.status === "completed" ? "default" : r.status === "cancelled" ? "destructive" : "secondary"} className="gap-1">
@@ -167,6 +185,44 @@ function RecompensasPage() {
           )}
         </TabsContent>
       </Tabs>
+
+      {activeRedemptionCode && (
+        <Dialog open={!!activeRedemptionCode} onOpenChange={(open) => { if (!open) setActiveRedemptionCode(null); }}>
+          <DialogContent className="max-w-md bg-card border-border text-foreground">
+            <DialogHeader className="space-y-3 text-center sm:text-left">
+              <DialogTitle className="text-xl font-black text-white flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-[#ea580c] animate-pulse" />
+                Resgate Confirmado!
+              </DialogTitle>
+              <DialogDescription className="text-muted-foreground text-sm">
+                Sua solicitação de resgate foi registrada. Apresente o código abaixo ao lojista para retirar sua recompensa.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="py-6 flex flex-col items-center justify-center bg-[#070707] border border-border rounded-2xl my-4 space-y-2">
+              <span className="text-xs text-muted-foreground uppercase tracking-widest font-bold">CÓDIGO DE RESGATE</span>
+              <span className="text-3xl font-black text-white tracking-widest font-mono select-all">
+                {activeRedemptionCode.code}
+              </span>
+              <span className="text-[10px] text-muted-foreground/80 mt-1 uppercase tracking-wider text-center px-4">
+                {activeRedemptionCode.title} · {activeRedemptionCode.cost} pts
+              </span>
+            </div>
+
+            <div className="text-xs text-muted-foreground space-y-1">
+              <p className="font-bold text-white">⚠️ Importante:</p>
+              <p>• Esse código é de uso único e será invalidado após a confirmação do lojista.</p>
+              <p>• Você pode acessar esse código a qualquer momento na aba &quot;Meus resgates&quot;.</p>
+            </div>
+
+            <DialogFooter className="mt-4">
+              <Button onClick={() => setActiveRedemptionCode(null)} className="w-full bg-primary hover:bg-primary/90 text-white font-bold">
+                Entendido
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

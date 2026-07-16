@@ -1,12 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Gift, CheckCircle2, Clock, XCircle } from "lucide-react";
+import { Gift, CheckCircle2, Clock, XCircle, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 export const Route = createFileRoute("/_authenticated/admin/resgates")({
   component: AdminRedemptions,
@@ -14,6 +15,7 @@ export const Route = createFileRoute("/_authenticated/admin/resgates")({
 
 function AdminRedemptions() {
   const qc = useQueryClient();
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { data: redemptions } = useQuery({
     queryKey: ["admin-redemptions-all"],
@@ -49,13 +51,38 @@ function AdminRedemptions() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const byStatus = (s: string) => redemptions?.filter((r) => r.status === s) ?? [];
+  const byStatus = (s: string) => {
+    let list = redemptions?.filter((r) => r.status === s) ?? [];
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      list = list.filter((r) => {
+        const code = ("GM-" + r.id.split("-")[0]).toLowerCase();
+        return (
+          code.includes(q) ||
+          r.reward_title.toLowerCase().includes(q) ||
+          (r.profiles?.full_name && r.profiles.full_name.toLowerCase().includes(q)) ||
+          (r.profiles?.email && r.profiles.email.toLowerCase().includes(q))
+        );
+      });
+    }
+    return list;
+  };
 
   return (
     <div className="space-y-4">
       <h1 className="text-2xl md:text-3xl font-black flex items-center gap-2">
         <Gift className="h-7 w-7 text-primary" /> Aprovação de Resgates
       </h1>
+
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Buscar por código (ex: GM-A1B2C3D4) ou cliente..."
+          className="pl-10 bg-[#121212] border-border text-foreground focus-visible:ring-1 focus-visible:ring-primary rounded-lg"
+        />
+      </div>
 
       <Tabs defaultValue="pending">
         <TabsList>
@@ -74,8 +101,13 @@ function AdminRedemptions() {
                     <Gift className="h-5 w-5" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="font-bold text-sm">{r.reward_title}</div>
-                    <div className="text-xs text-muted-foreground">
+                    <div className="font-bold text-sm flex items-center gap-2 flex-wrap">
+                      <span>{r.reward_title}</span>
+                      <span className="bg-[#181818] border border-border px-2 py-0.5 rounded font-mono text-[11px] text-white font-black">
+                        {"GM-" + r.id.split("-")[0].toUpperCase()}
+                      </span>
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-0.5">
                       {r.profiles?.full_name || r.profiles?.email} · {r.cost} pts · {new Date(r.created_at).toLocaleString("pt-BR")}
                     </div>
                   </div>
