@@ -18,6 +18,7 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedAdminResgatesRouteImport } from './routes/_authenticated/admin.resgates'
 import { Route as AuthenticatedAdminRecompensasRouteImport } from './routes/_authenticated/admin.recompensas'
+import { Route as AuthenticatedAdminGaragensRouteImport } from './routes/_authenticated/admin.garagens'
 import { Route as AuthenticatedAdminCarrosRouteImport } from './routes/_authenticated/admin.carros'
 
 const AuthRoute = AuthRouteImport.update({
@@ -67,6 +68,12 @@ const AuthenticatedAdminRecompensasRoute =
     path: '/recompensas',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminGaragensRoute =
+  AuthenticatedAdminGaragensRouteImport.update({
+    id: '/garagens',
+    path: '/garagens',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminCarrosRoute =
   AuthenticatedAdminCarrosRouteImport.update({
     id: '/carros',
@@ -81,6 +88,7 @@ export interface FileRoutesByFullPath {
   '/garagem': typeof AuthenticatedGaragemRoute
   '/recompensas': typeof AuthenticatedRecompensasRoute
   '/admin/carros': typeof AuthenticatedAdminCarrosRoute
+  '/admin/garagens': typeof AuthenticatedAdminGaragensRoute
   '/admin/recompensas': typeof AuthenticatedAdminRecompensasRoute
   '/admin/resgates': typeof AuthenticatedAdminResgatesRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
@@ -91,6 +99,7 @@ export interface FileRoutesByTo {
   '/garagem': typeof AuthenticatedGaragemRoute
   '/recompensas': typeof AuthenticatedRecompensasRoute
   '/admin/carros': typeof AuthenticatedAdminCarrosRoute
+  '/admin/garagens': typeof AuthenticatedAdminGaragensRoute
   '/admin/recompensas': typeof AuthenticatedAdminRecompensasRoute
   '/admin/resgates': typeof AuthenticatedAdminResgatesRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
@@ -104,6 +113,7 @@ export interface FileRoutesById {
   '/_authenticated/garagem': typeof AuthenticatedGaragemRoute
   '/_authenticated/recompensas': typeof AuthenticatedRecompensasRoute
   '/_authenticated/admin/carros': typeof AuthenticatedAdminCarrosRoute
+  '/_authenticated/admin/garagens': typeof AuthenticatedAdminGaragensRoute
   '/_authenticated/admin/recompensas': typeof AuthenticatedAdminRecompensasRoute
   '/_authenticated/admin/resgates': typeof AuthenticatedAdminResgatesRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
@@ -117,6 +127,7 @@ export interface FileRouteTypes {
     | '/garagem'
     | '/recompensas'
     | '/admin/carros'
+    | '/admin/garagens'
     | '/admin/recompensas'
     | '/admin/resgates'
     | '/admin/'
@@ -127,6 +138,7 @@ export interface FileRouteTypes {
     | '/garagem'
     | '/recompensas'
     | '/admin/carros'
+    | '/admin/garagens'
     | '/admin/recompensas'
     | '/admin/resgates'
     | '/admin'
@@ -139,6 +151,7 @@ export interface FileRouteTypes {
     | '/_authenticated/garagem'
     | '/_authenticated/recompensas'
     | '/_authenticated/admin/carros'
+    | '/_authenticated/admin/garagens'
     | '/_authenticated/admin/recompensas'
     | '/_authenticated/admin/resgates'
     | '/_authenticated/admin/'
@@ -215,6 +228,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRecompensasRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/garagens': {
+      id: '/_authenticated/admin/garagens'
+      path: '/garagens'
+      fullPath: '/admin/garagens'
+      preLoaderRoute: typeof AuthenticatedAdminGaragensRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/carros': {
       id: '/_authenticated/admin/carros'
       path: '/carros'
@@ -227,6 +247,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminCarrosRoute: typeof AuthenticatedAdminCarrosRoute
+  AuthenticatedAdminGaragensRoute: typeof AuthenticatedAdminGaragensRoute
   AuthenticatedAdminRecompensasRoute: typeof AuthenticatedAdminRecompensasRoute
   AuthenticatedAdminResgatesRoute: typeof AuthenticatedAdminResgatesRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
@@ -234,6 +255,7 @@ interface AuthenticatedAdminRouteChildren {
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminCarrosRoute: AuthenticatedAdminCarrosRoute,
+  AuthenticatedAdminGaragensRoute: AuthenticatedAdminGaragensRoute,
   AuthenticatedAdminRecompensasRoute: AuthenticatedAdminRecompensasRoute,
   AuthenticatedAdminResgatesRoute: AuthenticatedAdminResgatesRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,

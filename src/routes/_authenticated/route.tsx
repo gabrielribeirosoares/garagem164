@@ -41,6 +41,7 @@ function AuthedLayout() {
   const adminNav = [
     { to: "/admin", label: "Dashboard", icon: LayoutDashboard },
     { to: "/admin/carros", label: "Adicionar Carro", icon: PlusCircle },
+    { to: "/admin/garagens", label: "Garagens de clientes", icon: Car },
     { to: "/admin/recompensas", label: "Recompensas", icon: Package },
     { to: "/admin/resgates", label: "Resgates", icon: Gift },
   ] as const;
