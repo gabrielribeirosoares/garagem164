@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Bell, Users, Gift, Clock, Trophy, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { useOwnedStore } from "@/hooks/useStore";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
   component: AdminDashboard,
@@ -12,22 +13,36 @@ export const Route = createFileRoute("/_authenticated/admin/")({
 
 function AdminDashboard() {
   const qc = useQueryClient();
+  const { data: store } = useOwnedStore();
+  const storeId = store?.id;
 
   const { data: customers } = useQuery({
-    queryKey: ["admin-customers"],
+    queryKey: ["admin-customers", storeId],
+    enabled: !!storeId,
     queryFn: async () => {
-      const { data, error } = await supabase.from("profiles").select("*").order("created_at", { ascending: false });
+      const { data, error } = await supabase
+        .from("customer_points")
+        .select("points, user_id, created_at, profiles:profiles!customer_points_user_id_fkey(id,full_name,email,created_at)")
+        .eq("store_id", storeId!)
+        .order("created_at", { ascending: false });
       if (error) throw error;
-      return data;
+      return (data ?? []).map((r: any) => ({
+        id: r.profiles?.id ?? r.user_id,
+        full_name: r.profiles?.full_name,
+        email: r.profiles?.email,
+        points: r.points,
+      }));
     },
   });
 
   const { data: redemptions } = useQuery({
-    queryKey: ["admin-redemptions"],
+    queryKey: ["admin-redemptions", storeId],
+    enabled: !!storeId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("redemptions")
         .select("*, profiles:profiles!redemptions_user_id_fkey(full_name,email)")
+        .eq("store_id", storeId!)
         .order("created_at", { ascending: false })
         .limit(50);
       if (error) throw error;
@@ -36,20 +51,21 @@ function AdminDashboard() {
   });
 
   useEffect(() => {
+    if (!storeId) return;
     const ch = supabase
-      .channel("admin-redemptions")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "redemptions" }, (payload) => {
+      .channel(`admin-redemptions-${storeId}`)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "redemptions", filter: `store_id=eq.${storeId}` }, (payload) => {
         const row: any = payload.new;
         toast.success(`Novo resgate: ${row.reward_title}`, { description: `${row.cost} pontos` });
-        qc.invalidateQueries({ queryKey: ["admin-redemptions"] });
-        qc.invalidateQueries({ queryKey: ["admin-customers"] });
+        qc.invalidateQueries({ queryKey: ["admin-redemptions", storeId] });
+        qc.invalidateQueries({ queryKey: ["admin-customers", storeId] });
       })
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "redemptions" }, () => {
-        qc.invalidateQueries({ queryKey: ["admin-redemptions"] });
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "redemptions", filter: `store_id=eq.${storeId}` }, () => {
+        qc.invalidateQueries({ queryKey: ["admin-redemptions", storeId] });
       })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [qc]);
+  }, [qc, storeId]);
 
   const pending = redemptions?.filter((r) => r.status === "pending") ?? [];
   const totalPoints = customers?.reduce((s, c) => s + (c.points ?? 0), 0) ?? 0;
