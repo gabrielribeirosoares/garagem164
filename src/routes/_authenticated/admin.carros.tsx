@@ -88,6 +88,22 @@ function AddCarros() {
     },
   });
 
+  const updateCarStatus = useMutation({
+    mutationFn: async ({ id, paymentStatus, shippingStatus }: { id: string; paymentStatus?: string; shippingStatus?: string }) => {
+      const updates: any = {};
+      if (paymentStatus !== undefined) updates.payment_status = paymentStatus;
+      if (shippingStatus !== undefined) updates.shipping_status = shippingStatus;
+      const { error } = await supabase.from("cars").update(updates).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Status atualizado com sucesso!");
+      qc.invalidateQueries({ queryKey: ["admin-recent-cars"] });
+      qc.invalidateQueries({ queryKey: ["admin-customer-cars"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const { data: customerCars } = useQuery({
     queryKey: ["admin-customer-cars", userId],
     enabled: !!userId,
@@ -361,10 +377,46 @@ function AddCarros() {
                             <Car className="h-4 w-4 text-muted-foreground" />
                           )}
                         </div>
-                        <div className="min-w-0">
-                          <div className="font-bold text-sm text-white truncate">{c.name}</div>
-                          <div className="text-[10px] text-muted-foreground mt-0.5">
+                        <div className="min-w-0 space-y-1 flex-1">
+                          <div className="font-bold text-sm text-white truncate leading-none">{c.name}</div>
+                          <div className="text-[10px] text-muted-foreground">
                             +{c.points} pts · {new Date(c.created_at).toLocaleDateString("pt-BR")}
+                          </div>
+                          
+                          <div className="flex items-center gap-1.5 pt-0.5 flex-wrap">
+                            {/* Payment Status Toggle */}
+                            <button
+                              type="button"
+                              onClick={() => updateCarStatus.mutate({ 
+                                id: c.id, 
+                                paymentStatus: c.payment_status === "paid" ? "pending" : "paid" 
+                              })}
+                              className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded cursor-pointer transition-colors border ${
+                                c.payment_status === "paid"
+                                  ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20"
+                                  : "bg-amber-500/10 text-amber-400 border-amber-500/20 hover:bg-amber-500/20"
+                              }`}
+                              title="Clique para alternar o status de pagamento"
+                            >
+                              {c.payment_status === "paid" ? "Pago" : "Aguardando Pagto"}
+                            </button>
+
+                            {/* Shipping Status Toggle */}
+                            <button
+                              type="button"
+                              onClick={() => updateCarStatus.mutate({ 
+                                id: c.id, 
+                                shippingStatus: c.shipping_status === "shipped" ? "pending" : "shipped" 
+                              })}
+                              className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded cursor-pointer transition-colors border ${
+                                c.shipping_status === "shipped"
+                                  ? "bg-blue-500/10 text-blue-400 border-blue-500/20 hover:bg-blue-500/20"
+                                  : "bg-zinc-500/10 text-zinc-400 border-zinc-500/20 hover:bg-zinc-500/20"
+                              }`}
+                              title="Clique para alternar o status de envio"
+                            >
+                              {c.shipping_status === "shipped" ? "Enviado" : "Pendente Envio"}
+                            </button>
                           </div>
                         </div>
                       </div>

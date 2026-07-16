@@ -87,10 +87,33 @@ function Garagem() {
                   <Car className="h-12 w-12 text-muted-foreground" />
                 )}
               </div>
-              <div className="p-3">
+              <div className="p-3 space-y-2">
                 <div className="font-bold text-sm line-clamp-2 min-h-[2.5rem]">{c.name}</div>
-                <div className="mt-2 flex items-center gap-1 text-xs font-bold text-primary">
-                  <Sparkles className="h-3 w-3" /> +{c.points} pts
+                
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex items-center gap-1 text-xs font-bold text-primary">
+                    <Sparkles className="h-3 w-3" /> +{c.points} pts
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-1">
+                    {/* Payment Status Badge */}
+                    <span className={`text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded border ${
+                      c.payment_status === "paid" 
+                        ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" 
+                        : "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                    }`}>
+                      {c.payment_status === "paid" ? "Pago" : "Aguardando Pagto"}
+                    </span>
+
+                    {/* Shipping Status Badge */}
+                    <span className={`text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded border ${
+                      c.shipping_status === "shipped" 
+                        ? "bg-blue-500/10 text-blue-400 border-blue-500/20" 
+                        : "bg-zinc-500/10 text-zinc-400 border-zinc-500/20"
+                    }`}>
+                      {c.shipping_status === "shipped" ? "Enviado" : "Pendente Envio"}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
