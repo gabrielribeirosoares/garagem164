@@ -20,12 +20,25 @@ function AdminRedemptions() {
   const { data: redemptions } = useQuery({
     queryKey: ["admin-redemptions-all"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: redemptionsData, error: redemptionsError } = await supabase
         .from("redemptions")
-        .select("*, profiles:profiles!redemptions_user_id_fkey(full_name,email)")
+        .select("*")
         .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data as any[];
+      
+      if (redemptionsError) throw redemptionsError;
+      if (!redemptionsData || redemptionsData.length === 0) return [];
+
+      const { data: profilesData, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id,full_name,email");
+      
+      if (profilesError) throw profilesError;
+
+      const profileMap = new Map(profilesData.map(p => [p.id, p]));
+      return redemptionsData.map(r => ({
+        ...r,
+        profiles: profileMap.get(r.user_id) || null
+      })) as any[];
     },
   });
 
