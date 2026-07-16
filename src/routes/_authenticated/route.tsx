@@ -54,7 +54,7 @@ function AuthedLayout() {
         <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between gap-4">
           <Link to={isAdmin ? "/admin" : "/garagem"} className="flex items-center gap-2">
             <Flame className="h-5 w-5 text-primary" />
-            <span className="font-black tracking-tight">GARAGEM<span className="hw-text-flame">HW</span></span>
+            <span className="font-black tracking-tight">GONZAGA<span className="hw-text-flame">MINIS</span></span>
           </Link>
 
           {/* Desktop nav */}

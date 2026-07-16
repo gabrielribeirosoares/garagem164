@@ -24,7 +24,7 @@ function Landing() {
       <header className="flex items-center justify-between px-6 py-5">
         <div className="flex items-center gap-2">
           <Flame className="h-6 w-6 text-primary" />
-          <span className="font-black tracking-tight text-lg">GARAGEM<span className="hw-text-flame">HW</span></span>
+          <span className="font-black tracking-tight text-lg">GONZAGA<span className="hw-text-flame">MINIS</span></span>
         </div>
         <Link to="/auth"><Button variant="secondary" size="sm">Entrar</Button></Link>
       </header>

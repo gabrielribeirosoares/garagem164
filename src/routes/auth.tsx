@@ -111,7 +111,7 @@ function AuthPage() {
             <div className="space-y-6">
               <div className="text-center space-y-1">
                 <h1 className="font-black text-3xl tracking-wide text-white uppercase font-sans">
-                  DIECAST MANAGER
+                  GONZAGA MINIS
                 </h1>
                 <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">
                   ACESSE SUA COLEÇÃO COM E-MAIL E SENHA.
