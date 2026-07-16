@@ -14,6 +14,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as StoreSlugRouteImport } from './routes/$storeSlug'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as StoreSlugIndexRouteImport } from './routes/$storeSlug.index'
 import { Route as AuthenticatedRecompensasRouteImport } from './routes/_authenticated/recompensas'
 import { Route as AuthenticatedGaragemRouteImport } from './routes/_authenticated/garagem'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
@@ -46,6 +47,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const StoreSlugIndexRoute = StoreSlugIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => StoreSlugRoute,
 } as any)
 const AuthenticatedRecompensasRoute =
   AuthenticatedRecompensasRouteImport.update({
@@ -95,12 +101,13 @@ const AuthenticatedAdminCarrosRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/$storeSlug': typeof StoreSlugRoute
+  '/$storeSlug': typeof StoreSlugRouteWithChildren
   '/auth': typeof AuthRoute
   '/create-store': typeof CreateStoreRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/garagem': typeof AuthenticatedGaragemRoute
   '/recompensas': typeof AuthenticatedRecompensasRoute
+  '/$storeSlug/': typeof StoreSlugIndexRoute
   '/admin/carros': typeof AuthenticatedAdminCarrosRoute
   '/admin/garagens': typeof AuthenticatedAdminGaragensRoute
   '/admin/recompensas': typeof AuthenticatedAdminRecompensasRoute
@@ -109,11 +116,11 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/$storeSlug': typeof StoreSlugRoute
   '/auth': typeof AuthRoute
   '/create-store': typeof CreateStoreRoute
   '/garagem': typeof AuthenticatedGaragemRoute
   '/recompensas': typeof AuthenticatedRecompensasRoute
+  '/$storeSlug': typeof StoreSlugIndexRoute
   '/admin/carros': typeof AuthenticatedAdminCarrosRoute
   '/admin/garagens': typeof AuthenticatedAdminGaragensRoute
   '/admin/recompensas': typeof AuthenticatedAdminRecompensasRoute
@@ -124,12 +131,13 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
-  '/$storeSlug': typeof StoreSlugRoute
+  '/$storeSlug': typeof StoreSlugRouteWithChildren
   '/auth': typeof AuthRoute
   '/create-store': typeof CreateStoreRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/garagem': typeof AuthenticatedGaragemRoute
   '/_authenticated/recompensas': typeof AuthenticatedRecompensasRoute
+  '/$storeSlug/': typeof StoreSlugIndexRoute
   '/_authenticated/admin/carros': typeof AuthenticatedAdminCarrosRoute
   '/_authenticated/admin/garagens': typeof AuthenticatedAdminGaragensRoute
   '/_authenticated/admin/recompensas': typeof AuthenticatedAdminRecompensasRoute
@@ -146,6 +154,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/garagem'
     | '/recompensas'
+    | '/$storeSlug/'
     | '/admin/carros'
     | '/admin/garagens'
     | '/admin/recompensas'
@@ -154,11 +163,11 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/$storeSlug'
     | '/auth'
     | '/create-store'
     | '/garagem'
     | '/recompensas'
+    | '/$storeSlug'
     | '/admin/carros'
     | '/admin/garagens'
     | '/admin/recompensas'
@@ -174,6 +183,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin'
     | '/_authenticated/garagem'
     | '/_authenticated/recompensas'
+    | '/$storeSlug/'
     | '/_authenticated/admin/carros'
     | '/_authenticated/admin/garagens'
     | '/_authenticated/admin/recompensas'
@@ -184,7 +194,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
-  StoreSlugRoute: typeof StoreSlugRoute
+  StoreSlugRoute: typeof StoreSlugRouteWithChildren
   AuthRoute: typeof AuthRoute
   CreateStoreRoute: typeof CreateStoreRoute
 }
@@ -225,6 +235,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/$storeSlug/': {
+      id: '/$storeSlug/'
+      path: '/'
+      fullPath: '/$storeSlug/'
+      preLoaderRoute: typeof StoreSlugIndexRouteImport
+      parentRoute: typeof StoreSlugRoute
     }
     '/_authenticated/recompensas': {
       id: '/_authenticated/recompensas'
@@ -319,10 +336,22 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface StoreSlugRouteChildren {
+  StoreSlugIndexRoute: typeof StoreSlugIndexRoute
+}
+
+const StoreSlugRouteChildren: StoreSlugRouteChildren = {
+  StoreSlugIndexRoute: StoreSlugIndexRoute,
+}
+
+const StoreSlugRouteWithChildren = StoreSlugRoute._addFileChildren(
+  StoreSlugRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
-  StoreSlugRoute: StoreSlugRoute,
+  StoreSlugRoute: StoreSlugRouteWithChildren,
   AuthRoute: AuthRoute,
   CreateStoreRoute: CreateStoreRoute,
 }
