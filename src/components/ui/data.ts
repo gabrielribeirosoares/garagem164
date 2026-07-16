@@ -1,4 +1,4 @@
-type RawCar = { year: number; name: string; series: string; color: string; part: string; hw: string; cas: string; image: string }; export const RAW: RawCar[] = [
+type RawCar = { year: number; name: string; series: string; color: string; part: string; hw: string; cas: string; image: string }; const _RAW: any = [
     {
         "year": 2026,
         "name": "Mazda MX-5 Miata",
