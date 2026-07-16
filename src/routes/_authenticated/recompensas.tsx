@@ -109,11 +109,11 @@ function RecompensasPage() {
                 return (
                   <div key={r.id} className="rounded-2xl border border-border bg-card overflow-hidden group hover:border-primary/60 transition-all flex flex-col justify-between">
                     <div>
-                      <div className={`h-32 ${meta.gradient} relative flex items-center justify-center overflow-hidden`}>
+                      <div className="h-32 bg-[#141414] border-b border-border/30 relative flex items-center justify-center overflow-hidden">
                         {r.image_url ? (
                           <img src={r.image_url} alt={r.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                         ) : (
-                          <meta.icon className="h-14 w-14 text-primary-foreground opacity-80" />
+                          <meta.icon className="h-12 w-12 text-muted-foreground/45" />
                         )}
                         
                         {/* Category Badge */}
