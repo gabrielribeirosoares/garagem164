@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useSession, useProfile } from "@/hooks/useAuth";
+import { useSession } from "@/hooks/useAuth";
+import { useActiveClientStore, useCustomerPoints } from "@/hooks/useStore";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -24,27 +25,31 @@ type Category = keyof typeof CATEGORY_META;
 
 function RecompensasPage() {
   const user = useSession();
-  const { data: profile } = useProfile();
+  const { data: store } = useActiveClientStore();
+  const storeId = store?.id;
+  const { data: pointsBalance } = useCustomerPoints(storeId);
   const qc = useQueryClient();
   const [activeRedemptionCode, setActiveRedemptionCode] = useState<{ code: string; title: string; cost: number } | null>(null);
 
   const { data: rewards } = useQuery({
-    queryKey: ["rewards"],
+    queryKey: ["rewards", storeId],
+    enabled: !!storeId,
     queryFn: async () => {
-      const { data, error } = await supabase.from("rewards").select("*").eq("active", true).order("cost");
+      const { data, error } = await supabase.from("rewards").select("*").eq("store_id", storeId!).eq("active", true).order("cost");
       if (error) throw error;
       return data;
     },
   });
 
   const { data: myRedemptions } = useQuery({
-    queryKey: ["my-redemptions", user?.id],
-    enabled: !!user,
+    queryKey: ["my-redemptions", user?.id, storeId],
+    enabled: !!user && !!storeId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("redemptions")
         .select("*")
         .eq("user_id", user!.id)
+        .eq("store_id", storeId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
@@ -53,9 +58,11 @@ function RecompensasPage() {
 
   const redeem = useMutation({
     mutationFn: async (reward: { id: string; title: string; category: Category; cost: number }) => {
+      if (!storeId) throw new Error("Loja não encontrada.");
       const { data, error } = await supabase
         .from("redemptions")
         .insert({
+          store_id: storeId,
           user_id: user!.id,
           reward_id: reward.id,
           reward_title: reward.title,
@@ -71,13 +78,13 @@ function RecompensasPage() {
       const code = "GM-" + data.id.split("-")[0].toUpperCase();
       setActiveRedemptionCode({ code, title: variables.title, cost: variables.cost });
       toast.success("Resgate solicitado com sucesso!");
-      qc.invalidateQueries({ queryKey: ["my-redemptions", user?.id] });
-      qc.invalidateQueries({ queryKey: ["profile", user?.id] });
+      qc.invalidateQueries({ queryKey: ["my-redemptions", user?.id, storeId] });
+      qc.invalidateQueries({ queryKey: ["customer-points", user?.id, storeId] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const points = profile?.points ?? 0;
+  const points = pointsBalance ?? 0;
   const grouped = (cat: Category) => rewards?.filter((r) => r.category === cat) ?? [];
 
   return (
