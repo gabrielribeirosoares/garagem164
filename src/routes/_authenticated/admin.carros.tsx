@@ -9,6 +9,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { toast } from "sonner";
 import { Car, Trash2, PlusCircle, Search, RotateCcw, ChevronLeft, ChevronRight } from "lucide-react";
 import { RAW } from "@/components/ui/data";
+import { useOwnedStore } from "@/hooks/useStore";
 
 export const Route = createFileRoute("/_authenticated/admin/carros")({
   component: AddCarros,
@@ -16,6 +17,8 @@ export const Route = createFileRoute("/_authenticated/admin/carros")({
 
 function AddCarros() {
   const qc = useQueryClient();
+  const { data: store } = useOwnedStore();
+  const storeId = store?.id;
   const [userId, setUserId] = useState<string>("");
   const [name, setName] = useState("");
   const [imageUrl, setImageUrl] = useState("");
@@ -33,20 +36,28 @@ function AddCarros() {
   const [currentPage, setCurrentPage] = useState(1);
 
   const { data: customers } = useQuery({
-    queryKey: ["admin-customers"],
+    queryKey: ["admin-customers", storeId],
+    enabled: !!storeId,
     queryFn: async () => {
-      const { data, error } = await supabase.from("profiles").select("id,full_name,email,points").order("full_name");
+      const { data: cp, error } = await supabase
+        .from("customer_points")
+        .select("points, user_id, profiles:profiles!customer_points_user_id_fkey(id,full_name,email)")
+        .eq("store_id", storeId!);
       if (error) throw error;
-      return data;
+      return (cp ?? [])
+        .map((r: any) => ({ id: r.profiles?.id ?? r.user_id, full_name: r.profiles?.full_name, email: r.profiles?.email, points: r.points }))
+        .sort((a, b) => (a.full_name || a.email || "").localeCompare(b.full_name || b.email || ""));
     },
   });
 
   const { data: recentCars } = useQuery({
-    queryKey: ["admin-recent-cars"],
+    queryKey: ["admin-recent-cars", storeId],
+    enabled: !!storeId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("cars")
         .select("*, profiles:profiles!cars_user_id_fkey(full_name,email)")
+        .eq("store_id", storeId!)
         .order("created_at", { ascending: false })
         .limit(20);
       if (error) throw error;
@@ -56,8 +67,10 @@ function AddCarros() {
 
   const addCar = useMutation({
     mutationFn: async () => {
+      if (!storeId) throw new Error("Loja não encontrada.");
       if (!userId || !name) throw new Error("Selecione o cliente e informe o nome do carro.");
       const { error } = await supabase.from("cars").insert({
+        store_id: storeId,
         user_id: userId,
         name,
         image_url: imageUrl || null,
