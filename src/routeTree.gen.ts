@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as CreateStoreRouteImport } from './routes/create-store'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as StoreSlugRouteImport } from './routes/$storeSlug'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRecompensasRouteImport } from './routes/_authenticated/recompensas'
@@ -30,6 +31,11 @@ const CreateStoreRoute = CreateStoreRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StoreSlugRoute = StoreSlugRouteImport.update({
+  id: '/$storeSlug',
+  path: '/$storeSlug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
@@ -89,6 +95,7 @@ const AuthenticatedAdminCarrosRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/$storeSlug': typeof StoreSlugRoute
   '/auth': typeof AuthRoute
   '/create-store': typeof CreateStoreRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
@@ -102,6 +109,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/$storeSlug': typeof StoreSlugRoute
   '/auth': typeof AuthRoute
   '/create-store': typeof CreateStoreRoute
   '/garagem': typeof AuthenticatedGaragemRoute
@@ -116,6 +124,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/$storeSlug': typeof StoreSlugRoute
   '/auth': typeof AuthRoute
   '/create-store': typeof CreateStoreRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
@@ -131,6 +140,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/$storeSlug'
     | '/auth'
     | '/create-store'
     | '/admin'
@@ -144,6 +154,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/$storeSlug'
     | '/auth'
     | '/create-store'
     | '/garagem'
@@ -157,6 +168,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/$storeSlug'
     | '/auth'
     | '/create-store'
     | '/_authenticated/admin'
@@ -172,6 +184,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  StoreSlugRoute: typeof StoreSlugRoute
   AuthRoute: typeof AuthRoute
   CreateStoreRoute: typeof CreateStoreRoute
 }
@@ -190,6 +203,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$storeSlug': {
+      id: '/$storeSlug'
+      path: '/$storeSlug'
+      fullPath: '/$storeSlug'
+      preLoaderRoute: typeof StoreSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -302,6 +322,7 @@ const AuthenticatedRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  StoreSlugRoute: StoreSlugRoute,
   AuthRoute: AuthRoute,
   CreateStoreRoute: CreateStoreRoute,
 }
