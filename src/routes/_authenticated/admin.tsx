@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   ssr: false,
-  beforeLoad: async ({ router }) => {
+  beforeLoad: async ({ context }) => {
     const { data: userData } = await supabase.auth.getUser();
     if (!userData.user) throw redirect({ to: "/auth" });
     const { data: store } = await supabase
@@ -14,7 +14,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
     if (!store) {
       throw redirect({ to: "/create-store" });
     }
-    const queryClient = (router.context as any).queryClient;
+    const queryClient = (context as any)?.queryClient;
     if (queryClient) {
       queryClient.setQueryData(["owned-store", userData.user.id], store);
     }
