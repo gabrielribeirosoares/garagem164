@@ -65,6 +65,15 @@ function AuthedLayout() {
     };
   }, [brand, isAdmin]);
 
+  // Link client user to active store when accessing authenticated area
+  useEffect(() => {
+    if (user && role === "client" && activeStore?.id) {
+      supabase.rpc("link_user_to_store", { _store_id: activeStore.id }).then(({ error }) => {
+        if (error) console.error("Error linking user to store:", error);
+      });
+    }
+  }, [user, role, activeStore?.id]);
+
   const clientNav = [
     { to: "/garagem", label: "Garagem", icon: Car },
     { to: "/recompensas", label: "Recompensas", icon: Gift },

@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Bell, Users, Gift, Clock, Trophy, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useOwnedStore } from "@/hooks/useStore";
 
@@ -72,9 +73,23 @@ function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <p className="text-xs uppercase tracking-widest text-secondary font-bold">Painel do Lojista</p>
-        <h1 className="text-3xl md:text-4xl font-black">Dashboard</h1>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <p className="text-xs uppercase tracking-widest text-secondary font-bold">Painel do Lojista</p>
+          <h1 className="text-3xl md:text-4xl font-black">Dashboard</h1>
+        </div>
+        {store && (
+          <Button
+            className="hw-gradient-orange text-white font-bold h-9"
+            onClick={() => {
+              const link = `${window.location.origin}/${store.slug}`;
+              navigator.clipboard.writeText(link);
+              toast.success("Link de convite copiado!");
+            }}
+          >
+            <Sparkles className="h-4 w-4 mr-2" /> Copiar Link de Convite
+          </Button>
+        )}
       </div>
 
       <div className="grid gap-3 md:grid-cols-3">
