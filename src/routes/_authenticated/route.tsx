@@ -1,11 +1,15 @@
 import { createFileRoute, Outlet, redirect, Link, useNavigate, useLocation } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useSession, useRole } from "@/hooks/useAuth";
+import { useSession, useRole, useProfile } from "@/hooks/useAuth";
 import { useOwnedStore, useActiveClientStore, useCustomerPoints } from "@/hooks/useStore";
 import { Button } from "@/components/ui/button";
-import { Flame, Car, Gift, LayoutDashboard, Package, PlusCircle, LogOut, Trophy, Store } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { Flame, Car, Gift, LayoutDashboard, Package, PlusCircle, LogOut, Trophy, Store, User as UserIcon } from "lucide-react";
+import { useQueryClient, useMutation } from "@tanstack/react-query";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -30,6 +34,32 @@ function AuthedLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const qc = useQueryClient();
+
+  const { data: profile } = useProfile();
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [fullName, setFullName] = useState("");
+
+  useEffect(() => {
+    if (profile?.full_name) {
+      setFullName(profile.full_name);
+    }
+  }, [profile]);
+
+  const updateProfile = useMutation({
+    mutationFn: async (name: string) => {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ full_name: name })
+        .eq("id", user!.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["profile", user?.id] });
+      toast.success("Perfil atualizado com sucesso!");
+      setProfileOpen(false);
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
 
   async function signOut() {
     await qc.cancelQueries();
@@ -128,6 +158,9 @@ function AuthedLayout() {
                 <span>{clientPoints ?? 0} pts</span>
               </div>
             )}
+            <Button onClick={() => setProfileOpen(true)} variant="ghost" size="icon" title="Meu Perfil">
+              <UserIcon className="h-4 w-4" />
+            </Button>
             <Button onClick={signOut} variant="ghost" size="icon" title="Sair">
               <LogOut className="h-4 w-4" />
             </Button>
@@ -153,6 +186,55 @@ function AuthedLayout() {
           })}
         </div>
       </nav>
+
+      {/* Dialog do Perfil */}
+      <Dialog open={profileOpen} onOpenChange={setProfileOpen}>
+        <DialogContent className="sm:max-w-[425px] bg-card border-border text-foreground">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-black flex items-center gap-2">
+              <UserIcon className="h-6 w-6 text-primary" /> Meu Perfil
+            </DialogTitle>
+          </DialogHeader>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              updateProfile.mutate(fullName);
+            }}
+            className="space-y-4 pt-4"
+          >
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={profile?.email || ""}
+                disabled
+                className="bg-muted/30 border-border text-muted-foreground cursor-not-allowed"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="fullName" className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Nome Completo</Label>
+              <Input
+                id="fullName"
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="Seu nome"
+                required
+                className="bg-[#121212] border-border text-foreground"
+              />
+            </div>
+            <div className="flex justify-end gap-3 pt-2">
+              <Button type="button" variant="ghost" onClick={() => setProfileOpen(false)}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={updateProfile.isPending} className="hw-gradient-orange text-white font-bold">
+                {updateProfile.isPending ? "Salvando..." : "Salvar Alterações"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

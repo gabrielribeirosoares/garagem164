@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useSession, useRole } from "@/hooks/useAuth";
-import { useStoreBySlug } from "@/hooks/useStore";
+import { useStoreBySlug, setActiveStoreSlug } from "@/hooks/useStore";
 import { Store } from "lucide-react";
 
 export const Route = createFileRoute("/$storeSlug/login")({
@@ -21,6 +21,13 @@ function StoreLogin() {
   const { data: role } = useRole();
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
+
+  // Sync active store slug on load
+  useEffect(() => {
+    if (storeSlug) {
+      setActiveStoreSlug(storeSlug);
+    }
+  }, [storeSlug]);
 
   useEffect(() => {
     if (user && role) {
@@ -56,7 +63,10 @@ function StoreLogin() {
       password: String(form.get("password")),
       options: {
         emailRedirectTo: `${window.location.origin}/${storeSlug}`,
-        data: { full_name: String(form.get("full_name")) },
+        data: { 
+          full_name: String(form.get("full_name")),
+          register_store_id: store?.id
+        },
       },
     });
     setLoading(false);
