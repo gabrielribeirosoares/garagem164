@@ -3,8 +3,6 @@ INSERT INTO storage.buckets (id, name, public)
 VALUES ('images', 'images', true)
 ON CONFLICT (id) DO NOTHING;
 
--- Enable RLS on storage.objects
-ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
 
 -- Drop old policies if they exist to avoid conflict
 DROP POLICY IF EXISTS "Public Read Access" ON storage.objects;
