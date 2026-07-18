@@ -209,14 +209,64 @@ function AuthedLayout() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Link to="/admin" className="flex items-center gap-2 min-w-0">
-              {brand?.logo_url ? (
-                <img src={brand.logo_url} alt={brand.name} className="h-7 w-7 rounded object-cover" />
-              ) : (
-                <Store className="h-5 w-5" style={{ color: primaryColor }} />
-              )}
-              <span className="font-black tracking-tight truncate">{brand?.name ?? "Minha Loja"}</span>
-            </Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-2 hover:opacity-80 transition-opacity min-w-0 cursor-pointer text-left focus:outline-none">
+                  {brand?.logo_url ? (
+                    <img src={brand.logo_url} alt={brand.name} className="h-7 w-7 rounded object-cover" />
+                  ) : (
+                    <Store className="h-5 w-5" style={{ color: primaryColor }} />
+                  )}
+                  <span className="font-black tracking-tight truncate flex items-center gap-1">
+                    {brand?.name ?? "Minha Loja"}
+                    <ChevronDown className="h-4 w-4 shrink-0 opacity-60" />
+                  </span>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56 bg-card border-border text-foreground align-start">
+                <DropdownMenuLabel className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                  Minha Loja (Admin)
+                </DropdownMenuLabel>
+                <DropdownMenuItem
+                  onClick={() => navigate({ to: "/admin" })}
+                  className="cursor-pointer focus:bg-muted/50 gap-2 font-bold text-primary"
+                >
+                  <LayoutDashboard className="h-4 w-4" />
+                  {ownedStore?.name ?? "Painel Admin"}
+                </DropdownMenuItem>
+                {myStores && myStores.length > 0 && (
+                  <>
+                    <DropdownMenuSeparator className="bg-border" />
+                    <DropdownMenuLabel className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                      Lojas que sou cliente
+                    </DropdownMenuLabel>
+                    {myStores.map((s: any) => (
+                      <DropdownMenuItem
+                        key={s.id}
+                        onClick={async () => {
+                          setActiveStoreSlug(s.slug);
+                          await qc.invalidateQueries();
+                          navigate({ to: "/garagem" });
+                        }}
+                        className="flex items-center justify-between cursor-pointer focus:bg-muted/50"
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          {s.logo_url ? (
+                            <img src={s.logo_url} alt={s.name} className="h-5 w-5 rounded object-cover" />
+                          ) : (
+                            <Store className="h-4 w-4 text-muted-foreground" />
+                          )}
+                          <span className="truncate">{s.name}</span>
+                        </div>
+                        <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded font-black shrink-0">
+                          {s.points} pts
+                        </span>
+                      </DropdownMenuItem>
+                    ))}
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
 
           {/* Desktop nav */}
