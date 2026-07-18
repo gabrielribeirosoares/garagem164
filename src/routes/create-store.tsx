@@ -36,6 +36,39 @@ function CreateStore() {
   const [faviconUrl, setFaviconUrl] = useState("");
   const [color, setColor] = useState("#f97316");
   const [saving, setSaving] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadingFavicon, setUploadingFavicon] = useState(false);
+
+  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>, type: "logo" | "favicon") {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (type === "logo") setUploadingLogo(true);
+    else setUploadingFavicon(true);
+
+    try {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${user?.id || "anonymous"}-${type}-${Math.random().toString(36).slice(2)}.${fileExt}`;
+      const filePath = `stores/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("images")
+        .upload(filePath, file, { cacheControl: "3600", upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage.from("images").getPublicUrl(filePath);
+      if (type === "logo") setLogoUrl(data.publicUrl);
+      else setFaviconUrl(data.publicUrl);
+
+      toast.success(`${type === "logo" ? "Logo" : "Favicon"} enviado com sucesso!`);
+    } catch (err: any) {
+      toast.error(`Erro no upload: ${err.message}`);
+    } finally {
+      if (type === "logo") setUploadingLogo(false);
+      else setUploadingFavicon(false);
+    }
+  }
 
   useEffect(() => {
     if (user === null) navigate({ to: "/auth", replace: true });
@@ -91,12 +124,50 @@ function CreateStore() {
           <p className="text-xs text-muted-foreground">Sua loja ficará em <code>/{slug || "minha-loja"}</code></p>
         </div>
         <div className="space-y-2">
-          <Label>URL do logo (opcional)</Label>
-          <Input value={logoUrl} onChange={(e) => setLogoUrl(e.target.value)} placeholder="https://..." />
+          <Label>Logo da Loja</Label>
+          {logoUrl ? (
+            <div className="flex items-center gap-3 p-3 rounded-xl border border-border bg-background/50">
+              <img src={logoUrl} alt="Logo Preview" className="h-10 w-10 rounded object-cover" />
+              <div className="min-w-0 flex-1">
+                <p className="text-xs text-muted-foreground truncate">Logo enviado com sucesso</p>
+              </div>
+              <Button type="button" variant="ghost" size="sm" onClick={() => setLogoUrl("")} className="text-xs text-destructive hover:bg-destructive/10">Remover</Button>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleUpload(e, "logo")}
+                disabled={uploadingLogo}
+                className="bg-[#121212] border-border text-foreground h-11 file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-white hover:file:bg-primary/95 cursor-pointer"
+              />
+              {uploadingLogo && <p className="text-xs text-primary animate-pulse">Enviando logo...</p>}
+            </div>
+          )}
         </div>
         <div className="space-y-2">
-          <Label>URL do favicon (opcional)</Label>
-          <Input value={faviconUrl} onChange={(e) => setFaviconUrl(e.target.value)} placeholder="https://.../favicon.ico" />
+          <Label>Favicon da Loja (ícone da aba do navegador)</Label>
+          {faviconUrl ? (
+            <div className="flex items-center gap-3 p-3 rounded-xl border border-border bg-background/50">
+              <img src={faviconUrl} alt="Favicon Preview" className="h-8 w-8 rounded object-cover animate-in fade-in" />
+              <div className="min-w-0 flex-1">
+                <p className="text-xs text-muted-foreground truncate">Favicon enviado com sucesso</p>
+              </div>
+              <Button type="button" variant="ghost" size="sm" onClick={() => setFaviconUrl("")} className="text-xs text-destructive hover:bg-destructive/10">Remover</Button>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              <Input
+                type="file"
+                accept="image/x-icon,image/png,image/jpeg"
+                onChange={(e) => handleUpload(e, "favicon")}
+                disabled={uploadingFavicon}
+                className="bg-[#121212] border-border text-foreground h-11 file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-white hover:file:bg-primary/95 cursor-pointer"
+              />
+              {uploadingFavicon && <p className="text-xs text-primary animate-pulse">Enviando favicon...</p>}
+            </div>
+          )}
         </div>
         <div className="space-y-2">
           <Label>Cor primária</Label>
