@@ -69,6 +69,7 @@ function StoreLogin() {
         emailRedirectTo: `${window.location.origin}/${storeSlug}`,
         data: { 
           full_name: String(form.get("full_name")),
+          whatsapp: String(form.get("whatsapp")),
           register_store_id: store?.id
         },
       },
@@ -142,6 +143,10 @@ function StoreLogin() {
             <div className="space-y-1.5">
               <Label>Nome completo</Label>
               <Input name="full_name" required />
+            </div>
+            <div className="space-y-1.5">
+              <Label>WhatsApp</Label>
+              <Input name="whatsapp" placeholder="Ex: (11) 99999-9999" required />
             </div>
             <div className="space-y-1.5">
               <Label>Email</Label>

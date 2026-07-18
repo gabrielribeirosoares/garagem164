@@ -49,6 +49,7 @@ function AddCarros() {
   
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [clientSearch, setClientSearch] = useState("");
 
   // List search & filter states
   const [selectedYear, setSelectedYear] = useState<string>("Todos");
@@ -67,7 +68,7 @@ function AddCarros() {
       });
       if (error) throw error;
       return (data ?? [])
-        .map((r: any) => ({ id: r.user_id, full_name: r.full_name, email: r.email, points: r.points }))
+        .map((r: any) => ({ id: r.user_id, full_name: r.full_name, email: r.email, points: r.points, whatsapp: r.whatsapp }))
         .sort((a, b) => (a.full_name || a.email || "").localeCompare(b.full_name || b.email || ""));
     },
   });
@@ -302,24 +303,48 @@ function AddCarros() {
                 </Button>
               </div>
             ) : (
-              <Select value={userId} onValueChange={setUserId}>
-                <SelectTrigger id="customer-select">
-                  <SelectValue placeholder="Selecione um cliente" />
-                </SelectTrigger>
-                <SelectContent className="bg-card border-border text-foreground">
-                  {customers && customers.length > 0 ? (
-                    customers.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {c.full_name || c.email} · {c.points} pts
-                      </SelectItem>
-                    ))
-                  ) : (
-                    <SelectItem value="none" disabled className="text-muted-foreground text-xs">
-                      Nenhum cliente. Use "+ Vincular por E-mail" acima.
-                    </SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
+              <div className="space-y-2">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <input
+                    type="text"
+                    placeholder="Filtrar por nome, e-mail ou whatsapp..."
+                    value={clientSearch}
+                    onChange={(e) => setClientSearch(e.target.value)}
+                    className="w-full bg-[#121212] border border-border text-foreground h-11 pl-9 pr-4 rounded-xl text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+                  />
+                </div>
+                <Select value={userId} onValueChange={setUserId}>
+                  <SelectTrigger id="customer-select">
+                    <SelectValue placeholder="Selecione um cliente" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card border-border text-foreground">
+                    {(() => {
+                      const filtered = (customers ?? []).filter((c) => {
+                        const q = clientSearch.toLowerCase().trim();
+                        if (!q) return true;
+                        return (
+                          (c.full_name && c.full_name.toLowerCase().includes(q)) ||
+                          (c.email && c.email.toLowerCase().includes(q)) ||
+                          (c.whatsapp && c.whatsapp.toLowerCase().includes(q))
+                        );
+                      });
+                      if (filtered.length > 0) {
+                        return filtered.map((c) => (
+                          <SelectItem key={c.id} value={c.id}>
+                            {c.full_name || c.email} {c.whatsapp ? `(${c.whatsapp})` : ""} · {c.points} pts
+                          </SelectItem>
+                        ));
+                      }
+                      return (
+                        <SelectItem value="none" disabled className="text-muted-foreground text-xs">
+                          Nenhum cliente correspondente.
+                        </SelectItem>
+                      );
+                    })()}
+                  </SelectContent>
+                </Select>
+              </div>
             )}
           </div>
 

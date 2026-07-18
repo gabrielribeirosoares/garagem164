@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Car, Trash2, Sparkles, AlertCircle } from "lucide-react";
+import { Car, Trash2, Sparkles, AlertCircle, Search } from "lucide-react";
 import { useOwnedStore } from "@/hooks/useStore";
 
 export const Route = createFileRoute("/_authenticated/admin/garagens")({
@@ -21,6 +21,7 @@ function AdminGaragens() {
   const [userId, setUserId] = useState<string>("");
   const [linkEmail, setLinkEmail] = useState("");
   const [linking, setLinking] = useState(false);
+  const [clientSearch, setClientSearch] = useState("");
 
   async function handleLinkCustomer(e: React.FormEvent) {
     e.preventDefault();
@@ -49,7 +50,7 @@ function AdminGaragens() {
       });
       if (error) throw error;
       return (data ?? [])
-        .map((r: any) => ({ id: r.user_id, full_name: r.full_name, email: r.email, points: r.points }))
+        .map((r: any) => ({ id: r.user_id, full_name: r.full_name, email: r.email, points: r.points, whatsapp: r.whatsapp }))
         .sort((a, b) => (a.full_name || a.email || "").localeCompare(b.full_name || b.email || ""));
     },
   });
@@ -131,25 +132,49 @@ function AdminGaragens() {
 
       <div className="grid gap-6 md:grid-cols-2 max-w-4xl">
         <div className="rounded-3xl border border-border p-6 bg-card space-y-4">
-          <label className="text-sm font-bold text-muted-foreground uppercase tracking-wider block">
-            Selecionar Cliente
-          </label>
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-muted-foreground uppercase tracking-wider block">
+              Selecionar Cliente
+            </label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Filtrar por nome, e-mail ou whatsapp..."
+                value={clientSearch}
+                onChange={(e) => setClientSearch(e.target.value)}
+                className="w-full bg-[#121212] border border-border text-foreground h-11 pl-9 pr-4 rounded-xl text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+              />
+            </div>
+          </div>
           <Select value={userId} onValueChange={setUserId}>
             <SelectTrigger className="w-full bg-[#121212] border-border text-foreground h-11">
               <SelectValue placeholder="Escolha um cliente da lista" />
             </SelectTrigger>
             <SelectContent className="bg-card border-border text-foreground">
-              {customers && customers.length > 0 ? (
-                customers.map((c) => (
-                  <SelectItem key={c.id} value={c.id} className="hover:bg-muted/50 focus:bg-muted/50 cursor-pointer">
-                    {c.full_name || c.email} · {c.points} pts
+              {(() => {
+                const filtered = (customers ?? []).filter((c) => {
+                  const q = clientSearch.toLowerCase().trim();
+                  if (!q) return true;
+                  return (
+                    (c.full_name && c.full_name.toLowerCase().includes(q)) ||
+                    (c.email && c.email.toLowerCase().includes(q)) ||
+                    (c.whatsapp && c.whatsapp.toLowerCase().includes(q))
+                  );
+                });
+                if (filtered.length > 0) {
+                  return filtered.map((c) => (
+                    <SelectItem key={c.id} value={c.id} className="hover:bg-muted/50 focus:bg-muted/50 cursor-pointer">
+                      {c.full_name || c.email} {c.whatsapp ? `(${c.whatsapp})` : ""} · {c.points} pts
+                    </SelectItem>
+                  ));
+                }
+                return (
+                  <SelectItem value="none" disabled className="text-muted-foreground text-xs">
+                    Nenhum cliente correspondente.
                   </SelectItem>
-                ))
-              ) : (
-                <SelectItem value="none" disabled className="text-muted-foreground text-xs">
-                  Nenhum cliente. Use o formulário ao lado para vincular.
-                </SelectItem>
-              )}
+                );
+              })()}
             </SelectContent>
           </Select>
         </div>

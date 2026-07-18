@@ -64,7 +64,10 @@ function AuthPage() {
       password: String(form.get("password")),
       options: {
         emailRedirectTo: window.location.origin,
-        data: { full_name: String(form.get("full_name")) },
+        data: { 
+          full_name: String(form.get("full_name")),
+          whatsapp: String(form.get("whatsapp")),
+        },
       },
     });
     setLoading(false);
@@ -220,6 +223,23 @@ function AuthPage() {
                     id="su-name"
                     name="full_name"
                     type="text"
+                    required
+                    className="bg-[#eef2f7] border-none text-black h-11 px-4 focus-visible:ring-1 focus-visible:ring-primary focus-visible:text-black focus-visible:bg-white placeholder:text-muted-foreground/60 transition-colors rounded-md"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label
+                    htmlFor="su-whatsapp"
+                    className="text-[11px] font-black text-muted-foreground uppercase tracking-wider block"
+                  >
+                    WHATSAPP
+                  </Label>
+                  <Input
+                    id="su-whatsapp"
+                    name="whatsapp"
+                    type="text"
+                    placeholder="Ex: (11) 99999-9999"
                     required
                     className="bg-[#eef2f7] border-none text-black h-11 px-4 focus-visible:ring-1 focus-visible:ring-primary focus-visible:text-black focus-visible:bg-white placeholder:text-muted-foreground/60 transition-colors rounded-md"
                   />

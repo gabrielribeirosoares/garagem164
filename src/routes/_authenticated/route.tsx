@@ -47,18 +47,22 @@ function AuthedLayout() {
   const { data: profile } = useProfile();
   const [profileOpen, setProfileOpen] = useState(false);
   const [fullName, setFullName] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
 
   useEffect(() => {
     if (profile?.full_name) {
       setFullName(profile.full_name);
     }
+    if (profile?.whatsapp) {
+      setWhatsapp(profile.whatsapp);
+    }
   }, [profile]);
 
   const updateProfile = useMutation({
-    mutationFn: async (name: string) => {
+    mutationFn: async ({ name, wa }: { name: string; wa: string }) => {
       const { error } = await supabase
         .from("profiles")
-        .update({ full_name: name })
+        .update({ full_name: name, whatsapp: wa })
         .eq("id", user!.id);
       if (error) throw error;
     },
@@ -331,7 +335,7 @@ function AuthedLayout() {
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              updateProfile.mutate(fullName);
+              updateProfile.mutate({ name: fullName, wa: whatsapp });
             }}
             className="space-y-4 pt-4"
           >
@@ -354,6 +358,17 @@ function AuthedLayout() {
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="Seu nome"
                 required
+                className="bg-[#121212] border-border text-foreground"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="whatsapp" className="text-sm font-bold text-muted-foreground uppercase tracking-wider">WhatsApp</Label>
+              <Input
+                id="whatsapp"
+                type="text"
+                value={whatsapp}
+                onChange={(e) => setWhatsapp(e.target.value)}
+                placeholder="Ex: (11) 99999-9999"
                 className="bg-[#121212] border-border text-foreground"
               />
             </div>

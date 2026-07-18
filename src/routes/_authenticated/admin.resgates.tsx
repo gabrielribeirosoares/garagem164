@@ -35,7 +35,7 @@ function AdminRedemptions() {
 
       const { data: profilesData, error: profilesError } = await supabase
         .from("profiles")
-        .select("id,full_name,email");
+        .select("id,full_name,email,whatsapp");
       
       if (profilesError) throw profilesError;
 
@@ -80,7 +80,8 @@ function AdminRedemptions() {
           code.includes(q) ||
           r.reward_title.toLowerCase().includes(q) ||
           (r.profiles?.full_name && r.profiles.full_name.toLowerCase().includes(q)) ||
-          (r.profiles?.email && r.profiles.email.toLowerCase().includes(q))
+          (r.profiles?.email && r.profiles.email.toLowerCase().includes(q)) ||
+          (r.profiles?.whatsapp && r.profiles.whatsapp.toLowerCase().includes(q))
         );
       });
     }

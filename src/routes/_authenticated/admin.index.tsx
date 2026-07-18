@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Bell, Users, Gift, Clock, Trophy, Sparkles } from "lucide-react";
+import { Bell, Users, Gift, Clock, Trophy, Sparkles, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -17,6 +17,8 @@ function AdminDashboard() {
   const { data: store } = useOwnedStore();
   const storeId = store?.id;
 
+  const [customerSearch, setCustomerSearch] = useState("");
+
   const { data: customers } = useQuery({
     queryKey: ["admin-customers", storeId],
     enabled: !!storeId,
@@ -30,6 +32,7 @@ function AdminDashboard() {
         full_name: r.full_name,
         email: r.email,
         points: r.points,
+        whatsapp: r.whatsapp,
       }));
     },
   });
@@ -125,23 +128,61 @@ function AdminDashboard() {
       </section>
 
       <section className="rounded-3xl border border-border bg-card overflow-hidden">
-        <header className="p-5 border-b border-border flex items-center gap-2">
-          <Users className="h-5 w-5 text-secondary" />
-          <h2 className="font-black">Clientes</h2>
+        <header className="p-5 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <Users className="h-5 w-5 text-secondary" />
+            <h2 className="font-black">Clientes</h2>
+          </div>
+          <div className="relative w-full md:max-w-xs">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Pesquisar por nome, email ou whatsapp..."
+              value={customerSearch}
+              onChange={(e) => setCustomerSearch(e.target.value)}
+              className="w-full bg-[#121212] border border-border text-foreground h-9 pl-9 pr-4 rounded-xl text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+            />
+          </div>
         </header>
         <div className="divide-y divide-border">
-          {customers?.map((c) => (
-            <div key={c.id} className="p-4 flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <div className="font-bold text-sm truncate">{c.full_name || "Sem nome"}</div>
-                <div className="text-xs text-muted-foreground truncate">{c.email}</div>
+          {(customers ?? [])
+            .filter((c) => {
+              const q = customerSearch.toLowerCase().trim();
+              if (!q) return true;
+              return (
+                (c.full_name && c.full_name.toLowerCase().includes(q)) ||
+                (c.email && c.email.toLowerCase().includes(q)) ||
+                (c.whatsapp && c.whatsapp.toLowerCase().includes(q))
+              );
+            })
+            .map((c) => (
+              <div key={c.id} className="p-4 flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="font-bold text-sm truncate">{c.full_name || "Sem nome"}</div>
+                  <div className="text-xs text-muted-foreground truncate flex flex-col gap-0.5">
+                    <span>{c.email}</span>
+                    {c.whatsapp && <span className="text-secondary font-semibold">WhatsApp: {c.whatsapp}</span>}
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 text-sm font-bold text-primary">
+                  <Sparkles className="h-3 w-3" /> {c.points} pts
+                </div>
               </div>
-              <div className="flex items-center gap-1 text-sm font-bold text-primary">
-                <Sparkles className="h-3 w-3" /> {c.points} pts
-              </div>
+            ))}
+          {(!customers ||
+            customers.filter((c) => {
+              const q = customerSearch.toLowerCase().trim();
+              if (!q) return true;
+              return (
+                (c.full_name && c.full_name.toLowerCase().includes(q)) ||
+                (c.email && c.email.toLowerCase().includes(q)) ||
+                (c.whatsapp && c.whatsapp.toLowerCase().includes(q))
+              );
+            }).length === 0) && (
+            <div className="p-6 text-sm text-muted-foreground text-center">
+              Nenhum cliente encontrado.
             </div>
-          ))}
-          {!customers?.length && <div className="p-6 text-sm text-muted-foreground">Nenhum cliente cadastrado ainda.</div>}
+          )}
         </div>
       </section>
     </div>
