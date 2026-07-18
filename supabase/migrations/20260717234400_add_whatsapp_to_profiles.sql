@@ -37,6 +37,7 @@ BEGIN
 END; $$;
 
 -- Update get_store_customers RPC to return whatsapp column
+DROP FUNCTION IF EXISTS public.get_store_customers(uuid);
 CREATE OR REPLACE FUNCTION public.get_store_customers(_store_id uuid)
 RETURNS TABLE(user_id uuid, full_name text, email text, points integer, whatsapp text)
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
