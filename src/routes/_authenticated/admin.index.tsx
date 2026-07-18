@@ -21,16 +21,14 @@ function AdminDashboard() {
     queryKey: ["admin-customers", storeId],
     enabled: !!storeId,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("customer_points")
-        .select("points, user_id, created_at, profiles:profiles!customer_points_user_id_profiles_fkey(id,full_name,email,created_at)")
-        .eq("store_id", storeId!)
-        .order("created_at", { ascending: false });
+      const { data, error } = await supabase.rpc("get_store_customers", {
+        _store_id: storeId!,
+      });
       if (error) throw error;
       return (data ?? []).map((r: any) => ({
-        id: r.profiles?.id ?? r.user_id,
-        full_name: r.profiles?.full_name,
-        email: r.profiles?.email,
+        id: r.user_id,
+        full_name: r.full_name,
+        email: r.email,
         points: r.points,
       }));
     },
@@ -42,7 +40,7 @@ function AdminDashboard() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("redemptions")
-        .select("*, profiles:profiles!redemptions_user_id_profiles_fkey(full_name,email)")
+        .select("*")
         .eq("store_id", storeId!)
         .order("created_at", { ascending: false })
         .limit(50);
@@ -116,7 +114,7 @@ function AdminDashboard() {
                 <div className="flex-1 min-w-0">
                   <div className="font-bold text-sm truncate">{r.reward_title}</div>
                   <div className="text-xs text-muted-foreground truncate">
-                    {r.profiles?.full_name || r.profiles?.email || "Cliente"} · {r.cost} pts · {new Date(r.created_at).toLocaleString("pt-BR")}
+                    {(() => { const c = customers?.find(c => c.id === r.user_id); return c?.full_name || c?.email || "Cliente"; })()} · {r.cost} pts · {new Date(r.created_at).toLocaleString("pt-BR")}
                   </div>
                 </div>
                 <Badge variant="secondary" className="gap-1"><Clock className="h-3 w-3" />Pendente</Badge>

@@ -62,13 +62,12 @@ function AddCarros() {
     queryKey: ["admin-customers", storeId],
     enabled: !!storeId,
     queryFn: async () => {
-      const { data: cp, error } = await supabase
-        .from("customer_points")
-        .select("points, user_id, profiles:profiles!customer_points_user_id_profiles_fkey(id,full_name,email)")
-        .eq("store_id", storeId!);
+      const { data, error } = await supabase.rpc("get_store_customers", {
+        _store_id: storeId!,
+      });
       if (error) throw error;
-      return (cp ?? [])
-        .map((r: any) => ({ id: r.profiles?.id ?? r.user_id, full_name: r.profiles?.full_name, email: r.profiles?.email, points: r.points }))
+      return (data ?? [])
+        .map((r: any) => ({ id: r.user_id, full_name: r.full_name, email: r.email, points: r.points }))
         .sort((a, b) => (a.full_name || a.email || "").localeCompare(b.full_name || b.email || ""));
     },
   });
@@ -79,7 +78,7 @@ function AddCarros() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("cars")
-        .select("*, profiles:profiles!cars_user_id_profiles_fkey(full_name,email)")
+        .select("*")
         .eq("store_id", storeId!)
         .order("created_at", { ascending: false })
         .limit(20);
