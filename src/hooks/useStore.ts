@@ -108,3 +108,22 @@ export function useCustomerPoints(storeId: string | undefined) {
     },
   });
 }
+
+/** Stores where the user is currently registered as a customer (has a customer_points entry). */
+export function useMyStores() {
+  const user = useSession();
+  return useQuery({
+    queryKey: ["my-stores", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("customer_points")
+        .select("points, stores:stores!customer_points_store_id_fkey(*)")
+        .eq("user_id", user!.id);
+      if (error) throw error;
+      return (data ?? [])
+        .map((cp: any) => cp.stores ? { ...cp.stores, points: cp.points } : null)
+        .filter(Boolean);
+    },
+  });
+}

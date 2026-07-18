@@ -2,14 +2,22 @@ import { createFileRoute, Outlet, redirect, Link, useNavigate, useLocation } fro
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession, useRole, useProfile } from "@/hooks/useAuth";
-import { useOwnedStore, useActiveClientStore, useCustomerPoints } from "@/hooks/useStore";
+import { useOwnedStore, useActiveClientStore, useCustomerPoints, useMyStores, setActiveStoreSlug } from "@/hooks/useStore";
 import { Button } from "@/components/ui/button";
-import { Flame, Car, Gift, LayoutDashboard, Package, PlusCircle, LogOut, Trophy, Store, User as UserIcon } from "lucide-react";
+import { Flame, Car, Gift, LayoutDashboard, Package, PlusCircle, LogOut, Trophy, Store, User as UserIcon, ChevronDown } from "lucide-react";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -31,6 +39,7 @@ function AuthedLayout() {
   const { data: ownedStore } = useOwnedStore();
   const { data: activeStore } = useActiveClientStore();
   const { data: clientPoints } = useCustomerPoints(activeStore?.id);
+  const { data: myStores } = useMyStores();
   const navigate = useNavigate();
   const location = useLocation();
   const qc = useQueryClient();
@@ -128,14 +137,68 @@ function AuthedLayout() {
       {/* Top bar */}
       <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur">
         <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between gap-4">
-          <Link to={isAdmin ? "/admin" : "/garagem"} className="flex items-center gap-2 min-w-0">
-            {brand?.logo_url ? (
-              <img src={brand.logo_url} alt={brand.name} className="h-7 w-7 rounded object-cover" />
-            ) : (
-              <Store className="h-5 w-5" style={{ color: primaryColor }} />
-            )}
-            <span className="font-black tracking-tight truncate">{brand?.name ?? "Minha Loja"}</span>
-          </Link>
+          {!isAdmin ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-2 hover:opacity-80 transition-opacity min-w-0 cursor-pointer text-left focus:outline-none">
+                  {brand?.logo_url ? (
+                    <img src={brand.logo_url} alt={brand.name} className="h-7 w-7 rounded object-cover" />
+                  ) : (
+                    <Store className="h-5 w-5" style={{ color: primaryColor }} />
+                  )}
+                  <span className="font-black tracking-tight truncate flex items-center gap-1">
+                    {brand?.name ?? "Minha Loja"}
+                    <ChevronDown className="h-4 w-4 shrink-0 opacity-60" />
+                  </span>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56 bg-card border-border text-foreground align-start">
+                <DropdownMenuLabel className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                  Minhas Lojas
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator className="bg-border" />
+                {myStores?.map((s: any) => (
+                  <DropdownMenuItem
+                    key={s.id}
+                    onClick={async () => {
+                      setActiveStoreSlug(s.slug);
+                      await qc.invalidateQueries();
+                      navigate({ to: "/garagem" });
+                    }}
+                    className={`flex items-center justify-between cursor-pointer focus:bg-muted/50 ${
+                      s.id === brand?.id ? "font-bold text-primary" : ""
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      {s.logo_url ? (
+                        <img src={s.logo_url} alt={s.name} className="h-5 w-5 rounded object-cover" />
+                      ) : (
+                        <Store className="h-4 w-4 text-muted-foreground" />
+                      )}
+                      <span className="truncate">{s.name}</span>
+                    </div>
+                    <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded font-black shrink-0">
+                      {s.points} pts
+                    </span>
+                  </DropdownMenuItem>
+                ))}
+                {(!myStores || myStores.length === 0) && (
+                  <div className="p-3 text-xs text-muted-foreground text-center">
+                    Nenhuma loja vinculada.
+                  </div>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Link to="/admin" className="flex items-center gap-2 min-w-0">
+              {brand?.logo_url ? (
+                <img src={brand.logo_url} alt={brand.name} className="h-7 w-7 rounded object-cover" />
+              ) : (
+                <Store className="h-5 w-5" style={{ color: primaryColor }} />
+              )}
+              <span className="font-black tracking-tight truncate">{brand?.name ?? "Minha Loja"}</span>
+            </Link>
+          )}
 
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-1">
