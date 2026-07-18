@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useParams, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { useStoreBySlug } from "@/hooks/useStore";
+import { useStoreBySlug, setActiveStoreSlug } from "@/hooks/useStore";
 import { useSession, useRole } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Store, Trophy, Sparkles, Car } from "lucide-react";
