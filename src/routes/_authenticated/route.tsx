@@ -187,6 +187,25 @@ function AuthedLayout() {
                     Nenhuma loja vinculada.
                   </div>
                 )}
+                <DropdownMenuSeparator className="bg-border" />
+                {!ownedStore && (
+                  <DropdownMenuItem
+                    onClick={() => navigate({ to: "/create-store" })}
+                    className="cursor-pointer focus:bg-muted/50 gap-2 font-bold text-primary"
+                  >
+                    <Flame className="h-4 w-4" />
+                    Criar minha loja
+                  </DropdownMenuItem>
+                )}
+                {ownedStore && (
+                  <DropdownMenuItem
+                    onClick={() => navigate({ to: "/admin" })}
+                    className="cursor-pointer focus:bg-muted/50 gap-2 font-bold text-primary"
+                  >
+                    <LayoutDashboard className="h-4 w-4" />
+                    Painel da minha loja
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
