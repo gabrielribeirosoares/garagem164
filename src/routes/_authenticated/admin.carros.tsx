@@ -64,7 +64,7 @@ function AddCarros() {
     queryFn: async () => {
       const { data: cp, error } = await supabase
         .from("customer_points")
-        .select("points, user_id, profiles:profiles!customer_points_user_id_fkey(id,full_name,email)")
+        .select("points, user_id, profiles:profiles!customer_points_user_id_profiles_fkey(id,full_name,email)")
         .eq("store_id", storeId!);
       if (error) throw error;
       return (cp ?? [])
@@ -79,7 +79,7 @@ function AddCarros() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("cars")
-        .select("*, profiles:profiles!cars_user_id_fkey(full_name,email)")
+        .select("*, profiles:profiles!cars_user_id_profiles_fkey(full_name,email)")
         .eq("store_id", storeId!)
         .order("created_at", { ascending: false })
         .limit(20);

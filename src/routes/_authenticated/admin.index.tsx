@@ -23,7 +23,7 @@ function AdminDashboard() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("customer_points")
-        .select("points, user_id, created_at, profiles:profiles!customer_points_user_id_fkey(id,full_name,email,created_at)")
+        .select("points, user_id, created_at, profiles:profiles!customer_points_user_id_profiles_fkey(id,full_name,email,created_at)")
         .eq("store_id", storeId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -42,7 +42,7 @@ function AdminDashboard() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("redemptions")
-        .select("*, profiles:profiles!redemptions_user_id_fkey(full_name,email)")
+        .select("*, profiles:profiles!redemptions_user_id_profiles_fkey(full_name,email)")
         .eq("store_id", storeId!)
         .order("created_at", { ascending: false })
         .limit(50);
