@@ -24,6 +24,29 @@ function AddCarros() {
   const [imageUrl, setImageUrl] = useState("");
   const [points, setPoints] = useState<number>(10);
   
+  const [showLinkInput, setShowLinkInput] = useState(false);
+  const [linkEmail, setLinkEmail] = useState("");
+  const [linking, setLinking] = useState(false);
+
+  async function handleLinkCustomer(e: React.FormEvent) {
+    e.preventDefault();
+    if (!storeId) return toast.error("Loja não encontrada.");
+    setLinking(true);
+    const { error } = await supabase.rpc("link_customer_by_email", {
+      _email: linkEmail.trim(),
+      _store_id: storeId,
+    });
+    setLinking(false);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Cliente vinculado com sucesso!");
+      setLinkEmail("");
+      setShowLinkInput(false);
+      qc.invalidateQueries({ queryKey: ["admin-customers", storeId] });
+    }
+  }
+  
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
@@ -251,19 +274,48 @@ function AddCarros() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="customer-select">Cliente</Label>
-            <Select value={userId} onValueChange={setUserId}>
-              <SelectTrigger id="customer-select">
-                <SelectValue placeholder="Selecione um cliente" />
-              </SelectTrigger>
-              <SelectContent>
-                {customers?.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.full_name || c.email} · {c.points} pts
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex justify-between items-center">
+              <Label htmlFor="customer-select">Cliente</Label>
+              <button
+                type="button"
+                onClick={() => setShowLinkInput(!showLinkInput)}
+                className="text-xs text-primary font-bold hover:underline cursor-pointer"
+              >
+                {showLinkInput ? "Cancelar" : "+ Vincular por E-mail"}
+              </button>
+            </div>
+            {showLinkInput ? (
+              <div className="flex gap-2">
+                <Input
+                  type="email"
+                  value={linkEmail}
+                  onChange={(e) => setLinkEmail(e.target.value)}
+                  placeholder="cliente@email.com"
+                  className="bg-[#121212] border-border text-foreground h-11"
+                />
+                <Button
+                  type="button"
+                  onClick={handleLinkCustomer}
+                  disabled={linking}
+                  className="hw-gradient-orange text-white font-bold h-11 shrink-0"
+                >
+                  {linking ? "Vinculando..." : "Vincular"}
+                </Button>
+              </div>
+            ) : (
+              <Select value={userId} onValueChange={setUserId}>
+                <SelectTrigger id="customer-select">
+                  <SelectValue placeholder="Selecione um cliente" />
+                </SelectTrigger>
+                <SelectContent>
+                  {customers?.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.full_name || c.email} · {c.points} pts
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
           <div className="space-y-2 relative">

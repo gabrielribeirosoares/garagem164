@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Car, Trash2, Sparkles, AlertCircle } from "lucide-react";
 import { useOwnedStore } from "@/hooks/useStore";
@@ -18,6 +19,26 @@ function AdminGaragens() {
   const { data: store } = useOwnedStore();
   const storeId = store?.id;
   const [userId, setUserId] = useState<string>("");
+  const [linkEmail, setLinkEmail] = useState("");
+  const [linking, setLinking] = useState(false);
+
+  async function handleLinkCustomer(e: React.FormEvent) {
+    e.preventDefault();
+    if (!storeId) return toast.error("Loja não encontrada.");
+    setLinking(true);
+    const { error } = await supabase.rpc("link_customer_by_email", {
+      _email: linkEmail.trim(),
+      _store_id: storeId,
+    });
+    setLinking(false);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Cliente vinculado com sucesso!");
+      setLinkEmail("");
+      qc.invalidateQueries({ queryKey: ["admin-customers", storeId] });
+    }
+  }
 
   const { data: customers } = useQuery({
     queryKey: ["admin-customers", storeId],
@@ -109,22 +130,46 @@ function AdminGaragens() {
         </p>
       </div>
 
-      <div className="rounded-3xl border border-border p-6 bg-card max-w-xl space-y-4">
-        <label className="text-sm font-bold text-muted-foreground uppercase tracking-wider block">
-          Selecionar Cliente
-        </label>
-        <Select value={userId} onValueChange={setUserId}>
-          <SelectTrigger className="w-full bg-[#121212] border-border text-foreground h-11">
-            <SelectValue placeholder="Escolha um cliente da lista" />
-          </SelectTrigger>
-          <SelectContent className="bg-card border-border text-foreground">
-            {customers?.map((c) => (
-              <SelectItem key={c.id} value={c.id} className="hover:bg-muted/50 focus:bg-muted/50 cursor-pointer">
-                {c.full_name || c.email} · {c.points} pts
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="grid gap-6 md:grid-cols-2 max-w-4xl">
+        <div className="rounded-3xl border border-border p-6 bg-card space-y-4">
+          <label className="text-sm font-bold text-muted-foreground uppercase tracking-wider block">
+            Selecionar Cliente
+          </label>
+          <Select value={userId} onValueChange={setUserId}>
+            <SelectTrigger className="w-full bg-[#121212] border-border text-foreground h-11">
+              <SelectValue placeholder="Escolha um cliente da lista" />
+            </SelectTrigger>
+            <SelectContent className="bg-card border-border text-foreground">
+              {customers?.map((c) => (
+                <SelectItem key={c.id} value={c.id} className="hover:bg-muted/50 focus:bg-muted/50 cursor-pointer">
+                  {c.full_name || c.email} · {c.points} pts
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <form onSubmit={handleLinkCustomer} className="rounded-3xl border border-border p-6 bg-card space-y-4">
+          <div>
+            <label className="text-sm font-bold text-muted-foreground uppercase tracking-wider block">
+              Vincular Cliente por E-mail
+            </label>
+            <p className="text-xs text-muted-foreground mt-0.5">Associe um cliente cadastrado à sua loja.</p>
+          </div>
+          <div className="flex gap-2">
+            <Input
+              type="email"
+              value={linkEmail}
+              onChange={(e) => setLinkEmail(e.target.value)}
+              placeholder="cliente@email.com"
+              required
+              className="bg-[#121212] border-border text-foreground h-11"
+            />
+            <Button type="submit" disabled={linking} className="hw-gradient-orange text-white font-bold h-11 px-4 shrink-0">
+              {linking ? "Vinculando..." : "Vincular"}
+            </Button>
+          </div>
+        </form>
       </div>
 
       {userId ? (
