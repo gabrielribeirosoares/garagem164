@@ -17,12 +17,15 @@ function StoreLanding() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (user && storeSlug) {
+    if (user && storeSlug && store) {
       setActiveStoreSlug(storeSlug);
-      if (role === "client") navigate({ to: "/garagem", replace: true });
-      if (role === "admin") navigate({ to: "/admin", replace: true });
+      if (store.owner_id === user.id) {
+        navigate({ to: "/admin", replace: true });
+      } else {
+        navigate({ to: "/garagem", replace: true });
+      }
     }
-  }, [user, role, storeSlug, navigate]);
+  }, [user, store, storeSlug, navigate]);
 
   const primary = store?.primary_color || "#f97316";
 

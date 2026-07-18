@@ -77,9 +77,10 @@ function AuthedLayout() {
     navigate({ to: "/auth", replace: true });
   }
 
-  const isAdmin = role === "admin";
   const path = location.pathname;
-  const brand = isAdmin ? ownedStore : activeStore;
+  const isAdmin = role === "admin";
+  const isAdminView = path.startsWith("/admin");
+  const brand = isAdminView ? ownedStore : activeStore;
   const primaryColor = brand?.primary_color || "#f97316";
 
   useEffect(() => {
@@ -89,7 +90,7 @@ function AuthedLayout() {
     const prevFavicon = link ? link.href : "/favicon.ico";
 
     if (brand.name) {
-      document.title = `${brand.name} | ${isAdmin ? "Painel Admin" : "Minha Garagem"}`;
+      document.title = `${brand.name} | ${isAdminView ? "Painel Admin" : "Minha Garagem"}`;
     }
     if (brand.favicon_url) {
       if (!link) {
@@ -106,16 +107,16 @@ function AuthedLayout() {
         link.href = prevFavicon;
       }
     };
-  }, [brand, isAdmin]);
+  }, [brand, isAdminView]);
 
-  // Link client user to active store when accessing authenticated area
+  // Link user to active store when accessing authenticated area as a client
   useEffect(() => {
-    if (user && role === "client" && activeStore?.id) {
+    if (user && activeStore?.id) {
       supabase.rpc("link_user_to_store", { _store_id: activeStore.id }).then(({ error }) => {
         if (error) console.error("Error linking user to store:", error);
       });
     }
-  }, [user, role, activeStore?.id]);
+  }, [user, activeStore?.id]);
 
   const clientNav = [
     { to: "/garagem", label: "Garagem", icon: Car },
@@ -130,14 +131,14 @@ function AuthedLayout() {
     { to: "/admin/resgates", label: "Resgates", icon: Gift },
   ] as const;
 
-  const nav = isAdmin ? adminNav : clientNav;
+  const nav = isAdminView ? adminNav : clientNav;
 
   return (
     <div className="min-h-screen pb-24 md:pb-8" style={{ "--store-primary": primaryColor } as React.CSSProperties}>
       {/* Top bar */}
       <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur">
         <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between gap-4">
-          {!isAdmin ? (
+          {!isAdminView ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-2 hover:opacity-80 transition-opacity min-w-0 cursor-pointer text-left focus:outline-none">
@@ -284,7 +285,7 @@ function AuthedLayout() {
           </nav>
 
           <div className="flex items-center gap-3">
-            {!isAdmin && activeStore && (
+            {!isAdminView && activeStore && (
               <div className="flex items-center gap-2 rounded-full px-3 py-1.5 text-white font-bold text-sm" style={{ background: activeStore.primary_color || "#f97316" }}>
                 <Trophy className="h-4 w-4" />
                 <span>{clientPoints ?? 0} pts</span>

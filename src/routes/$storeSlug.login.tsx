@@ -30,14 +30,14 @@ function StoreLogin() {
   }, [storeSlug]);
 
   useEffect(() => {
-    if (user && role) {
-      if (role === "admin") {
+    if (user && store) {
+      if (store.owner_id === user.id) {
         navigate({ to: "/admin", replace: true });
       } else {
         navigate({ to: "/garagem", replace: true });
       }
     }
-  }, [user, role, navigate]);
+  }, [user, store, navigate]);
 
   const primary = store?.primary_color || "#f97316";
 
