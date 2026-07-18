@@ -51,6 +51,10 @@ function StoreLogin() {
     });
     setLoading(false);
     if (error) return toast.error(error.message);
+    // Auto-link user to this store if not already linked
+    if (store?.id) {
+      await supabase.rpc("link_user_to_store", { _store_id: store.id }).catch(() => {});
+    }
     toast.success("Bem-vindo!");
   }
 
@@ -58,7 +62,7 @@ function StoreLogin() {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
+    const { data: signUpData, error } = await supabase.auth.signUp({
       email: String(form.get("email")),
       password: String(form.get("password")),
       options: {
@@ -71,6 +75,10 @@ function StoreLogin() {
     });
     setLoading(false);
     if (error) return toast.error(error.message);
+    // If user was auto-confirmed (no email verification), link immediately
+    if (signUpData?.user && store?.id) {
+      await supabase.rpc("link_user_to_store", { _store_id: store.id }).catch(() => {});
+    }
     toast.success("Conta criada! Verifique seu e-mail se necessário.");
   }
 
