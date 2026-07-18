@@ -140,11 +140,17 @@ function AdminGaragens() {
               <SelectValue placeholder="Escolha um cliente da lista" />
             </SelectTrigger>
             <SelectContent className="bg-card border-border text-foreground">
-              {customers?.map((c) => (
-                <SelectItem key={c.id} value={c.id} className="hover:bg-muted/50 focus:bg-muted/50 cursor-pointer">
-                  {c.full_name || c.email} · {c.points} pts
+              {customers && customers.length > 0 ? (
+                customers.map((c) => (
+                  <SelectItem key={c.id} value={c.id} className="hover:bg-muted/50 focus:bg-muted/50 cursor-pointer">
+                    {c.full_name || c.email} · {c.points} pts
+                  </SelectItem>
+                ))
+              ) : (
+                <SelectItem value="none" disabled className="text-muted-foreground text-xs">
+                  Nenhum cliente. Use o formulário ao lado para vincular.
                 </SelectItem>
-              ))}
+              )}
             </SelectContent>
           </Select>
         </div>

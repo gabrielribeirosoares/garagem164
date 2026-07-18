@@ -307,12 +307,18 @@ function AddCarros() {
                 <SelectTrigger id="customer-select">
                   <SelectValue placeholder="Selecione um cliente" />
                 </SelectTrigger>
-                <SelectContent>
-                  {customers?.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.full_name || c.email} · {c.points} pts
+                <SelectContent className="bg-card border-border text-foreground">
+                  {customers && customers.length > 0 ? (
+                    customers.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.full_name || c.email} · {c.points} pts
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="none" disabled className="text-muted-foreground text-xs">
+                      Nenhum cliente. Use "+ Vincular por E-mail" acima.
                     </SelectItem>
-                  ))}
+                  )}
                 </SelectContent>
               </Select>
             )}
