@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Car, Trash2, PlusCircle, Search, RotateCcw, ChevronLeft, ChevronRight } from "lucide-react";
+import { Car, Trash2, PlusCircle, Search, RotateCcw, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
 import { RAW } from "@/components/ui/data";
 import { useOwnedStore } from "@/hooks/useStore";
 
@@ -49,7 +49,6 @@ function AddCarros() {
   
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [clientSearch, setClientSearch] = useState("");
 
   // List search & filter states
   const [selectedYear, setSelectedYear] = useState<string>("Todos");
@@ -303,48 +302,12 @@ function AddCarros() {
                 </Button>
               </div>
             ) : (
-              <div className="space-y-2">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <input
-                    type="text"
-                    placeholder="Filtrar por nome, e-mail ou whatsapp..."
-                    value={clientSearch}
-                    onChange={(e) => setClientSearch(e.target.value)}
-                    className="w-full bg-[#121212] border border-border text-foreground h-11 pl-9 pr-4 rounded-xl text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
-                  />
-                </div>
-                <Select value={userId} onValueChange={setUserId}>
-                  <SelectTrigger id="customer-select">
-                    <SelectValue placeholder="Selecione um cliente" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card border-border text-foreground">
-                    {(() => {
-                      const filtered = (customers ?? []).filter((c) => {
-                        const q = clientSearch.toLowerCase().trim();
-                        if (!q) return true;
-                        return (
-                          (c.full_name && c.full_name.toLowerCase().includes(q)) ||
-                          (c.email && c.email.toLowerCase().includes(q)) ||
-                          (c.whatsapp && c.whatsapp.toLowerCase().includes(q))
-                        );
-                      });
-                      if (filtered.length > 0) {
-                        return filtered.map((c) => (
-                          <SelectItem key={c.id} value={c.id}>
-                            {c.full_name || c.email} {c.whatsapp ? `(${c.whatsapp})` : ""} · {c.points} pts
-                          </SelectItem>
-                        ));
-                      }
-                      return (
-                        <SelectItem value="none" disabled className="text-muted-foreground text-xs">
-                          Nenhum cliente correspondente.
-                        </SelectItem>
-                      );
-                    })()}
-                  </SelectContent>
-                </Select>
-              </div>
+              <CustomerCombobox
+                customers={customers ?? []}
+                value={userId}
+                onChange={setUserId}
+                placeholder="Pesquise por nome, e-mail ou whatsapp..."
+              />
             )}
           </div>
 
@@ -634,6 +597,116 @@ function AddCarros() {
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function CustomerCombobox({
+  customers,
+  value,
+  onChange,
+  placeholder,
+}: {
+  customers: any[];
+  value: string;
+  onChange: (id: string) => void;
+  placeholder: string;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const selectedCustomer = customers.find((c) => c.id === value);
+
+  useEffect(() => {
+    if (selectedCustomer) {
+      const name = selectedCustomer.full_name || selectedCustomer.email || "";
+      const wa = selectedCustomer.whatsapp ? ` (${selectedCustomer.whatsapp})` : "";
+      setSearch(`${name}${wa}`);
+    } else {
+      setSearch("");
+    }
+  }, [value, selectedCustomer]);
+
+  const filtered = customers.filter((c) => {
+    const q = search.toLowerCase().trim();
+    const matchesSelected = selectedCustomer
+      ? `${selectedCustomer.full_name || selectedCustomer.email || ""}${selectedCustomer.whatsapp ? ` (${selectedCustomer.whatsapp})` : ""}`.toLowerCase() === q
+      : false;
+    if (!q || matchesSelected) return true;
+    return (
+      (c.full_name && c.full_name.toLowerCase().includes(q)) ||
+      (c.email && c.email.toLowerCase().includes(q)) ||
+      (c.whatsapp && c.whatsapp.toLowerCase().includes(q))
+    );
+  });
+
+  return (
+    <div className="relative w-full z-20">
+      <div className="relative">
+        <input
+          type="text"
+          placeholder={placeholder}
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setIsOpen(true);
+            if (!e.target.value) {
+              onChange("");
+            }
+          }}
+          onFocus={() => setIsOpen(true)}
+          onBlur={() => {
+            setTimeout(() => {
+              setIsOpen(false);
+              if (selectedCustomer) {
+                const name = selectedCustomer.full_name || selectedCustomer.email || "";
+                const wa = selectedCustomer.whatsapp ? ` (${selectedCustomer.whatsapp})` : "";
+                setSearch(`${name}${wa}`);
+              } else {
+                setSearch("");
+              }
+            }, 250);
+          }}
+          className="w-full bg-[#121212] border border-border text-foreground h-11 px-4 pr-10 rounded-xl text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary cursor-text"
+        />
+        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+      </div>
+
+      {isOpen && (
+        <div className="absolute z-50 w-full mt-1 bg-[#1a1a1a] border border-border rounded-xl shadow-xl max-h-60 overflow-y-auto divide-y divide-border/40">
+          {filtered.length > 0 ? (
+            filtered.map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => {
+                  onChange(c.id);
+                  setIsOpen(false);
+                }}
+                className="w-full text-left px-4 py-3 text-sm hover:bg-muted/50 transition-colors flex items-center justify-between"
+              >
+                <div className="min-w-0">
+                  <span className="font-bold text-white block truncate">
+                    {c.full_name || c.email}
+                  </span>
+                  {c.whatsapp && (
+                    <span className="text-xs text-secondary block truncate">
+                      WhatsApp: {c.whatsapp}
+                    </span>
+                  )}
+                </div>
+                <span className="text-xs bg-muted/60 px-2 py-0.5 rounded font-black shrink-0 ml-2 text-foreground">
+                  {c.points} pts
+                </span>
+              </button>
+            ))
+          ) : (
+            <div className="px-4 py-3 text-xs text-muted-foreground">
+              Nenhum cliente correspondente.
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
