@@ -15,11 +15,13 @@ import { Route as StoreSlugRouteImport } from './routes/$storeSlug'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as StoreSlugIndexRouteImport } from './routes/$storeSlug.index'
+import { Route as AuthenticatedRifasRouteImport } from './routes/_authenticated/rifas'
 import { Route as AuthenticatedRecompensasRouteImport } from './routes/_authenticated/recompensas'
 import { Route as AuthenticatedGaragemRouteImport } from './routes/_authenticated/garagem'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as StoreSlugLoginRouteImport } from './routes/$storeSlug.login'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
+import { Route as AuthenticatedAdminRifasRouteImport } from './routes/_authenticated/admin.rifas'
 import { Route as AuthenticatedAdminResgatesRouteImport } from './routes/_authenticated/admin.resgates'
 import { Route as AuthenticatedAdminRecompensasRouteImport } from './routes/_authenticated/admin.recompensas'
 import { Route as AuthenticatedAdminGaragensRouteImport } from './routes/_authenticated/admin.garagens'
@@ -54,6 +56,11 @@ const StoreSlugIndexRoute = StoreSlugIndexRouteImport.update({
   path: '/',
   getParentRoute: () => StoreSlugRoute,
 } as any)
+const AuthenticatedRifasRoute = AuthenticatedRifasRouteImport.update({
+  id: '/rifas',
+  path: '/rifas',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedRecompensasRoute =
   AuthenticatedRecompensasRouteImport.update({
     id: '/recompensas',
@@ -78,6 +85,11 @@ const StoreSlugLoginRoute = StoreSlugLoginRouteImport.update({
 const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
+const AuthenticatedAdminRifasRoute = AuthenticatedAdminRifasRouteImport.update({
+  id: '/rifas',
+  path: '/rifas',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
 const AuthenticatedAdminResgatesRoute =
@@ -114,11 +126,13 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/garagem': typeof AuthenticatedGaragemRoute
   '/recompensas': typeof AuthenticatedRecompensasRoute
+  '/rifas': typeof AuthenticatedRifasRoute
   '/$storeSlug/': typeof StoreSlugIndexRoute
   '/admin/carros': typeof AuthenticatedAdminCarrosRoute
   '/admin/garagens': typeof AuthenticatedAdminGaragensRoute
   '/admin/recompensas': typeof AuthenticatedAdminRecompensasRoute
   '/admin/resgates': typeof AuthenticatedAdminResgatesRoute
+  '/admin/rifas': typeof AuthenticatedAdminRifasRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRoutesByTo {
@@ -128,11 +142,13 @@ export interface FileRoutesByTo {
   '/$storeSlug/login': typeof StoreSlugLoginRoute
   '/garagem': typeof AuthenticatedGaragemRoute
   '/recompensas': typeof AuthenticatedRecompensasRoute
+  '/rifas': typeof AuthenticatedRifasRoute
   '/$storeSlug': typeof StoreSlugIndexRoute
   '/admin/carros': typeof AuthenticatedAdminCarrosRoute
   '/admin/garagens': typeof AuthenticatedAdminGaragensRoute
   '/admin/recompensas': typeof AuthenticatedAdminRecompensasRoute
   '/admin/resgates': typeof AuthenticatedAdminResgatesRoute
+  '/admin/rifas': typeof AuthenticatedAdminRifasRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRoutesById {
@@ -146,11 +162,13 @@ export interface FileRoutesById {
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/garagem': typeof AuthenticatedGaragemRoute
   '/_authenticated/recompensas': typeof AuthenticatedRecompensasRoute
+  '/_authenticated/rifas': typeof AuthenticatedRifasRoute
   '/$storeSlug/': typeof StoreSlugIndexRoute
   '/_authenticated/admin/carros': typeof AuthenticatedAdminCarrosRoute
   '/_authenticated/admin/garagens': typeof AuthenticatedAdminGaragensRoute
   '/_authenticated/admin/recompensas': typeof AuthenticatedAdminRecompensasRoute
   '/_authenticated/admin/resgates': typeof AuthenticatedAdminResgatesRoute
+  '/_authenticated/admin/rifas': typeof AuthenticatedAdminRifasRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRouteTypes {
@@ -164,11 +182,13 @@ export interface FileRouteTypes {
     | '/admin'
     | '/garagem'
     | '/recompensas'
+    | '/rifas'
     | '/$storeSlug/'
     | '/admin/carros'
     | '/admin/garagens'
     | '/admin/recompensas'
     | '/admin/resgates'
+    | '/admin/rifas'
     | '/admin/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -178,11 +198,13 @@ export interface FileRouteTypes {
     | '/$storeSlug/login'
     | '/garagem'
     | '/recompensas'
+    | '/rifas'
     | '/$storeSlug'
     | '/admin/carros'
     | '/admin/garagens'
     | '/admin/recompensas'
     | '/admin/resgates'
+    | '/admin/rifas'
     | '/admin'
   id:
     | '__root__'
@@ -195,11 +217,13 @@ export interface FileRouteTypes {
     | '/_authenticated/admin'
     | '/_authenticated/garagem'
     | '/_authenticated/recompensas'
+    | '/_authenticated/rifas'
     | '/$storeSlug/'
     | '/_authenticated/admin/carros'
     | '/_authenticated/admin/garagens'
     | '/_authenticated/admin/recompensas'
     | '/_authenticated/admin/resgates'
+    | '/_authenticated/admin/rifas'
     | '/_authenticated/admin/'
   fileRoutesById: FileRoutesById
 }
@@ -255,6 +279,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StoreSlugIndexRouteImport
       parentRoute: typeof StoreSlugRoute
     }
+    '/_authenticated/rifas': {
+      id: '/_authenticated/rifas'
+      path: '/rifas'
+      fullPath: '/rifas'
+      preLoaderRoute: typeof AuthenticatedRifasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/recompensas': {
       id: '/_authenticated/recompensas'
       path: '/recompensas'
@@ -288,6 +319,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/admin/'
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/rifas': {
+      id: '/_authenticated/admin/rifas'
+      path: '/rifas'
+      fullPath: '/admin/rifas'
+      preLoaderRoute: typeof AuthenticatedAdminRifasRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/admin/resgates': {
@@ -326,6 +364,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminGaragensRoute: typeof AuthenticatedAdminGaragensRoute
   AuthenticatedAdminRecompensasRoute: typeof AuthenticatedAdminRecompensasRoute
   AuthenticatedAdminResgatesRoute: typeof AuthenticatedAdminResgatesRoute
+  AuthenticatedAdminRifasRoute: typeof AuthenticatedAdminRifasRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
 }
 
@@ -334,6 +373,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminGaragensRoute: AuthenticatedAdminGaragensRoute,
   AuthenticatedAdminRecompensasRoute: AuthenticatedAdminRecompensasRoute,
   AuthenticatedAdminResgatesRoute: AuthenticatedAdminResgatesRoute,
+  AuthenticatedAdminRifasRoute: AuthenticatedAdminRifasRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
 }
 
@@ -344,12 +384,14 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedGaragemRoute: typeof AuthenticatedGaragemRoute
   AuthenticatedRecompensasRoute: typeof AuthenticatedRecompensasRoute
+  AuthenticatedRifasRoute: typeof AuthenticatedRifasRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedGaragemRoute: AuthenticatedGaragemRoute,
   AuthenticatedRecompensasRoute: AuthenticatedRecompensasRoute,
+  AuthenticatedRifasRoute: AuthenticatedRifasRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

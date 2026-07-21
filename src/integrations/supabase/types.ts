@@ -214,6 +214,119 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      raffles: {
+        Row: {
+          created_at: string
+          description: string | null
+          drawn_at: string | null
+          id: string
+          pix_key: string | null
+          points_per_number: number
+          price_per_number: number
+          status: string
+          store_id: string
+          title: string
+          total_numbers: number
+          winner_name: string | null
+          winner_number: number | null
+          winner_user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          drawn_at?: string | null
+          id?: string
+          pix_key?: string | null
+          points_per_number?: number
+          price_per_number?: number
+          status?: string
+          store_id: string
+          title: string
+          total_numbers?: number
+          winner_name?: string | null
+          winner_number?: number | null
+          winner_user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          drawn_at?: string | null
+          id?: string
+          pix_key?: string | null
+          points_per_number?: number
+          price_per_number?: number
+          status?: string
+          store_id?: string
+          title?: string
+          total_numbers?: number
+          winner_name?: string | null
+          winner_number?: number | null
+          winner_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "raffles_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "raffles_winner_user_id_fkey"
+            columns: ["winner_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      raffle_tickets: {
+        Row: {
+          created_at: string
+          id: string
+          number: number
+          participant_name: string | null
+          points_awarded: boolean
+          raffle_id: string
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          number: number
+          participant_name?: string | null
+          points_awarded?: boolean
+          raffle_id: string
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          number?: number
+          participant_name?: string | null
+          points_awarded?: boolean
+          raffle_id?: string
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "raffle_tickets_raffle_id_fkey"
+            columns: ["raffle_id"]
+            isOneToOne: false
+            referencedRelation: "raffles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "raffle_tickets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       stores: {
         Row: {

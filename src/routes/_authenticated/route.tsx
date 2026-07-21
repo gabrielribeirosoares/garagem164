@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession, useRole, useProfile } from "@/hooks/useAuth";
 import { useOwnedStore, useActiveClientStore, useCustomerPoints, useMyStores, setActiveStoreSlug } from "@/hooks/useStore";
 import { Button } from "@/components/ui/button";
-import { Flame, Car, Gift, LayoutDashboard, Package, PlusCircle, LogOut, Trophy, Store, User as UserIcon, ChevronDown } from "lucide-react";
+import { Flame, Car, Gift, LayoutDashboard, Package, PlusCircle, LogOut, Trophy, Store, User as UserIcon, ChevronDown, Ticket } from "lucide-react";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -125,14 +125,16 @@ function AuthedLayout() {
   const clientNav = [
     { to: "/garagem", label: "Garagem", icon: Car },
     { to: "/recompensas", label: "Recompensas", icon: Gift },
+    { to: "/rifas", label: "Rifas", icon: Ticket },
   ] as const;
 
   const adminNav = [
     { to: "/admin", label: "Dashboard", icon: LayoutDashboard },
     { to: "/admin/carros", label: "Adicionar Carro", icon: PlusCircle },
-    { to: "/admin/garagens", label: "Garagens de clientes", icon: Car },
+    { to: "/admin/garagens", label: "Garagens", icon: Car },
     { to: "/admin/recompensas", label: "Recompensas", icon: Package },
     { to: "/admin/resgates", label: "Resgates", icon: Gift },
+    { to: "/admin/rifas", label: "Rifas", icon: Ticket },
   ] as const;
 
   const nav = isAdminView ? adminNav : clientNav;
