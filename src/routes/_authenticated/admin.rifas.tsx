@@ -56,6 +56,7 @@ function AdminRifas() {
   const [pointsPerNumber, setPointsPerNumber] = useState(10);
   const [pixKey, setPixKey] = useState("");
   const [totalNumbers, setTotalNumbers] = useState(50);
+  const [maxWinners, setMaxWinners] = useState<number>(1);
 
   // Edit ticket state
   const [ticketStatus, setTicketStatus] = useState<"reserved" | "paid" | "free">("paid");
@@ -154,6 +155,7 @@ function AdminRifas() {
       points_per_number: number;
       pix_key: string;
       total_numbers: number;
+      max_winners: number;
     }) => {
       const { data, error } = await supabase
         .from("raffles")
@@ -177,6 +179,7 @@ function AdminRifas() {
       setPricePerNumber(5);
       setPointsPerNumber(10);
       setPixKey("");
+      setMaxWinners(1);
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -717,6 +720,7 @@ function AdminRifas() {
                 points_per_number: Number(pointsPerNumber),
                 pix_key: pixKey,
                 total_numbers: Number(totalNumbers),
+                max_winners: Number(maxWinners),
               });
             }}
             className="space-y-4 pt-4"
@@ -763,16 +767,16 @@ function AdminRifas() {
                 />
               </div>
             </div>
+            <div className="space-y-2">
+              <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Chave PIX</Label>
+              <Input
+                value={pixKey}
+                onChange={(e) => setPixKey(e.target.value)}
+                placeholder="Ex: celular, e-mail ou aleatória"
+                className="bg-[#121212] border-border text-white"
+              />
+            </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Chave PIX</Label>
-                <Input
-                  value={pixKey}
-                  onChange={(e) => setPixKey(e.target.value)}
-                  placeholder="Ex: celular, e-mail ou aleatória"
-                  className="bg-[#121212] border-border text-white"
-                />
-              </div>
               <div className="space-y-2">
                 <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Total de Números</Label>
                 <select
@@ -785,6 +789,19 @@ function AdminRifas() {
                   <option value={100}>100 Números</option>
                   <option value={200}>200 Números</option>
                 </select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Qtd. de Ganhadores</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={20}
+                  value={maxWinners}
+                  onChange={(e) => setMaxWinners(Math.max(1, parseInt(e.target.value) || 1))}
+                  placeholder="Ex: 1"
+                  required
+                  className="bg-[#121212] border-border text-white"
+                />
               </div>
             </div>
 
