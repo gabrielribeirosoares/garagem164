@@ -352,22 +352,14 @@ function AdminRifas() {
     const maxWinners = (selectedRaffle as any)?.max_winners || 1;
 
     if (drawnWinners.length >= maxWinners) {
-      toast.info("Todos os ganhadores desta rifa já foram sorteados.");
-      return;
-    }
-
-    const alreadyDrawnNumbers = drawnWinners.map((w) => w.number);
-    const eligibleTickets = paidTickets.filter((t) => !alreadyDrawnNumbers.includes(t.number));
-
-    if (!eligibleTickets.length) {
-      toast.error("Não há mais participantes elegíveis para sortear.");
+      toast.info("Todos os prêmios desta rifa já foram sorteados.");
       return;
     }
 
     setIsDrawing(true);
     setDrawOpen(true);
 
-    const newWinnerTicket = eligibleTickets[Math.floor(Math.random() * eligibleTickets.length)];
+    const newWinnerTicket = paidTickets[Math.floor(Math.random() * paidTickets.length)];
     const newWinner = {
       number: newWinnerTicket.number,
       name: newWinnerTicket.participant_name || "Comprador",
