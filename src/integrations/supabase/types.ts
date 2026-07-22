@@ -197,14 +197,17 @@ export type Database = {
         Row: {
           created_at: string
           description: string | null
+          draw_date: string | null
           drawn_at: string | null
           id: string
           image_url: string | null
           image_urls: string[] | null
+          item_condition: string | null
           max_winners: number
           pix_key: string | null
           points_per_number: number
           price_per_number: number
+          shipping_info: string | null
           status: string
           store_id: string
           title: string
@@ -216,14 +219,17 @@ export type Database = {
         Insert: {
           created_at?: string
           description?: string | null
+          draw_date?: string | null
           drawn_at?: string | null
           id?: string
           image_url?: string | null
           image_urls?: string[] | null
+          item_condition?: string | null
           max_winners?: number
           pix_key?: string | null
           points_per_number?: number
           price_per_number?: number
+          shipping_info?: string | null
           status?: string
           store_id: string
           title: string
@@ -235,14 +241,17 @@ export type Database = {
         Update: {
           created_at?: string
           description?: string | null
+          draw_date?: string | null
           drawn_at?: string | null
           id?: string
           image_url?: string | null
           image_urls?: string[] | null
+          item_condition?: string | null
           max_winners?: number
           pix_key?: string | null
           points_per_number?: number
           price_per_number?: number
+          shipping_info?: string | null
           status?: string
           store_id?: string
           title?: string

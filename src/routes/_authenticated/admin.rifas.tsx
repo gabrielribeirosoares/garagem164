@@ -34,7 +34,13 @@ import {
   Image as ImageIcon,
   ChevronLeft,
   ChevronRight,
-  ExternalLink
+  ExternalLink,
+  DollarSign,
+  TrendingUp,
+  Percent,
+  Truck,
+  Tag,
+  Filter
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/rifas")({
@@ -62,9 +68,15 @@ function AdminRifas() {
   const [pixKey, setPixKey] = useState("");
   const [totalNumbers, setTotalNumbers] = useState(50);
   const [maxWinners, setMaxWinners] = useState<number>(1);
+  const [drawDate, setDrawDate] = useState("");
+  const [shippingInfo, setShippingInfo] = useState("Acumular na Garagem");
+  const [itemCondition, setItemCondition] = useState("Lacrado na Cartela (Mint)");
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [newImageUrl, setNewImageUrl] = useState("");
   const [uploadingImage, setUploadingImage] = useState(false);
+
+  // Filter state for raffles list
+  const [filterStatus, setFilterStatus] = useState<"all" | "active" | "drawn">("all");
 
   // Edit Raffle State
   const [editOpen, setEditOpen] = useState(false);
@@ -75,6 +87,9 @@ function AdminRifas() {
   const [editPointsPerNumber, setEditPointsPerNumber] = useState(10);
   const [editPixKey, setEditPixKey] = useState("");
   const [editMaxWinners, setEditMaxWinners] = useState<number>(1);
+  const [editDrawDate, setEditDrawDate] = useState("");
+  const [editShippingInfo, setEditShippingInfo] = useState("Acumular na Garagem");
+  const [editItemCondition, setEditItemCondition] = useState("Lacrado na Cartela (Mint)");
   const [editImageUrls, setEditImageUrls] = useState<string[]>([]);
   const [editNewImageUrl, setEditNewImageUrl] = useState("");
   const [uploadingEditImage, setUploadingEditImage] = useState(false);
@@ -117,6 +132,9 @@ function AdminRifas() {
     setEditPointsPerNumber(Number(raffle.points_per_number) || 10);
     setEditPixKey(raffle.pix_key || "");
     setEditMaxWinners(raffle.max_winners || 1);
+    setEditDrawDate(raffle.draw_date ? new Date(raffle.draw_date).toISOString().slice(0, 16) : "");
+    setEditShippingInfo(raffle.shipping_info || "Acumular na Garagem");
+    setEditItemCondition(raffle.item_condition || "Lacrado na Cartela (Mint)");
     
     // Load images
     const urls: string[] = [];
@@ -228,6 +246,9 @@ function AdminRifas() {
       pix_key: string;
       total_numbers: number;
       max_winners: number;
+      draw_date: string;
+      shipping_info: string;
+      item_condition: string;
       image_urls: string[];
     }) => {
       const primaryUrl = values.image_urls.length > 0 ? values.image_urls[0] : null;
@@ -239,6 +260,9 @@ function AdminRifas() {
         pix_key: values.pix_key,
         total_numbers: values.total_numbers,
         max_winners: values.max_winners,
+        draw_date: values.draw_date ? new Date(values.draw_date).toISOString() : null,
+        shipping_info: values.shipping_info,
+        item_condition: values.item_condition,
         image_url: primaryUrl,
         image_urls: values.image_urls,
         store_id: storeId!,
@@ -252,10 +276,13 @@ function AdminRifas() {
         .single();
       
       if (error) {
-        if (error.message?.includes("image_url")) {
-          // Schema cache hasn't updated on server yet -> retry without image_url fields
+        if (error.message?.includes("image_url") || error.message?.includes("draw_date") || error.message?.includes("column")) {
+          // Schema cache hasn't updated on server yet -> retry without extra fields
           delete payload.image_url;
           delete payload.image_urls;
+          delete payload.draw_date;
+          delete payload.shipping_info;
+          delete payload.item_condition;
           const retry = await supabase.from("raffles").insert(payload).select().single();
           if (retry.error) throw retry.error;
           return retry.data;
@@ -275,6 +302,9 @@ function AdminRifas() {
       setPointsPerNumber(10);
       setPixKey("");
       setMaxWinners(1);
+      setDrawDate("");
+      setShippingInfo("Acumular na Garagem");
+      setItemCondition("Lacrado na Cartela (Mint)");
       setImageUrls([]);
       setNewImageUrl("");
     },
@@ -290,6 +320,9 @@ function AdminRifas() {
       points_per_number: number;
       pix_key: string;
       max_winners: number;
+      draw_date: string;
+      shipping_info: string;
+      item_condition: string;
       image_urls: string[];
     }) => {
       const primaryUrl = values.image_urls.length > 0 ? values.image_urls[0] : null;
@@ -300,6 +333,9 @@ function AdminRifas() {
         points_per_number: values.points_per_number,
         pix_key: values.pix_key,
         max_winners: values.max_winners,
+        draw_date: values.draw_date ? new Date(values.draw_date).toISOString() : null,
+        shipping_info: values.shipping_info,
+        item_condition: values.item_condition,
         image_url: primaryUrl,
         image_urls: values.image_urls,
       };
@@ -312,10 +348,13 @@ function AdminRifas() {
         .single();
       
       if (error) {
-        if (error.message?.includes("image_url")) {
-          // Schema cache hasn't updated on server yet -> retry without image_url fields
+        if (error.message?.includes("image_url") || error.message?.includes("draw_date") || error.message?.includes("column")) {
+          // Schema cache hasn't updated on server yet -> retry without extra fields
           delete payload.image_url;
           delete payload.image_urls;
+          delete payload.draw_date;
+          delete payload.shipping_info;
+          delete payload.item_condition;
           const retry = await supabase.from("raffles").update(payload).eq("id", values.id).select().single();
           if (retry.error) throw retry.error;
           return retry.data;
@@ -604,80 +643,120 @@ function AdminRifas() {
       <div className="grid gap-6 lg:grid-cols-12">
         {/* Left column: Raffles list */}
         <div className="lg:col-span-4 space-y-4">
-          <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest px-1">Rifas do Sistema</h2>
+          <div className="flex justify-between items-center px-1">
+            <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Rifas do Sistema</h2>
+            
+            {/* Status Filter Tabs */}
+            <div className="flex bg-[#121212] p-1 rounded-xl border border-border gap-1">
+              <button
+                type="button"
+                onClick={() => setFilterStatus("all")}
+                className={`px-2 py-0.5 text-[10px] font-bold rounded-lg transition-all ${
+                  filterStatus === "all" ? "bg-primary text-black" : "text-muted-foreground hover:text-white"
+                }`}
+              >
+                Todas
+              </button>
+              <button
+                type="button"
+                onClick={() => setFilterStatus("active")}
+                className={`px-2 py-0.5 text-[10px] font-bold rounded-lg transition-all ${
+                  filterStatus === "active" ? "bg-primary text-black" : "text-muted-foreground hover:text-white"
+                }`}
+              >
+                Ativas
+              </button>
+              <button
+                type="button"
+                onClick={() => setFilterStatus("drawn")}
+                className={`px-2 py-0.5 text-[10px] font-bold rounded-lg transition-all ${
+                  filterStatus === "drawn" ? "bg-primary text-black" : "text-muted-foreground hover:text-white"
+                }`}
+              >
+                Sorteadas
+              </button>
+            </div>
+          </div>
+
           <div className="space-y-3">
             {!raffles?.length ? (
               <div className="rounded-3xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground bg-card">
                 Nenhuma rifa cadastrada. Clique em "Nova Rifa" acima para criar a sua primeira.
               </div>
             ) : (
-              raffles.map((r) => {
-                const isSelected = r.id === selectedRaffleId;
-                const isDrawn = r.status === "drawn";
-                const thumb = r.image_url || (r.image_urls && r.image_urls.length > 0 ? r.image_urls[0] : null);
-                return (
-                  <div
-                    key={r.id}
-                    className={`p-4 rounded-2xl border transition-all cursor-pointer ${
-                      isSelected
-                        ? "border-primary bg-primary/10 shadow-lg hw-glow-orange"
-                        : "border-border bg-card hover:bg-muted/30"
-                    }`}
-                    onClick={() => setSelectedRaffleId(r.id)}
-                  >
-                    <div className="flex gap-3 items-center">
-                      {thumb && (
-                        <img
-                          src={thumb}
-                          alt={r.title}
-                          className="h-12 w-12 rounded-xl object-cover border border-border/80 shrink-0 bg-black"
-                        />
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex justify-between items-start gap-2">
-                          <h3 className="font-black text-white text-base truncate flex-1">{r.title}</h3>
-                          {isDrawn ? (
-                            <Badge variant="secondary" className="shrink-0 bg-zinc-800 text-zinc-400">Sorteada</Badge>
-                          ) : (
-                            <Badge className="shrink-0 bg-green-500/10 text-green-400 border-green-500/20">Ativa</Badge>
-                          )}
-                        </div>
-                        <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
-                          <span className="font-bold text-primary">R$ {Number(r.price_per_number).toFixed(2)} / nº</span>
-                          <span className="font-semibold text-secondary flex items-center gap-1">
-                            <Sparkles className="h-3 w-3" /> +{r.points_per_number} pts
-                          </span>
+              raffles
+                .filter((r) => {
+                  if (filterStatus === "active") return r.status === "active";
+                  if (filterStatus === "drawn") return r.status === "drawn";
+                  return true;
+                })
+                .map((r) => {
+                  const isSelected = r.id === selectedRaffleId;
+                  const isDrawn = r.status === "drawn";
+                  const thumb = r.image_url || (r.image_urls && r.image_urls.length > 0 ? r.image_urls[0] : null);
+                  return (
+                    <div
+                      key={r.id}
+                      className={`p-4 rounded-2xl border transition-all cursor-pointer ${
+                        isSelected
+                          ? "border-primary bg-primary/10 shadow-lg hw-glow-orange"
+                          : "border-border bg-card hover:bg-muted/30"
+                      }`}
+                      onClick={() => setSelectedRaffleId(r.id)}
+                    >
+                      <div className="flex gap-3 items-center">
+                        {thumb && (
+                          <img
+                            src={thumb}
+                            alt={r.title}
+                            className="h-12 w-12 rounded-xl object-cover border border-border/80 shrink-0 bg-black"
+                          />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex justify-between items-start gap-2">
+                            <h3 className="font-black text-white text-base truncate flex-1">{r.title}</h3>
+                            {isDrawn ? (
+                              <Badge variant="secondary" className="shrink-0 bg-zinc-800 text-zinc-400">Sorteada</Badge>
+                            ) : (
+                              <Badge className="shrink-0 bg-green-500/10 text-green-400 border-green-500/20">Ativa</Badge>
+                            )}
+                          </div>
+                          <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
+                            <span className="font-bold text-primary">R$ {Number(r.price_per_number).toFixed(2)} / nº</span>
+                            <span className="font-semibold text-secondary flex items-center gap-1">
+                              <Sparkles className="h-3 w-3" /> +{r.points_per_number} pts
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    {isSelected && (
-                      <div className="mt-4 pt-3 border-t border-border/60 flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-8 px-2 text-xs border-border hover:bg-muted text-white font-semibold"
-                          onClick={() => handleOpenEditRaffle(r)}
-                        >
-                          <Edit3 className="h-3.5 w-3.5 mr-1" /> Editar
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                          onClick={() => {
-                            if (confirm(`Excluir a rifa "${r.title}"? Todos os números associados serão deletados.`)) {
-                              deleteRaffle.mutate(r.id);
-                            }
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                );
-              })
+                      {isSelected && (
+                        <div className="mt-4 pt-3 border-t border-border/60 flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 px-2 text-xs border-border hover:bg-muted text-white font-semibold"
+                            onClick={() => handleOpenEditRaffle(r)}
+                          >
+                            <Edit3 className="h-3.5 w-3.5 mr-1" /> Editar
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => {
+                              if (confirm(`Excluir a rifa "${r.title}"? Todos os números associados serão deletados.`)) {
+                                deleteRaffle.mutate(r.id);
+                              }
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
             )}
           </div>
         </div>
@@ -694,7 +773,27 @@ function AdminRifas() {
                     <p className="text-xs text-muted-foreground mt-1 max-w-lg">
                       {selectedRaffle.description || "Sem descrição."}
                     </p>
+
+                    {/* Condition & Shipping Badges */}
+                    <div className="flex flex-wrap gap-2 mt-3 text-xs">
+                      {selectedRaffle.item_condition && (
+                        <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 text-[10px] font-bold">
+                          <Tag className="h-3 w-3 mr-1" /> {selectedRaffle.item_condition}
+                        </Badge>
+                      )}
+                      {selectedRaffle.shipping_info && (
+                        <Badge variant="outline" className="bg-blue-500/10 text-blue-400 border-blue-500/20 text-[10px] font-bold">
+                          <Truck className="h-3 w-3 mr-1" /> {selectedRaffle.shipping_info}
+                        </Badge>
+                      )}
+                      {selectedRaffle.draw_date && (
+                        <Badge variant="outline" className="bg-yellow-500/10 text-yellow-400 border-yellow-500/20 text-[10px] font-bold">
+                          <Clock className="h-3 w-3 mr-1" /> Sorteio: {new Date(selectedRaffle.draw_date).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}
+                        </Badge>
+                      )}
+                    </div>
                   </div>
+
                   <div className="flex gap-2 flex-wrap">
                     <Button
                       onClick={() => handleOpenEditRaffle(selectedRaffle)}
@@ -762,21 +861,52 @@ function AdminRifas() {
                   );
                 })()}
 
-                {/* Dashboard Stats */}
-                <div className="grid grid-cols-3 border-b border-border bg-[#161616]/40 text-center divide-x divide-border">
-                  <div className="py-4">
-                    <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Disponíveis</div>
-                    <div className="text-xl font-black text-white mt-0.5">{freeCount}</div>
-                  </div>
-                  <div className="py-4">
-                    <div className="text-[10px] uppercase font-bold text-yellow-500 tracking-wider">Reservados</div>
-                    <div className="text-xl font-black text-yellow-500 mt-0.5">{reservedCount}</div>
-                  </div>
-                  <div className="py-4">
-                    <div className="text-[10px] uppercase font-bold text-green-400 tracking-wider">Pagos</div>
-                    <div className="text-xl font-black text-green-400 mt-0.5">{paidCount}</div>
-                  </div>
-                </div>
+                {/* Financial Metrics & Dashboard Stats */}
+                {(() => {
+                  const unitPrice = Number(selectedRaffle.price_per_number);
+                  const paidTotal = paidCount * unitPrice;
+                  const reservedTotal = reservedCount * unitPrice;
+                  const maxPotentialTotal = selectedRaffle.total_numbers * unitPrice;
+                  const fillPercentage = Math.round(((paidCount + reservedCount) / selectedRaffle.total_numbers) * 100);
+
+                  return (
+                    <div className="border-b border-border bg-[#121212] p-4">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
+                        <div className="bg-[#181818] border border-border/60 p-3 rounded-2xl">
+                          <div className="text-[10px] uppercase font-bold text-green-400 tracking-wider flex items-center justify-center gap-1">
+                            <DollarSign className="h-3 w-3" /> Recebido (Pagos)
+                          </div>
+                          <div className="text-lg font-black text-green-400 mt-1">R$ {paidTotal.toFixed(2)}</div>
+                          <div className="text-[10px] text-muted-foreground mt-0.5">{paidCount} número(s)</div>
+                        </div>
+
+                        <div className="bg-[#181818] border border-border/60 p-3 rounded-2xl">
+                          <div className="text-[10px] uppercase font-bold text-yellow-500 tracking-wider flex items-center justify-center gap-1">
+                            <Clock className="h-3 w-3" /> Pendente (Reservas)
+                          </div>
+                          <div className="text-lg font-black text-yellow-500 mt-1">R$ {reservedTotal.toFixed(2)}</div>
+                          <div className="text-[10px] text-muted-foreground mt-0.5">{reservedCount} número(s)</div>
+                        </div>
+
+                        <div className="bg-[#181818] border border-border/60 p-3 rounded-2xl">
+                          <div className="text-[10px] uppercase font-bold text-primary tracking-wider flex items-center justify-center gap-1">
+                            <TrendingUp className="h-3 w-3" /> Potencial Total
+                          </div>
+                          <div className="text-lg font-black text-white mt-1">R$ {maxPotentialTotal.toFixed(2)}</div>
+                          <div className="text-[10px] text-muted-foreground mt-0.5">{selectedRaffle.total_numbers} números</div>
+                        </div>
+
+                        <div className="bg-[#181818] border border-border/60 p-3 rounded-2xl">
+                          <div className="text-[10px] uppercase font-bold text-blue-400 tracking-wider flex items-center justify-center gap-1">
+                            <Percent className="h-3 w-3" /> Preenchimento
+                          </div>
+                          <div className="text-lg font-black text-blue-400 mt-1">{fillPercentage}%</div>
+                          <div className="text-[10px] text-muted-foreground mt-0.5">{freeCount} livre(s)</div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* Main Content */}
                 <div className="p-6 space-y-6">
@@ -954,6 +1084,9 @@ function AdminRifas() {
                 pix_key: pixKey,
                 total_numbers: Number(totalNumbers),
                 max_winners: Number(maxWinners),
+                draw_date: drawDate,
+                shipping_info: shippingInfo,
+                item_condition: itemCondition,
                 image_urls: imageUrls,
               });
             }}
@@ -1091,6 +1224,46 @@ function AdminRifas() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
+                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Estado da Miniatura</Label>
+                <select
+                  value={itemCondition}
+                  onChange={(e) => setItemCondition(e.target.value)}
+                  className="w-full bg-[#121212] border border-border text-white h-10 px-3 rounded-xl text-sm focus-visible:outline-none focus:border-primary"
+                >
+                  <option value="Lacrado na Cartela (Mint)">Lacrado na Cartela (Mint)</option>
+                  <option value="Super Treasure Hunt (STH)">Super Treasure Hunt (STH)</option>
+                  <option value="Item Raro / Edição Especial">Item Raro / Edição Especial</option>
+                  <option value="Customizada / Exclusiva">Customizada / Exclusiva</option>
+                  <option value="Loose (Sem Cartela)">Loose (Sem Cartela)</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Regra de Entrega / Frete</Label>
+                <select
+                  value={shippingInfo}
+                  onChange={(e) => setShippingInfo(e.target.value)}
+                  className="w-full bg-[#121212] border border-border text-white h-10 px-3 rounded-xl text-sm focus-visible:outline-none focus:border-primary"
+                >
+                  <option value="Acumular na Garagem">Acumular na Garagem</option>
+                  <option value="Frete Grátis para todo Brasil">Frete Grátis para todo Brasil</option>
+                  <option value="Frete a Combinar / Pago pelo Ganhador">Frete a Combinar / Pago pelo Ganhador</option>
+                  <option value="Retirada no Local">Retirada no Local</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Data / Hora Limite do Sorteio (Opcional)</Label>
+              <Input
+                type="datetime-local"
+                value={drawDate}
+                onChange={(e) => setDrawDate(e.target.value)}
+                className="bg-[#121212] border-border text-white"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
                 <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Total de Números</Label>
                 <select
                   value={totalNumbers}
@@ -1153,6 +1326,9 @@ function AdminRifas() {
                 points_per_number: Number(editPointsPerNumber),
                 pix_key: editPixKey,
                 max_winners: Number(editMaxWinners),
+                draw_date: editDrawDate,
+                shipping_info: editShippingInfo,
+                item_condition: editItemCondition,
                 image_urls: editImageUrls,
               });
             }}
@@ -1285,6 +1461,45 @@ function AdminRifas() {
                 value={editPixKey}
                 onChange={(e) => setEditPixKey(e.target.value)}
                 placeholder="Ex: celular, e-mail ou aleatória"
+                className="bg-[#121212] border-border text-white"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Estado da Miniatura</Label>
+                <select
+                  value={editItemCondition}
+                  onChange={(e) => setEditItemCondition(e.target.value)}
+                  className="w-full bg-[#121212] border border-border text-white h-10 px-3 rounded-xl text-sm focus-visible:outline-none focus:border-primary"
+                >
+                  <option value="Lacrado na Cartela (Mint)">Lacrado na Cartela (Mint)</option>
+                  <option value="Super Treasure Hunt (STH)">Super Treasure Hunt (STH)</option>
+                  <option value="Item Raro / Edição Especial">Item Raro / Edição Especial</option>
+                  <option value="Customizada / Exclusiva">Customizada / Exclusiva</option>
+                  <option value="Loose (Sem Cartela)">Loose (Sem Cartela)</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Regra de Entrega / Frete</Label>
+                <select
+                  value={editShippingInfo}
+                  onChange={(e) => setEditShippingInfo(e.target.value)}
+                  className="w-full bg-[#121212] border border-border text-white h-10 px-3 rounded-xl text-sm focus-visible:outline-none focus:border-primary"
+                >
+                  <option value="Acumular na Garagem">Acumular na Garagem</option>
+                  <option value="Frete Grátis para todo Brasil">Frete Grátis para todo Brasil</option>
+                  <option value="Frete a Combinar / Pago pelo Ganhador">Frete a Combinar / Pago pelo Ganhador</option>
+                  <option value="Retirada no Local">Retirada no Local</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Data / Hora Limite do Sorteio (Opcional)</Label>
+              <Input
+                type="datetime-local"
+                value={editDrawDate}
+                onChange={(e) => setEditDrawDate(e.target.value)}
                 className="bg-[#121212] border-border text-white"
               />
             </div>

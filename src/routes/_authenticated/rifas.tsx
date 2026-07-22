@@ -9,11 +9,62 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Ticket, Sparkles, Copy, MessageSquare, Info, Trophy, Calendar, CheckCircle2, X, Image as ImageIcon, ExternalLink, ZoomIn } from "lucide-react";
+import { Ticket, Sparkles, Copy, MessageSquare, Info, Trophy, Calendar, CheckCircle2, X, Image as ImageIcon, ExternalLink, ZoomIn, Flame, Zap, Dices, Clock, Truck, Tag } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/rifas")({
   component: ClientRifas,
 });
+
+function CountdownTimer({ targetDate }: { targetDate: string }) {
+  const [timeLeft, setTimeLeft] = useState<{ days: number; hours: number; minutes: number; seconds: number } | null>(null);
+
+  useEffect(() => {
+    const calculate = () => {
+      const diff = new Date(targetDate).getTime() - new Date().getTime();
+      if (diff <= 0) {
+        setTimeLeft(null);
+        return;
+      }
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+      const minutes = Math.floor((diff / 1000 / 60) % 60);
+      const seconds = Math.floor((diff / 1000) % 60);
+      setTimeLeft({ days, hours, minutes, seconds });
+    };
+
+    calculate();
+    const interval = setInterval(calculate, 1000);
+    return () => clearInterval(interval);
+  }, [targetDate]);
+
+  if (!timeLeft) return null;
+
+  return (
+    <div className="bg-gradient-to-r from-yellow-500/10 via-primary/10 to-yellow-500/10 border border-yellow-500/30 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
+      <div className="flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-yellow-400">
+        <Clock className="h-4 w-4 animate-spin text-primary shrink-0" /> Sorteio em Encerramento
+      </div>
+      <div className="flex gap-2 text-center font-mono">
+        <div className="bg-black/60 border border-border px-2.5 py-1 rounded-xl">
+          <span className="text-base font-black text-white">{String(timeLeft.days).padStart(2, "0")}</span>
+          <span className="text-[9px] block text-muted-foreground uppercase font-sans">dias</span>
+        </div>
+        <div className="bg-black/60 border border-border px-2.5 py-1 rounded-xl">
+          <span className="text-base font-black text-white">{String(timeLeft.hours).padStart(2, "0")}</span>
+          <span className="text-[9px] block text-muted-foreground uppercase font-sans">horas</span>
+        </div>
+        <div className="bg-black/60 border border-border px-2.5 py-1 rounded-xl">
+          <span className="text-base font-black text-white">{String(timeLeft.minutes).padStart(2, "0")}</span>
+          <span className="text-[9px] block text-muted-foreground uppercase font-sans">min</span>
+        </div>
+        <div className="bg-black/60 border border-border px-2.5 py-1 rounded-xl">
+          <span className="text-base font-black text-primary">{String(timeLeft.seconds).padStart(2, "0")}</span>
+          <span className="text-[9px] block text-muted-foreground uppercase font-sans">seg</span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function ClientRifas() {
   const user = useSession();
@@ -24,6 +75,7 @@ function ClientRifas() {
   const [selectedRaffleId, setSelectedRaffleId] = useState<string | null>(null);
   const [activeImageIndex, setActiveImageIndex] = useState<number>(0);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [clientTab, setClientTab] = useState<"active" | "hall_of_fame">("active");
 
   // Fetch active store owner's whatsapp for copy PIX contact
   const { data: ownerProfile } = useQuery({
@@ -117,6 +169,51 @@ function ClientRifas() {
     },
   });
 
+  const batchReserve = useMutation({
+    mutationFn: async (numbers: number[]) => {
+      if (!user) throw new Error("Você precisa estar logado.");
+      const rows = numbers.map((n) => ({
+        raffle_id: selectedRaffleId!,
+        number: n,
+        participant_name: profile?.full_name || profile?.email || "Cliente",
+        user_id: user.id,
+        status: "reserved",
+      }));
+
+      const { error } = await supabase.from("raffle_tickets").insert(rows);
+      if (error) throw error;
+    },
+    onSuccess: (_, vars) => {
+      toast.success(`${vars.length} número(s) reservado(s) com sucesso! Realize o PIX para confirmar.`);
+      qc.invalidateQueries({ queryKey: ["raffle-tickets", selectedRaffleId] });
+    },
+    onError: (e: any) => {
+      toast.error(e.message || "Erro ao reservar números.");
+    },
+  });
+
+  const handleQuickPick = (count: number) => {
+    if (!selectedRaffle || selectedRaffle.status !== "active") return;
+    if (!user) return toast.error("Você precisa estar logado.");
+
+    const takenNumbers = new Set(tickets?.map((t) => t.number) || []);
+    const available: number[] = [];
+    for (let i = 1; i <= selectedRaffle.total_numbers; i++) {
+      if (!takenNumbers.has(i)) {
+        available.push(i);
+      }
+    }
+
+    if (available.length === 0) {
+      toast.error("Não há mais números disponíveis nesta rifa.");
+      return;
+    }
+
+    const shuffled = [...available].sort(() => Math.random() - 0.5);
+    const picked = shuffled.slice(0, Math.min(count, available.length));
+    batchReserve.mutate(picked);
+  };
+
   const cancelReservation = useMutation({
     mutationFn: async (ticketId: string) => {
       const { error } = await supabase
@@ -191,64 +288,91 @@ function ClientRifas() {
       <div className="grid gap-6 lg:grid-cols-12">
         {/* Left Side: Raffles List */}
         <div className="lg:col-span-4 space-y-4">
-          <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-widest px-1">Rifas Disponíveis</h2>
+          <div className="flex justify-between items-center px-1">
+            <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Rifas do Sistema</h2>
+            <div className="flex bg-[#121212] p-1 rounded-xl border border-border gap-1">
+              <button
+                type="button"
+                onClick={() => setClientTab("active")}
+                className={`px-2.5 py-1 text-[10px] font-bold rounded-lg transition-all ${
+                  clientTab === "active" ? "bg-primary text-black" : "text-muted-foreground hover:text-white"
+                }`}
+              >
+                Disponíveis
+              </button>
+              <button
+                type="button"
+                onClick={() => setClientTab("hall_of_fame")}
+                className={`px-2.5 py-1 text-[10px] font-bold rounded-lg transition-all flex items-center gap-1 ${
+                  clientTab === "hall_of_fame" ? "bg-yellow-500 text-black" : "text-muted-foreground hover:text-white"
+                }`}
+              >
+                <Trophy className="h-3 w-3" /> Hall da Fama
+              </button>
+            </div>
+          </div>
+
           <div className="space-y-3">
             {!raffles?.length ? (
               <div className="rounded-3xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground bg-card">
                 Nenhuma rifa criada por esta loja ainda.
               </div>
             ) : (
-              raffles.map((r) => {
-                const isSelected = r.id === selectedRaffleId;
-                const isDrawn = r.status === "drawn";
-                const thumb = r.image_url || (r.image_urls && r.image_urls.length > 0 ? r.image_urls[0] : null);
-                return (
-                  <button
-                    key={r.id}
-                    onClick={() => {
-                      setSelectedRaffleId(r.id);
-                      setActiveImageIndex(0);
-                    }}
-                    className={`w-full text-left p-4 rounded-2xl border transition-all cursor-pointer ${
-                      isSelected
-                        ? "border-primary bg-primary/10 shadow-lg hw-glow-orange"
-                        : "border-border bg-card hover:bg-muted/30"
-                    }`}
-                  >
-                    <div className="flex gap-3 items-center">
-                      {thumb && (
-                        <img
-                          src={thumb}
-                          alt={r.title}
-                          className="h-12 w-12 rounded-xl object-cover border border-border/80 shrink-0 bg-black"
-                        />
+              raffles
+                .filter((r) => (clientTab === "hall_of_fame" ? r.status === "drawn" : r.status === "active"))
+                .map((r) => {
+                  const isSelected = r.id === selectedRaffleId;
+                  const isDrawn = r.status === "drawn";
+                  const thumb = r.image_url || (r.image_urls && r.image_urls.length > 0 ? r.image_urls[0] : null);
+                  return (
+                    <button
+                      key={r.id}
+                      onClick={() => {
+                        setSelectedRaffleId(r.id);
+                        setActiveImageIndex(0);
+                      }}
+                      className={`w-full text-left p-4 rounded-2xl border transition-all cursor-pointer ${
+                        isSelected
+                          ? "border-primary bg-primary/10 shadow-lg hw-glow-orange"
+                          : "border-border bg-card hover:bg-muted/30"
+                      }`}
+                    >
+                      <div className="flex gap-3 items-center">
+                        {thumb && (
+                          <img
+                            src={thumb}
+                            alt={r.title}
+                            className="h-12 w-12 rounded-xl object-cover border border-border/80 shrink-0 bg-black"
+                          />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex justify-between items-start gap-2">
+                            <h3 className="font-black text-white text-base truncate flex-1">{r.title}</h3>
+                            {isDrawn ? (
+                              <Badge variant="secondary" className="shrink-0 bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
+                                <Trophy className="h-3 w-3 mr-1" /> Sorteada
+                              </Badge>
+                            ) : (
+                              <Badge variant="default" className="shrink-0 bg-green-500/10 text-green-400 border-green-500/20">Ativa</Badge>
+                            )}
+                          </div>
+                          <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
+                            <span className="font-bold text-primary">R$ {Number(r.price_per_number).toFixed(2)} / nº</span>
+                            <span className="flex items-center gap-1 font-semibold text-secondary">
+                              <Sparkles className="h-3 w-3" /> +{r.points_per_number} pts
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      {isDrawn && r.winner_number && (
+                        <div className="mt-3 pt-3 border-t border-border flex items-center justify-between text-xs text-green-400 bg-green-950/20 px-2 py-1 rounded-xl">
+                          <span className="font-black">Ganhador: {r.winner_name || "Comprador"}</span>
+                          <span className="bg-green-500 text-black px-1.5 py-0.5 rounded font-black">Nº {String(r.winner_number).padStart(2, "0")}</span>
+                        </div>
                       )}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex justify-between items-start gap-2">
-                          <h3 className="font-black text-white text-base truncate flex-1">{r.title}</h3>
-                          {isDrawn ? (
-                            <Badge variant="secondary" className="shrink-0 bg-zinc-800 text-zinc-400">Finalizada</Badge>
-                          ) : (
-                            <Badge variant="default" className="shrink-0 bg-green-500/10 text-green-400 border-green-500/20">Ativa</Badge>
-                          )}
-                        </div>
-                        <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
-                          <span className="font-bold text-primary">R$ {Number(r.price_per_number).toFixed(2)} / nº</span>
-                          <span className="flex items-center gap-1 font-semibold text-secondary">
-                            <Sparkles className="h-3 w-3" /> +{r.points_per_number} pts
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    {isDrawn && r.winner_number && (
-                      <div className="mt-3 pt-3 border-t border-border flex items-center justify-between text-xs text-green-400 bg-green-950/20 px-2 py-1 rounded-xl">
-                        <span className="font-black">Ganhador: {r.winner_name || "Comprador"}</span>
-                        <span className="bg-green-500 text-black px-1.5 py-0.5 rounded font-black">Nº {String(r.winner_number).padStart(2, "0")}</span>
-                      </div>
-                    )}
-                  </button>
-                );
-              })
+                    </button>
+                  );
+                })
             )}
           </div>
         </div>
@@ -261,15 +385,31 @@ function ClientRifas() {
                 <CardHeader className="bg-muted/10 border-b border-border p-6">
                   <div className="flex flex-wrap justify-between items-start gap-4">
                     <div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <CardTitle className="text-xl md:text-2xl font-black text-white">{selectedRaffle.title}</CardTitle>
                         {selectedRaffle.status === "drawn" && (
-                          <Badge className="bg-yellow-500/20 text-yellow-500 border-yellow-500/30">Sorteado</Badge>
+                          <Badge className="bg-yellow-500/20 text-yellow-500 border-yellow-500/30">
+                            <Trophy className="h-3.5 w-3.5 mr-1" /> Hall da Fama
+                          </Badge>
                         )}
                       </div>
                       <CardDescription className="mt-1 text-sm text-muted-foreground">
                         {selectedRaffle.description || "Sem descrição fornecida."}
                       </CardDescription>
+
+                      {/* Condition & Shipping Badges in Client View */}
+                      <div className="flex flex-wrap gap-2 mt-3 text-xs">
+                        {selectedRaffle.item_condition && (
+                          <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 text-[11px] font-bold">
+                            <Tag className="h-3 w-3 mr-1" /> {selectedRaffle.item_condition}
+                          </Badge>
+                        )}
+                        {selectedRaffle.shipping_info && (
+                          <Badge variant="outline" className="bg-blue-500/10 text-blue-400 border-blue-500/20 text-[11px] font-bold">
+                            <Truck className="h-3 w-3 mr-1" /> {selectedRaffle.shipping_info}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                     <div className="text-right">
                       <div className="text-2xl font-black text-primary">R$ {Number(selectedRaffle.price_per_number).toFixed(2)}</div>
@@ -279,6 +419,96 @@ function ClientRifas() {
                 </CardHeader>
 
                 <CardContent className="p-6 space-y-6">
+                  {/* Countdown Timer if draw_date exists */}
+                  {selectedRaffle.draw_date && selectedRaffle.status === "active" && (
+                    <CountdownTimer targetDate={selectedRaffle.draw_date} />
+                  )}
+
+                  {/* Progress Bar & Scarcity Banner */}
+                  {(() => {
+                    const takenCount = (tickets?.length || 0);
+                    const total = selectedRaffle.total_numbers;
+                    const percent = Math.round((takenCount / total) * 100);
+                    const isHighDemand = percent >= 70 && selectedRaffle.status === "active";
+
+                    return (
+                      <div className="bg-[#121212] border border-border/80 p-4 rounded-2xl space-y-2">
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="font-bold text-white flex items-center gap-1.5">
+                            {isHighDemand ? (
+                              <span className="text-red-400 font-black flex items-center gap-1 animate-pulse">
+                                <Flame className="h-4 w-4 text-red-500 fill-red-500" /> QUASE ESGOTADO!
+                              </span>
+                            ) : (
+                              "Progresso de Vendas"
+                            )}
+                          </span>
+                          <span className="font-black text-primary">{percent}% Vendido ({takenCount}/{total} números)</span>
+                        </div>
+                        <div className="h-3 w-full bg-black/80 rounded-full overflow-hidden border border-border p-0.5">
+                          <div
+                            className={`h-full rounded-full transition-all duration-500 ${
+                              percent >= 85
+                                ? "bg-gradient-to-r from-yellow-500 to-red-500 shadow-[0_0_12px_rgba(239,68,68,0.5)]"
+                                : "hw-gradient-orange"
+                            }`}
+                            style={{ width: `${percent}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Quick Pick Buttons (Surpresinha / 1-Clique) */}
+                  {selectedRaffle.status === "active" && (
+                    <div className="bg-gradient-to-r from-[#181818] via-[#121212] to-[#181818] border border-border p-4 rounded-2xl space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                          <Zap className="h-4 w-4 text-primary fill-primary/20" /> Compra Rápida em 1-Clique (Surpresinha)
+                        </span>
+                        <span className="text-[10px] text-muted-foreground font-semibold">Seleção automática aleatória</span>
+                      </div>
+
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => handleQuickPick(1)}
+                          disabled={batchReserve.isPending}
+                          className="h-10 text-xs font-bold border-border hover:border-primary hover:bg-primary/10 text-white"
+                        >
+                          <Dices className="h-3.5 w-3.5 mr-1 text-primary" /> +1 Nº da Sorte
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => handleQuickPick(3)}
+                          disabled={batchReserve.isPending}
+                          className="h-10 text-xs font-bold border-border hover:border-primary hover:bg-primary/10 text-white"
+                        >
+                          <Zap className="h-3.5 w-3.5 mr-1 text-yellow-400" /> 3 Números
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => handleQuickPick(5)}
+                          disabled={batchReserve.isPending}
+                          className="h-10 text-xs font-bold border-border hover:border-primary hover:bg-primary/10 text-white"
+                        >
+                          <Flame className="h-3.5 w-3.5 mr-1 text-orange-400" /> Combo 5 Nºs
+                        </Button>
+                        <Button
+                          type="button"
+                          onClick={() => handleQuickPick(10)}
+                          disabled={batchReserve.isPending}
+                          className="h-10 text-xs font-bold hw-gradient-orange text-white"
+                        >
+                          <Sparkles className="h-3.5 w-3.5 mr-1" /> Mega 10 Nºs
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Prize Images Section in Client View */}
                   {(() => {
                     const images = (selectedRaffle.image_urls && selectedRaffle.image_urls.length > 0)
