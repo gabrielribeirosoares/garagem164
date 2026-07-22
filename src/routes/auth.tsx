@@ -78,14 +78,11 @@ function AuthPage() {
 
   async function handleGoogleSignIn() {
     setLoading(true);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: window.location.origin,
-      },
+    const result = await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: window.location.origin,
     });
     setLoading(false);
-    if (error) return toast.error(error.message);
+    if (result.error) return toast.error(result.error.message);
   }
 
   async function handleForgotPassword() {
