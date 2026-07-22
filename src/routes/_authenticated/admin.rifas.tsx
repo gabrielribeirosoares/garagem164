@@ -25,7 +25,11 @@ import {
   ChevronDown,
   Info,
   Clock,
-  User
+  User,
+  CheckSquare,
+  Square,
+  Edit3,
+  Check
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/rifas")({
@@ -39,8 +43,11 @@ function AdminRifas() {
 
   const [selectedRaffleId, setSelectedRaffleId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
-  const [editNumber, setEditNumber] = useState<number | null>(null);
+  const [batchModalOpen, setBatchModalOpen] = useState(false);
   const [drawOpen, setDrawOpen] = useState(false);
+
+  // Multi-select state
+  const [selectedNumbers, setSelectedNumbers] = useState<number[]>([]);
 
   // Form states for creating raffle
   const [title, setTitle] = useState("");
@@ -51,7 +58,7 @@ function AdminRifas() {
   const [totalNumbers, setTotalNumbers] = useState(50);
 
   // Edit ticket state
-  const [ticketStatus, setTicketStatus] = useState<"reserved" | "paid" | "free">("free");
+  const [ticketStatus, setTicketStatus] = useState<"reserved" | "paid" | "free">("paid");
   const [participantName, setParticipantName] = useState("");
   const [selectedUserId, setSelectedUserId] = useState<string>("");
 
@@ -130,36 +137,13 @@ function AdminRifas() {
     };
   }, [selectedRaffleId, storeId, qc]);
 
-  // Set default selected raffle
+  // Set default selected raffle & clear selections when switching raffle
   useEffect(() => {
     if (raffles && raffles.length > 0 && !selectedRaffleId) {
       setSelectedRaffleId(raffles[0].id);
     }
+    setSelectedNumbers([]);
   }, [raffles, selectedRaffleId]);
-
-  // Pre-fill fields for ticket edit
-  useEffect(() => {
-    if (editNumber !== null && selectedRaffle) {
-      const ticket = tickets?.find((t) => t.number === editNumber);
-      if (ticket) {
-        setTicketStatus(ticket.status as any);
-        setParticipantName(ticket.participant_name || "");
-        setSelectedUserId(ticket.user_id || "");
-      } else {
-        setTicketStatus("free");
-        setParticipantName("");
-        setSelectedUserId("");
-      }
-    }
-  }, [editNumber, tickets, selectedRaffle]);
-
-  // Auto fill pix key from store details or default if exists
-  useEffect(() => {
-    if (store && !pixKey) {
-      // Just seed default key or placeholder
-      setPixKey("");
-    }
-  }, [store]);
 
   // Mutations
   const createRaffle = useMutation({
@@ -197,53 +181,49 @@ function AdminRifas() {
     onError: (e: any) => toast.error(e.message),
   });
 
-  const updateTicket = useMutation({
+  const batchUpdateTickets = useMutation({
     mutationFn: async ({
-      number,
+      numbers,
       status,
       participantName,
       userId,
-      ticketId,
     }: {
-      number: number;
+      numbers: number[];
       status: "reserved" | "paid" | "free";
       participantName: string;
       userId: string | null;
-      ticketId?: string;
     }) => {
       if (status === "free") {
-        if (ticketId) {
-          const { error } = await supabase.from("raffle_tickets").delete().eq("id", ticketId);
-          if (error) throw error;
-        }
+        const { error } = await supabase
+          .from("raffle_tickets")
+          .delete()
+          .eq("raffle_id", selectedRaffleId!)
+          .in("number", numbers);
+        if (error) throw error;
       } else {
-        if (ticketId) {
-          const { error } = await supabase
-            .from("raffle_tickets")
-            .update({
-              status,
-              participant_name: participantName,
-              user_id: userId || null,
-            })
-            .eq("id", ticketId);
-          if (error) throw error;
-        } else {
-          const { error } = await supabase.from("raffle_tickets").insert({
+        const rows = numbers.map((num) => {
+          const existingTicket = tickets?.find((t) => t.number === num);
+          return {
+            ...(existingTicket ? { id: existingTicket.id } : {}),
             raffle_id: selectedRaffleId!,
-            number,
+            number: num,
             status,
-            participant_name: participantName,
+            participant_name: participantName.trim() || "Comprador",
             user_id: userId || null,
-          });
-          if (error) throw error;
-        }
+          };
+        });
+        const { error } = await supabase
+          .from("raffle_tickets")
+          .upsert(rows, { onConflict: "raffle_id,number" });
+        if (error) throw error;
       }
     },
-    onSuccess: () => {
-      toast.success("Número atualizado com sucesso!");
+    onSuccess: (_, vars) => {
+      toast.success(`${vars.numbers.length} número(s) atualizado(s) com sucesso!`);
       qc.invalidateQueries({ queryKey: ["raffle-tickets", selectedRaffleId] });
       qc.invalidateQueries({ queryKey: ["admin-customers", storeId] });
-      setEditNumber(null);
+      setSelectedNumbers([]);
+      setBatchModalOpen(false);
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -289,25 +269,49 @@ function AdminRifas() {
     onError: (e: any) => toast.error(e.message),
   });
 
-  // Handle number click to edit
-  const handleEditNumber = (num: number) => {
+  // Toggle selection of a number
+  const toggleNumberSelection = (num: number) => {
     if (selectedRaffle?.status === "drawn") {
       toast.error("Esta rifa já foi sorteada. Não é possível alterar números.");
       return;
     }
-    setEditNumber(num);
+    setSelectedNumbers((prev) =>
+      prev.includes(num) ? prev.filter((n) => n !== num) : [...prev, num].sort((a, b) => a - b)
+    );
   };
 
-  const handleSaveTicket = (e: React.FormEvent) => {
+  // Open modal for selected numbers
+  const handleOpenBatchEdit = () => {
+    if (selectedNumbers.length === 0) return;
+    
+    // If only 1 number selected, pre-fill its info
+    if (selectedNumbers.length === 1) {
+      const ticket = tickets?.find((t) => t.number === selectedNumbers[0]);
+      if (ticket) {
+        setTicketStatus(ticket.status as any);
+        setParticipantName(ticket.participant_name || "");
+        setSelectedUserId(ticket.user_id || "");
+      } else {
+        setTicketStatus("paid");
+        setParticipantName("");
+        setSelectedUserId("");
+      }
+    } else {
+      setTicketStatus("paid");
+      setParticipantName("");
+      setSelectedUserId("");
+    }
+    setBatchModalOpen(true);
+  };
+
+  const handleSaveBatchForm = (e: React.FormEvent) => {
     e.preventDefault();
-    if (editNumber === null) return;
-    const ticket = tickets?.find((t) => t.number === editNumber);
-    updateTicket.mutate({
-      number: editNumber,
+    if (selectedNumbers.length === 0) return;
+    batchUpdateTickets.mutate({
+      numbers: selectedNumbers,
       status: ticketStatus,
       participantName: participantName.trim() || "Comprador",
       userId: selectedUserId || null,
-      ticketId: ticket?.id,
     });
   };
 
@@ -360,11 +364,9 @@ function AdminRifas() {
       
       count++;
       if (count < maxShuffles) {
-        // Shuffling speed profile: gets slower
         const delay = count < 25 ? 70 : count < 35 ? 120 : count < 40 ? 250 : 500;
         drawIntervalRef.current = setTimeout(runShuffle, delay);
       } else {
-        // Reveal winner
         setAnimationNumber(String(winner.number).padStart(2, "0"));
         setAnimationName(winner.participant_name || "Comprador");
         setDrawnWinner({
@@ -411,14 +413,14 @@ function AdminRifas() {
   const freeCount = selectedRaffle ? selectedRaffle.total_numbers - paidCount - reservedCount : 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-black flex items-center gap-2">
             <Ticket className="h-7 w-7 text-primary" /> Gerenciador de Rifas
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Crie rifas de miniaturas, reserve ou confirme pagamentos de números, conceda pontos automáticos e realize sorteios eletrônicos.
+            Selecione múltiplos números de uma vez para atribuir clientes, confirmar pagamentos e conceder pontos automáticos.
           </p>
         </div>
         <Button onClick={() => setCreateOpen(true)} className="hw-gradient-orange text-white font-bold h-11 px-4">
@@ -539,15 +541,24 @@ function AdminRifas() {
 
                 {/* Main Content */}
                 <div className="p-6 space-y-6">
-                  {/* Points information alert */}
-                  <div className="flex items-start gap-3 bg-[#121212] border border-border/80 p-4 rounded-2xl">
-                    <Info className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                    <div className="text-xs text-muted-foreground leading-relaxed">
-                      <span className="font-bold text-white block">Atribuição Automática de Pontos:</span>
-                      Quando você altera o status de um número para <strong className="text-green-400">Pago</strong> e vincula o número a um
-                      cliente cadastrado, o sistema credita <strong className="text-primary">+{selectedRaffle.points_per_number} pontos</strong> automaticamente.
-                      Se o número for liberado ou alterado, os pontos serão estornados de forma automática.
+                  {/* Quick Tip Alert */}
+                  <div className="flex items-center justify-between gap-3 bg-[#121212] border border-border/80 p-4 rounded-2xl">
+                    <div className="flex items-center gap-3">
+                      <Info className="h-5 w-5 text-primary shrink-0" />
+                      <div className="text-xs text-muted-foreground">
+                        <strong className="text-white">Seleção Múltipla Ativa:</strong> Clique nos números desejados para selecionar mais de um ao mesmo tempo e editar em lote.
+                      </div>
                     </div>
+                    {selectedNumbers.length > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setSelectedNumbers([])}
+                        className="text-xs text-muted-foreground hover:text-white shrink-0"
+                      >
+                        Limpar seleção
+                      </Button>
+                    )}
                   </div>
 
                   {/* Draw summary if drawn */}
@@ -572,13 +583,24 @@ function AdminRifas() {
 
                   {/* Numbers Grid */}
                   <div className="space-y-3">
-                    <h3 className="font-bold text-sm text-white">Painel de Números da Rifa</h3>
+                    <div className="flex justify-between items-center">
+                      <h3 className="font-bold text-sm text-white">Painel de Números</h3>
+                      <div className="text-xs text-muted-foreground">
+                        {selectedNumbers.length > 0 ? (
+                          <span className="font-bold text-primary">{selectedNumbers.length} número(s) selecionado(s)</span>
+                        ) : (
+                          "Clique nos números para selecionar"
+                        )}
+                      </div>
+                    </div>
+
                     <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-2">
                       {Array.from({ length: selectedRaffle.total_numbers }).map((_, index) => {
                         const num = index + 1;
                         const ticket = ticketMap.get(num);
                         const isReserved = ticket?.status === "reserved";
                         const isPaid = ticket?.status === "paid";
+                        const isSelected = selectedNumbers.includes(num);
 
                         let bgClass = "bg-muted/20 border-border text-muted-foreground hover:bg-muted/50 hover:border-primary/40";
                         let titleText = `Nº ${String(num).padStart(2, "0")} - Livre`;
@@ -591,16 +613,23 @@ function AdminRifas() {
                           titleText = `Nº ${String(num).padStart(2, "0")} - Reservado por ${ticket.participant_name}`;
                         }
 
+                        if (isSelected) {
+                          bgClass = "bg-primary text-primary-foreground border-primary font-black ring-2 ring-primary/50 shadow-lg scale-105";
+                        }
+
                         return (
                           <button
                             key={num}
                             type="button"
                             title={titleText}
-                            onClick={() => handleEditNumber(num)}
-                            className={`h-12 rounded-xl border flex flex-col items-center justify-center text-xs font-black transition-all cursor-pointer ${bgClass}`}
+                            onClick={() => toggleNumberSelection(num)}
+                            className={`h-12 rounded-xl border flex flex-col items-center justify-center text-xs font-black transition-all cursor-pointer relative ${bgClass}`}
                           >
-                            <span>{String(num).padStart(2, "0")}</span>
-                            {ticket && (
+                            <span className="flex items-center gap-0.5">
+                              {isSelected && <Check className="h-3 w-3 shrink-0 stroke-[3]" />}
+                              {String(num).padStart(2, "0")}
+                            </span>
+                            {ticket && !isSelected && (
                               <span className="text-[7px] max-w-full truncate px-1 font-semibold leading-none opacity-80 mt-0.5">
                                 {ticket.participant_name?.split(" ")[0]}
                               </span>
@@ -620,6 +649,52 @@ function AdminRifas() {
           )}
         </div>
       </div>
+
+      {/* Floating Action Bar when numbers are selected */}
+      {selectedNumbers.length > 0 && selectedRaffle?.status === "active" && (
+        <div className="fixed bottom-6 inset-x-4 md:inset-x-auto md:left-1/2 md:-translate-x-1/2 z-50 bg-[#161616] border border-primary/40 rounded-2xl p-4 shadow-2xl backdrop-blur-lg hw-glow-orange flex flex-col sm:flex-row items-center justify-between gap-4 animate-in slide-in-from-bottom-5 duration-300">
+          <div className="flex items-center gap-3">
+            <Badge className="bg-primary text-primary-foreground font-black px-2.5 py-1 text-xs">
+              {selectedNumbers.length} selecionado(s)
+            </Badge>
+            <span className="text-xs text-white font-mono font-bold truncate max-w-[200px] sm:max-w-xs">
+              {selectedNumbers.map((n) => String(n).padStart(2, "0")).join(", ")}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap justify-end w-full sm:w-auto">
+            <Button
+              onClick={handleOpenBatchEdit}
+              className="hw-gradient-orange text-white font-bold h-9 text-xs px-3"
+            >
+              <Edit3 className="h-3.5 w-3.5 mr-1.5" /> Editar / Vincular Cliente
+            </Button>
+            <Button
+              onClick={() => {
+                batchUpdateTickets.mutate({
+                  numbers: selectedNumbers,
+                  status: "free",
+                  participantName: "",
+                  userId: null,
+                });
+              }}
+              variant="outline"
+              size="sm"
+              className="border-destructive/40 text-destructive hover:bg-destructive/10 h-9 text-xs"
+            >
+              Liberar Números
+            </Button>
+            <Button
+              onClick={() => setSelectedNumbers([])}
+              variant="ghost"
+              size="sm"
+              className="h-9 px-2 text-muted-foreground hover:text-white text-xs"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Dialog: Create Raffle */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
@@ -725,35 +800,37 @@ function AdminRifas() {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog: Edit Number Details */}
-      <Dialog open={editNumber !== null} onOpenChange={(open) => !open && setEditNumber(null)}>
-        <DialogContent className="sm:max-w-[450px] bg-card border-border text-foreground">
+      {/* Dialog: Batch Edit Selected Numbers */}
+      <Dialog open={batchModalOpen} onOpenChange={setBatchModalOpen}>
+        <DialogContent className="sm:max-w-[480px] bg-card border-border text-foreground">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-black text-white">Editar Número {String(editNumber).padStart(2, "0")}</DialogTitle>
+            <DialogTitle className="text-2xl font-black text-white">
+              Editar {selectedNumbers.length} Número(s)
+            </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">
-              Atribua o número a um cliente cadastrado ou preencha manualmente para um comprador externo.
+              Números selecionados: <strong className="text-primary">{selectedNumbers.map((n) => String(n).padStart(2, "0")).join(", ")}</strong>.
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSaveTicket} className="space-y-4 pt-4">
+          <form onSubmit={handleSaveBatchForm} className="space-y-4 pt-4">
             <div className="space-y-2">
-              <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Status do Número</Label>
+              <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Status para os Números</Label>
               <select
                 value={ticketStatus}
                 onChange={(e) => setTicketStatus(e.target.value as any)}
                 className="w-full bg-[#121212] border border-border text-white h-10 px-3 rounded-xl text-sm focus-visible:outline-none focus:border-primary"
               >
-                <option value="free">Livre / Disponível</option>
-                <option value="reserved">Reservado</option>
                 <option value="paid">Confirmado / Pago (Concede Pontos)</option>
+                <option value="reserved">Reservado</option>
+                <option value="free">Livre / Disponível (Remover)</option>
               </select>
             </div>
 
             {ticketStatus !== "free" && (
               <>
                 <div className="space-y-2">
-                  <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Comprador Cadastrado (Opcional)</Label>
+                  <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Vincular a Cliente Cadastrado (Opcional)</Label>
                   <p className="text-[10px] text-muted-foreground">
-                    Vincula o número a um usuário registrado para conceder pontos automaticamente.
+                    Ao selecionar um cliente cadastrado e marcar como Pago, o cliente receberá <strong className="text-primary font-bold">+{selectedRaffle?.points_per_number || 0} pts</strong> por cada número selecionado.
                   </p>
                   <CustomerCombobox
                     customers={customers ?? []}
@@ -765,12 +842,12 @@ function AdminRifas() {
                         setParticipantName(customer.full_name || customer.email || "");
                       }
                     }}
-                    placeholder="Buscar cliente por nome ou whatsapp..."
+                    placeholder="Pesquisar cliente por nome ou whatsapp..."
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Nome do Participante</Label>
+                  <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Nome do Comprador / Participante</Label>
                   <Input
                     value={participantName}
                     onChange={(e) => setParticipantName(e.target.value)}
@@ -783,11 +860,11 @@ function AdminRifas() {
             )}
 
             <div className="flex justify-end gap-3 pt-4 border-t border-border/60">
-              <Button type="button" variant="ghost" onClick={() => setEditNumber(null)}>
+              <Button type="button" variant="ghost" onClick={() => setBatchModalOpen(false)}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={updateTicket.isPending} className="hw-gradient-orange text-white font-bold">
-                {updateTicket.isPending ? "Salvando..." : "Salvar Alterações"}
+              <Button type="submit" disabled={batchUpdateTickets.isPending} className="hw-gradient-orange text-white font-bold">
+                {batchUpdateTickets.isPending ? "Aplicando..." : `Salvar (${selectedNumbers.length} Números)`}
               </Button>
             </div>
           </form>
@@ -804,7 +881,6 @@ function AdminRifas() {
           <div className="flex flex-col items-center justify-center py-10 space-y-6">
             {/* Spinning Slot/Box */}
             <div className={`w-36 h-36 rounded-3xl flex flex-col items-center justify-center border-2 border-primary/50 relative overflow-hidden bg-card shadow-2xl ${isDrawing ? "hw-glow-orange animate-pulse" : "hw-glow-orange border-green-500/60 shadow-green-500/20"}`}>
-              {/* Spinning background effect */}
               {isDrawing && (
                 <div className="absolute inset-0 bg-gradient-to-t from-primary/10 via-transparent to-primary/10 animate-pulse pointer-events-none" />
               )}
