@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Boxes, Plus, Trash2, Edit3, ShoppingCart, Sparkles, ChevronDown, Car, Tag } from "lucide-react";
+import { Boxes, Plus, Trash2, Edit3, ShoppingCart, Sparkles, ChevronDown, Car, Tag, Upload, X } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/estoque")({
   component: AdminEstoque,
@@ -23,9 +23,13 @@ function AdminEstoque() {
 
   const [createOpen, setCreateOpen] = useState(false);
   const [sellItem, setSellItem] = useState<any | null>(null);
+  const [editItem, setEditItem] = useState<any | null>(null);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
 
-  // Product form states
+  const [uploadingCreateImage, setUploadingCreateImage] = useState(false);
+  const [uploadingEditImage, setUploadingEditImage] = useState(false);
+
+  // Product form states for Create
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState(35);
@@ -33,6 +37,59 @@ function AdminEstoque() {
   const [imageUrl, setImageUrl] = useState("");
   const [category, setCategory] = useState("Mainline");
   const [stockQuantity, setStockQuantity] = useState(1);
+
+  // Product form states for Edit
+  const [editName, setEditName] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editPrice, setEditPrice] = useState(35);
+  const [editPointsReward, setEditPointsReward] = useState(35);
+  const [editImageUrl, setEditImageUrl] = useState("");
+  const [editCategory, setEditCategory] = useState("Mainline");
+  const [editStockQuantity, setEditStockQuantity] = useState(1);
+  const [editStatus, setEditStatus] = useState("available");
+
+  // File Upload Helper
+  const handleFileUpload = async (file: File, isEdit: boolean = false) => {
+    if (isEdit) setUploadingEditImage(true);
+    else setUploadingCreateImage(true);
+
+    try {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `inventory/${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("images")
+        .upload(fileName, file, { cacheControl: "3600", upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage.from("images").getPublicUrl(fileName);
+      if (isEdit) {
+        setEditImageUrl(data.publicUrl);
+      } else {
+        setImageUrl(data.publicUrl);
+      }
+
+      toast.success("Foto enviada com sucesso!");
+    } catch (err: any) {
+      toast.error(`Erro no upload da foto: ${err.message}`);
+    } finally {
+      if (isEdit) setUploadingEditImage(false);
+      else setUploadingCreateImage(false);
+    }
+  };
+
+  const handleOpenEdit = (item: any) => {
+    setEditItem(item);
+    setEditName(item.name);
+    setEditDescription(item.description || "");
+    setEditPrice(item.price);
+    setEditPointsReward(item.points_reward);
+    setEditImageUrl(item.image_url || "");
+    setEditCategory(item.category);
+    setEditStockQuantity(item.stock_quantity);
+    setEditStatus(item.status);
+  };
 
   // Fetch customers
   const { data: customers } = useQuery({
@@ -90,6 +147,22 @@ function AdminEstoque() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const updateItem = useMutation({
+    mutationFn: async (values: any) => {
+      const { error } = await supabase
+        .from("store_inventory")
+        .update(values)
+        .eq("id", editItem.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Produto atualizado com sucesso!");
+      qc.invalidateQueries({ queryKey: ["admin-inventory", storeId] });
+      setEditItem(null);
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const deleteItem = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("store_inventory").delete().eq("id", id);
@@ -102,10 +175,9 @@ function AdminEstoque() {
     onError: (e: any) => toast.error(e.message),
   });
 
-  // 1-Click Sell: Transfers item to customer's garage & awards points automatically
+  // 1-Click Sell
   const executeSell = useMutation({
     mutationFn: async ({ item, customerId }: { item: any; customerId: string }) => {
-      // 1. Insert into cars table
       const { error: carError } = await supabase.from("cars").insert({
         store_id: storeId!,
         user_id: customerId,
@@ -117,7 +189,6 @@ function AdminEstoque() {
       });
       if (carError) throw carError;
 
-      // 2. Decrement stock or mark sold
       const newQty = item.stock_quantity - 1;
       const newStatus = newQty <= 0 ? "sold" : "available";
       const { error: invError } = await supabase
@@ -212,6 +283,15 @@ function AdminEstoque() {
                     className="flex-1 hw-gradient-orange text-white font-bold h-9 text-xs"
                   >
                     <ShoppingCart className="h-3.5 w-3.5 mr-1.5" /> Vender p/ Cliente
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleOpenEdit(item)}
+                    className="h-9 w-9 text-muted-foreground hover:text-white hover:bg-muted shrink-0"
+                    title="Editar produto"
+                  >
+                    <Edit3 className="h-4 w-4" />
                   </Button>
                   <Button
                     variant="ghost"
@@ -317,13 +397,49 @@ function AdminEstoque() {
               </div>
             </div>
 
+            {/* Photo Upload Section */}
             <div className="space-y-2">
-              <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">URL da Foto (Opcional)</Label>
+              <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Foto da Miniatura</Label>
+
+              {imageUrl && (
+                <div className="h-28 w-full rounded-xl overflow-hidden bg-muted border border-border relative group mb-2">
+                  <img src={imageUrl} alt="Preview" className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => setImageUrl("")}
+                    className="absolute top-2 right-2 bg-black/70 text-white rounded-full p-1 hover:bg-red-600 transition-colors text-xs"
+                    title="Remover imagem"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              )}
+
+              <div className="flex gap-2">
+                <label className="flex-1 cursor-pointer">
+                  <div className="bg-[#121212] border border-dashed border-border hover:border-primary/50 text-white rounded-xl h-11 px-3 flex items-center justify-center gap-2 text-xs font-bold transition-colors">
+                    <Upload className="h-4 w-4 text-primary" />
+                    {uploadingCreateImage ? "Enviando imagem..." : "Upload de arquivo de foto"}
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    disabled={uploadingCreateImage}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleFileUpload(file, false);
+                    }}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+
+              <div className="text-[10px] text-muted-foreground">Ou insira uma URL de imagem externa se preferir:</div>
               <Input
                 value={imageUrl}
                 onChange={(e) => setImageUrl(e.target.value)}
-                placeholder="https://imagem-do-carro.com/foto.jpg"
-                className="bg-[#121212] border-border text-white"
+                placeholder="https://..."
+                className="bg-[#121212] border-border text-white text-xs h-9"
               />
             </div>
 
@@ -331,8 +447,163 @@ function AdminEstoque() {
               <Button type="button" variant="ghost" onClick={() => setCreateOpen(false)}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={createItem.isPending} className="hw-gradient-orange text-white font-bold">
+              <Button type="submit" disabled={createItem.isPending || uploadingCreateImage} className="hw-gradient-orange text-white font-bold">
                 {createItem.isPending ? "Adicionando..." : "Adicionar Produto"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog: Edit Product */}
+      <Dialog open={editItem !== null} onOpenChange={(open) => !open && setEditItem(null)}>
+        <DialogContent className="sm:max-w-[480px] bg-card border-border text-foreground">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-black flex items-center gap-2">
+              <Edit3 className="h-6 w-6 text-primary" /> Editar Produto no Estoque
+            </DialogTitle>
+          </DialogHeader>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              updateItem.mutate({
+                name: editName,
+                description: editDescription,
+                price: Number(editPrice),
+                points_reward: Number(editPointsReward),
+                image_url: editImageUrl.trim() || null,
+                category: editCategory,
+                stock_quantity: Number(editStockQuantity),
+                status: editStatus,
+              });
+            }}
+            className="space-y-4 pt-4"
+          >
+            <div className="space-y-2">
+              <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Nome da Miniatura</Label>
+              <Input
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                required
+                className="bg-[#121212] border-border text-white"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Preço (R$)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={editPrice}
+                  onChange={(e) => setEditPrice(Number(e.target.value))}
+                  required
+                  className="bg-[#121212] border-border text-white"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Pontos Gerados</Label>
+                <Input
+                  type="number"
+                  value={editPointsReward}
+                  onChange={(e) => setEditPointsReward(Number(e.target.value))}
+                  required
+                  className="bg-[#121212] border-border text-white"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-2">
+                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Categoria</Label>
+                <select
+                  value={editCategory}
+                  onChange={(e) => setEditCategory(e.target.value)}
+                  className="w-full bg-[#121212] border border-border text-white h-10 px-2 rounded-xl text-xs focus-visible:outline-none focus:border-primary"
+                >
+                  <option value="Mainline">Mainline</option>
+                  <option value="Premium">Premium</option>
+                  <option value="TH">TH</option>
+                  <option value="STH">STH</option>
+                  <option value="Custom">Custom</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Qtd. Estoque</Label>
+                <Input
+                  type="number"
+                  value={editStockQuantity}
+                  onChange={(e) => setEditStockQuantity(Number(e.target.value))}
+                  required
+                  className="bg-[#121212] border-border text-white"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Status</Label>
+                <select
+                  value={editStatus}
+                  onChange={(e) => setEditStatus(e.target.value)}
+                  className="w-full bg-[#121212] border border-border text-white h-10 px-2 rounded-xl text-xs focus-visible:outline-none focus:border-primary"
+                >
+                  <option value="available">Disponível</option>
+                  <option value="reserved">Reservado</option>
+                  <option value="sold">Esgotado</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Photo Upload Section for Edit */}
+            <div className="space-y-2">
+              <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Foto da Miniatura</Label>
+
+              {editImageUrl && (
+                <div className="h-28 w-full rounded-xl overflow-hidden bg-muted border border-border relative group mb-2">
+                  <img src={editImageUrl} alt="Preview" className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => setEditImageUrl("")}
+                    className="absolute top-2 right-2 bg-black/70 text-white rounded-full p-1 hover:bg-red-600 transition-colors text-xs"
+                    title="Remover imagem"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              )}
+
+              <div className="flex gap-2">
+                <label className="flex-1 cursor-pointer">
+                  <div className="bg-[#121212] border border-dashed border-border hover:border-primary/50 text-white rounded-xl h-11 px-3 flex items-center justify-center gap-2 text-xs font-bold transition-colors">
+                    <Upload className="h-4 w-4 text-primary" />
+                    {uploadingEditImage ? "Enviando imagem..." : "Upload de arquivo de foto"}
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    disabled={uploadingEditImage}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleFileUpload(file, true);
+                    }}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+
+              <div className="text-[10px] text-muted-foreground">Ou insira uma URL de imagem externa se preferir:</div>
+              <Input
+                value={editImageUrl}
+                onChange={(e) => setEditImageUrl(e.target.value)}
+                placeholder="https://..."
+                className="bg-[#121212] border-border text-white text-xs h-9"
+              />
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4 border-t border-border/60">
+              <Button type="button" variant="ghost" onClick={() => setEditItem(null)}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={updateItem.isPending || uploadingEditImage} className="hw-gradient-orange text-white font-bold">
+                {updateItem.isPending ? "Salvando..." : "Salvar Alterações"}
               </Button>
             </div>
           </form>

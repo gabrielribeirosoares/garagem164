@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Car, Trash2, PlusCircle, Search, RotateCcw, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
+import { Car, Trash2, PlusCircle, Search, RotateCcw, ChevronLeft, ChevronRight, ChevronDown, Upload, X } from "lucide-react";
 import { RAW } from "@/components/ui/data";
 import { useOwnedStore } from "@/hooks/useStore";
 
@@ -21,7 +21,29 @@ function AddCarros() {
   const storeId = store?.id;
   const [userId, setUserId] = useState<string>("");
   const [name, setName] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  const handleFileUpload = async (file: File) => {
+    setUploadingImage(true);
+    try {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `cars/${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("images")
+        .upload(fileName, file, { cacheControl: "3600", upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage.from("images").getPublicUrl(fileName);
+      setImageUrl(data.publicUrl);
+      toast.success("Foto enviada com sucesso!");
+    } catch (err: any) {
+      toast.error(`Erro no upload da foto: ${err.message}`);
+    } finally {
+      setUploadingImage(false);
+    }
+  };
   const [points, setPoints] = useState<number>(10);
   
   const [showLinkInput, setShowLinkInput] = useState(false);
@@ -363,8 +385,43 @@ function AddCarros() {
           </div>
 
           <div className="space-y-2">
-            <Label>URL da imagem</Label>
-            <Input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://..." />
+            <Label className="text-xs font-bold uppercase tracking-wider">Foto do Carro</Label>
+
+            {imageUrl && (
+              <div className="h-28 w-full rounded-xl overflow-hidden bg-muted border border-border relative group mb-2">
+                <img src={imageUrl} alt="Preview" className="w-full h-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => setImageUrl("")}
+                  className="absolute top-2 right-2 bg-black/70 text-white rounded-full p-1 hover:bg-red-600 transition-colors text-xs"
+                  title="Remover imagem"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <label className="flex-1 cursor-pointer">
+                <div className="bg-[#121212] border border-dashed border-border hover:border-primary/50 text-white rounded-xl h-11 px-3 flex items-center justify-center gap-2 text-xs font-bold transition-colors">
+                  <Upload className="h-4 w-4 text-primary" />
+                  {uploadingImage ? "Enviando foto..." : "Upload de arquivo de foto"}
+                </div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  disabled={uploadingImage}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleFileUpload(file);
+                  }}
+                  className="hidden"
+                />
+              </label>
+            </div>
+
+            <div className="text-[10px] text-muted-foreground">Ou insira uma URL de imagem externa se preferir:</div>
+            <Input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://..." className="bg-[#121212] border-border text-white text-xs h-9" />
           </div>
 
           <div className="space-y-2">
