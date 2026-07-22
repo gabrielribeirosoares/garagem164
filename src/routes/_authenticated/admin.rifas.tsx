@@ -231,24 +231,37 @@ function AdminRifas() {
       image_urls: string[];
     }) => {
       const primaryUrl = values.image_urls.length > 0 ? values.image_urls[0] : null;
+      const payload: any = {
+        title: values.title,
+        description: values.description,
+        price_per_number: values.price_per_number,
+        points_per_number: values.points_per_number,
+        pix_key: values.pix_key,
+        total_numbers: values.total_numbers,
+        max_winners: values.max_winners,
+        image_url: primaryUrl,
+        image_urls: values.image_urls,
+        store_id: storeId!,
+        status: "active",
+      };
+
       const { data, error } = await supabase
         .from("raffles")
-        .insert({
-          title: values.title,
-          description: values.description,
-          price_per_number: values.price_per_number,
-          points_per_number: values.points_per_number,
-          pix_key: values.pix_key,
-          total_numbers: values.total_numbers,
-          max_winners: values.max_winners,
-          image_url: primaryUrl,
-          image_urls: values.image_urls,
-          store_id: storeId!,
-          status: "active",
-        })
+        .insert(payload)
         .select()
         .single();
-      if (error) throw error;
+      
+      if (error) {
+        if (error.message?.includes("image_url")) {
+          // Schema cache hasn't updated on server yet -> retry without image_url fields
+          delete payload.image_url;
+          delete payload.image_urls;
+          const retry = await supabase.from("raffles").insert(payload).select().single();
+          if (retry.error) throw retry.error;
+          return retry.data;
+        }
+        throw error;
+      }
       return data;
     },
     onSuccess: (data) => {
@@ -280,22 +293,35 @@ function AdminRifas() {
       image_urls: string[];
     }) => {
       const primaryUrl = values.image_urls.length > 0 ? values.image_urls[0] : null;
+      const payload: any = {
+        title: values.title,
+        description: values.description,
+        price_per_number: values.price_per_number,
+        points_per_number: values.points_per_number,
+        pix_key: values.pix_key,
+        max_winners: values.max_winners,
+        image_url: primaryUrl,
+        image_urls: values.image_urls,
+      };
+
       const { data, error } = await supabase
         .from("raffles")
-        .update({
-          title: values.title,
-          description: values.description,
-          price_per_number: values.price_per_number,
-          points_per_number: values.points_per_number,
-          pix_key: values.pix_key,
-          max_winners: values.max_winners,
-          image_url: primaryUrl,
-          image_urls: values.image_urls,
-        })
+        .update(payload)
         .eq("id", values.id)
         .select()
         .single();
-      if (error) throw error;
+      
+      if (error) {
+        if (error.message?.includes("image_url")) {
+          // Schema cache hasn't updated on server yet -> retry without image_url fields
+          delete payload.image_url;
+          delete payload.image_urls;
+          const retry = await supabase.from("raffles").update(payload).eq("id", values.id).select().single();
+          if (retry.error) throw retry.error;
+          return retry.data;
+        }
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {
