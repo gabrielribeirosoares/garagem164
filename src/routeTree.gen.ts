@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SaasRouteImport } from './routes/saas'
 import { Route as CreateStoreRouteImport } from './routes/create-store'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as StoreSlugRouteImport } from './routes/$storeSlug'
@@ -17,6 +18,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as StoreSlugIndexRouteImport } from './routes/$storeSlug.index'
 import { Route as AuthenticatedRifasRouteImport } from './routes/_authenticated/rifas'
 import { Route as AuthenticatedRecompensasRouteImport } from './routes/_authenticated/recompensas'
+import { Route as AuthenticatedRankingRouteImport } from './routes/_authenticated/ranking'
+import { Route as AuthenticatedLojaRouteImport } from './routes/_authenticated/loja'
 import { Route as AuthenticatedGaragemRouteImport } from './routes/_authenticated/garagem'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as StoreSlugLoginRouteImport } from './routes/$storeSlug.login'
@@ -25,8 +28,14 @@ import { Route as AuthenticatedAdminRifasRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminResgatesRouteImport } from './routes/_authenticated/admin.resgates'
 import { Route as AuthenticatedAdminRecompensasRouteImport } from './routes/_authenticated/admin.recompensas'
 import { Route as AuthenticatedAdminGaragensRouteImport } from './routes/_authenticated/admin.garagens'
+import { Route as AuthenticatedAdminEstoqueRouteImport } from './routes/_authenticated/admin.estoque'
 import { Route as AuthenticatedAdminCarrosRouteImport } from './routes/_authenticated/admin.carros'
 
+const SaasRoute = SaasRouteImport.update({
+  id: '/saas',
+  path: '/saas',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CreateStoreRoute = CreateStoreRouteImport.update({
   id: '/create-store',
   path: '/create-store',
@@ -67,6 +76,16 @@ const AuthenticatedRecompensasRoute =
     path: '/recompensas',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedRankingRoute = AuthenticatedRankingRouteImport.update({
+  id: '/ranking',
+  path: '/ranking',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedLojaRoute = AuthenticatedLojaRouteImport.update({
+  id: '/loja',
+  path: '/loja',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedGaragemRoute = AuthenticatedGaragemRouteImport.update({
   id: '/garagem',
   path: '/garagem',
@@ -110,6 +129,12 @@ const AuthenticatedAdminGaragensRoute =
     path: '/garagens',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminEstoqueRoute =
+  AuthenticatedAdminEstoqueRouteImport.update({
+    id: '/estoque',
+    path: '/estoque',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminCarrosRoute =
   AuthenticatedAdminCarrosRouteImport.update({
     id: '/carros',
@@ -122,13 +147,17 @@ export interface FileRoutesByFullPath {
   '/$storeSlug': typeof StoreSlugRouteWithChildren
   '/auth': typeof AuthRoute
   '/create-store': typeof CreateStoreRoute
+  '/saas': typeof SaasRoute
   '/$storeSlug/login': typeof StoreSlugLoginRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/garagem': typeof AuthenticatedGaragemRoute
+  '/loja': typeof AuthenticatedLojaRoute
+  '/ranking': typeof AuthenticatedRankingRoute
   '/recompensas': typeof AuthenticatedRecompensasRoute
   '/rifas': typeof AuthenticatedRifasRoute
   '/$storeSlug/': typeof StoreSlugIndexRoute
   '/admin/carros': typeof AuthenticatedAdminCarrosRoute
+  '/admin/estoque': typeof AuthenticatedAdminEstoqueRoute
   '/admin/garagens': typeof AuthenticatedAdminGaragensRoute
   '/admin/recompensas': typeof AuthenticatedAdminRecompensasRoute
   '/admin/resgates': typeof AuthenticatedAdminResgatesRoute
@@ -139,12 +168,16 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/create-store': typeof CreateStoreRoute
+  '/saas': typeof SaasRoute
   '/$storeSlug/login': typeof StoreSlugLoginRoute
   '/garagem': typeof AuthenticatedGaragemRoute
+  '/loja': typeof AuthenticatedLojaRoute
+  '/ranking': typeof AuthenticatedRankingRoute
   '/recompensas': typeof AuthenticatedRecompensasRoute
   '/rifas': typeof AuthenticatedRifasRoute
   '/$storeSlug': typeof StoreSlugIndexRoute
   '/admin/carros': typeof AuthenticatedAdminCarrosRoute
+  '/admin/estoque': typeof AuthenticatedAdminEstoqueRoute
   '/admin/garagens': typeof AuthenticatedAdminGaragensRoute
   '/admin/recompensas': typeof AuthenticatedAdminRecompensasRoute
   '/admin/resgates': typeof AuthenticatedAdminResgatesRoute
@@ -158,13 +191,17 @@ export interface FileRoutesById {
   '/$storeSlug': typeof StoreSlugRouteWithChildren
   '/auth': typeof AuthRoute
   '/create-store': typeof CreateStoreRoute
+  '/saas': typeof SaasRoute
   '/$storeSlug/login': typeof StoreSlugLoginRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/garagem': typeof AuthenticatedGaragemRoute
+  '/_authenticated/loja': typeof AuthenticatedLojaRoute
+  '/_authenticated/ranking': typeof AuthenticatedRankingRoute
   '/_authenticated/recompensas': typeof AuthenticatedRecompensasRoute
   '/_authenticated/rifas': typeof AuthenticatedRifasRoute
   '/$storeSlug/': typeof StoreSlugIndexRoute
   '/_authenticated/admin/carros': typeof AuthenticatedAdminCarrosRoute
+  '/_authenticated/admin/estoque': typeof AuthenticatedAdminEstoqueRoute
   '/_authenticated/admin/garagens': typeof AuthenticatedAdminGaragensRoute
   '/_authenticated/admin/recompensas': typeof AuthenticatedAdminRecompensasRoute
   '/_authenticated/admin/resgates': typeof AuthenticatedAdminResgatesRoute
@@ -178,13 +215,17 @@ export interface FileRouteTypes {
     | '/$storeSlug'
     | '/auth'
     | '/create-store'
+    | '/saas'
     | '/$storeSlug/login'
     | '/admin'
     | '/garagem'
+    | '/loja'
+    | '/ranking'
     | '/recompensas'
     | '/rifas'
     | '/$storeSlug/'
     | '/admin/carros'
+    | '/admin/estoque'
     | '/admin/garagens'
     | '/admin/recompensas'
     | '/admin/resgates'
@@ -195,12 +236,16 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/create-store'
+    | '/saas'
     | '/$storeSlug/login'
     | '/garagem'
+    | '/loja'
+    | '/ranking'
     | '/recompensas'
     | '/rifas'
     | '/$storeSlug'
     | '/admin/carros'
+    | '/admin/estoque'
     | '/admin/garagens'
     | '/admin/recompensas'
     | '/admin/resgates'
@@ -213,13 +258,17 @@ export interface FileRouteTypes {
     | '/$storeSlug'
     | '/auth'
     | '/create-store'
+    | '/saas'
     | '/$storeSlug/login'
     | '/_authenticated/admin'
     | '/_authenticated/garagem'
+    | '/_authenticated/loja'
+    | '/_authenticated/ranking'
     | '/_authenticated/recompensas'
     | '/_authenticated/rifas'
     | '/$storeSlug/'
     | '/_authenticated/admin/carros'
+    | '/_authenticated/admin/estoque'
     | '/_authenticated/admin/garagens'
     | '/_authenticated/admin/recompensas'
     | '/_authenticated/admin/resgates'
@@ -233,10 +282,18 @@ export interface RootRouteChildren {
   StoreSlugRoute: typeof StoreSlugRouteWithChildren
   AuthRoute: typeof AuthRoute
   CreateStoreRoute: typeof CreateStoreRoute
+  SaasRoute: typeof SaasRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/saas': {
+      id: '/saas'
+      path: '/saas'
+      fullPath: '/saas'
+      preLoaderRoute: typeof SaasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/create-store': {
       id: '/create-store'
       path: '/create-store'
@@ -291,6 +348,20 @@ declare module '@tanstack/react-router' {
       path: '/recompensas'
       fullPath: '/recompensas'
       preLoaderRoute: typeof AuthenticatedRecompensasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/ranking': {
+      id: '/_authenticated/ranking'
+      path: '/ranking'
+      fullPath: '/ranking'
+      preLoaderRoute: typeof AuthenticatedRankingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/loja': {
+      id: '/_authenticated/loja'
+      path: '/loja'
+      fullPath: '/loja'
+      preLoaderRoute: typeof AuthenticatedLojaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/garagem': {
@@ -349,6 +420,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminGaragensRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/estoque': {
+      id: '/_authenticated/admin/estoque'
+      path: '/estoque'
+      fullPath: '/admin/estoque'
+      preLoaderRoute: typeof AuthenticatedAdminEstoqueRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/carros': {
       id: '/_authenticated/admin/carros'
       path: '/carros'
@@ -361,6 +439,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminCarrosRoute: typeof AuthenticatedAdminCarrosRoute
+  AuthenticatedAdminEstoqueRoute: typeof AuthenticatedAdminEstoqueRoute
   AuthenticatedAdminGaragensRoute: typeof AuthenticatedAdminGaragensRoute
   AuthenticatedAdminRecompensasRoute: typeof AuthenticatedAdminRecompensasRoute
   AuthenticatedAdminResgatesRoute: typeof AuthenticatedAdminResgatesRoute
@@ -370,6 +449,7 @@ interface AuthenticatedAdminRouteChildren {
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminCarrosRoute: AuthenticatedAdminCarrosRoute,
+  AuthenticatedAdminEstoqueRoute: AuthenticatedAdminEstoqueRoute,
   AuthenticatedAdminGaragensRoute: AuthenticatedAdminGaragensRoute,
   AuthenticatedAdminRecompensasRoute: AuthenticatedAdminRecompensasRoute,
   AuthenticatedAdminResgatesRoute: AuthenticatedAdminResgatesRoute,
@@ -383,6 +463,8 @@ const AuthenticatedAdminRouteWithChildren =
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedGaragemRoute: typeof AuthenticatedGaragemRoute
+  AuthenticatedLojaRoute: typeof AuthenticatedLojaRoute
+  AuthenticatedRankingRoute: typeof AuthenticatedRankingRoute
   AuthenticatedRecompensasRoute: typeof AuthenticatedRecompensasRoute
   AuthenticatedRifasRoute: typeof AuthenticatedRifasRoute
 }
@@ -390,6 +472,8 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedGaragemRoute: AuthenticatedGaragemRoute,
+  AuthenticatedLojaRoute: AuthenticatedLojaRoute,
+  AuthenticatedRankingRoute: AuthenticatedRankingRoute,
   AuthenticatedRecompensasRoute: AuthenticatedRecompensasRoute,
   AuthenticatedRifasRoute: AuthenticatedRifasRoute,
 }
@@ -417,6 +501,7 @@ const rootRouteChildren: RootRouteChildren = {
   StoreSlugRoute: StoreSlugRouteWithChildren,
   AuthRoute: AuthRoute,
   CreateStoreRoute: CreateStoreRoute,
+  SaasRoute: SaasRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
