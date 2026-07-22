@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useSession, useRole } from "@/hooks/useAuth";
+import { lovable } from "@/integrations/lovable";
 import { useStoreBySlug, setActiveStoreSlug } from "@/hooks/useStore";
 import { Store } from "lucide-react";
 
@@ -53,7 +54,7 @@ function StoreLogin() {
     if (error) return toast.error(error.message);
     // Auto-link user to this store if not already linked
     if (store?.id) {
-      await supabase.rpc("link_user_to_store", { _store_id: store.id }).catch(() => {});
+      try { await supabase.rpc("link_user_to_store", { _store_id: store.id }); } catch {}
     }
     toast.success("Bem-vindo!");
   }
@@ -78,19 +79,18 @@ function StoreLogin() {
     if (error) return toast.error(error.message);
     // If user was auto-confirmed (no email verification), link immediately
     if (signUpData?.user && store?.id) {
-      await supabase.rpc("link_user_to_store", { _store_id: store.id }).catch(() => {});
+      try { await supabase.rpc("link_user_to_store", { _store_id: store.id }); } catch {}
     }
     toast.success("Conta criada! Verifique seu e-mail se necessário.");
   }
 
   async function handleGoogle() {
     setLoading(true);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${window.location.origin}/${storeSlug}` },
+    const result = await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: `${window.location.origin}/${storeSlug}`,
     });
     setLoading(false);
-    if (error) toast.error(error.message);
+    if (result.error) toast.error(result.error.message);
   }
 
   return (

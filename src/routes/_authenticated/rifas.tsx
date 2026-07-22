@@ -120,7 +120,7 @@ function ClientRifas() {
         .from("raffle_tickets")
         .delete()
         .eq("id", ticketId)
-        .eq("user_id", user?.id)
+        .eq("user_id", user?.id ?? "")
         .eq("status", "reserved");
       if (error) throw error;
     },
