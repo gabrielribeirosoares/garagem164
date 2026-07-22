@@ -63,9 +63,9 @@ function AdminRifas() {
   const [participantName, setParticipantName] = useState("");
   const [selectedUserId, setSelectedUserId] = useState<string>("");
 
-  // Draw animation states
+  // Draw animation states (Suporte a múltiplos ganhadores)
   const [isDrawing, setIsDrawing] = useState(false);
-  const [drawnWinner, setDrawnWinner] = useState<{ number: number; name: string; user_id: string | null } | null>(null);
+  const [drawnWinners, setDrawnWinners] = useState<Array<{ number: number; name: string; user_id: string | null }>>([]);
   const [animationNumber, setAnimationNumber] = useState<string>("00");
   const [animationName, setAnimationName] = useState<string>("Carregando...");
   const drawIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -244,23 +244,23 @@ function AdminRifas() {
     onError: (e: any) => toast.error(e.message),
   });
 
-  const saveWinner = useMutation({
+  const saveWinners = useMutation({
     mutationFn: async ({
-      winnerNumber,
-      winnerName,
-      winnerUserId,
+      winners,
     }: {
-      winnerNumber: number;
-      winnerName: string;
-      winnerUserId: string | null;
+      winners: Array<{ number: number; name: string; user_id: string | null }>;
     }) => {
+      const winnerNameFormatted = winners.map((w, i) => `${i + 1}º: ${w.name}`).join(", ");
+      const firstWinnerNumber = winners[0]?.number || null;
+      const firstWinnerUserId = winners[0]?.user_id || null;
+
       const { error } = await supabase
         .from("raffles")
         .update({
           status: "drawn",
-          winner_number: winnerNumber,
-          winner_name: winnerName,
-          winner_user_id: winnerUserId,
+          winner_number: firstWinnerNumber,
+          winner_name: winnerNameFormatted,
+          winner_user_id: firstWinnerUserId,
           drawn_at: new Date().toISOString(),
         })
         .eq("id", selectedRaffleId!);
@@ -287,7 +287,6 @@ function AdminRifas() {
   const handleOpenBatchEdit = () => {
     if (selectedNumbers.length === 0) return;
     
-    // If only 1 number selected, pre-fill its info
     if (selectedNumbers.length === 1) {
       const ticket = tickets?.find((t) => t.number === selectedNumbers[0]);
       if (ticket) {
@@ -344,7 +343,7 @@ function AdminRifas() {
     toast.success("Lista de rifa copiada para o WhatsApp!");
   };
 
-  // Electronic Draw logic
+  // Electronic Draw logic para múltiplos ganhadores
   const handleStartDraw = () => {
     const paidTickets = tickets?.filter((t) => t.status === "paid") || [];
     if (!paidTickets.length) {
@@ -352,11 +351,20 @@ function AdminRifas() {
       return;
     }
 
-    setDrawnWinner(null);
+    const targetWinnersCount = Math.min((selectedRaffle as any)?.max_winners || 1, paidTickets.length);
+
+    setDrawnWinners([]);
     setIsDrawing(true);
     setDrawOpen(true);
 
-    const winner = paidTickets[Math.floor(Math.random() * paidTickets.length)];
+    // Seleciona ganhadores sem repetição
+    const shuffled = [...paidTickets].sort(() => Math.random() - 0.5);
+    const selectedWinnersList = shuffled.slice(0, targetWinnersCount).map((t) => ({
+      number: t.number,
+      name: t.participant_name || "Comprador",
+      user_id: t.user_id,
+    }));
+
     let count = 0;
     const maxShuffles = 45;
 
@@ -370,19 +378,11 @@ function AdminRifas() {
         const delay = count < 25 ? 70 : count < 35 ? 120 : count < 40 ? 250 : 500;
         drawIntervalRef.current = setTimeout(runShuffle, delay);
       } else {
-        setAnimationNumber(String(winner.number).padStart(2, "0"));
-        setAnimationName(winner.participant_name || "Comprador");
-        setDrawnWinner({
-          number: winner.number,
-          name: winner.participant_name || "Comprador",
-          user_id: winner.user_id,
-        });
+        setAnimationNumber(String(selectedWinnersList[0].number).padStart(2, "0"));
+        setAnimationName(selectedWinnersList[0].name);
+        setDrawnWinners(selectedWinnersList);
         setIsDrawing(false);
-        saveWinner.mutate({
-          winnerNumber: winner.number,
-          winnerName: winner.participant_name || "Comprador",
-          winnerUserId: winner.user_id,
-        });
+        saveWinners.mutate({ winners: selectedWinnersList });
       }
     };
 
@@ -566,20 +566,17 @@ function AdminRifas() {
 
                   {/* Draw summary if drawn */}
                   {selectedRaffle.status === "drawn" && (
-                    <div className="bg-green-500/10 border border-green-500/20 rounded-2xl p-5 flex items-center justify-between gap-4">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 bg-yellow-500 text-black flex items-center justify-center rounded-xl font-bold shrink-0">
+                    <div className="bg-green-500/10 border border-green-500/20 rounded-2xl p-5 flex items-start justify-between gap-4">
+                      <div className="flex items-start gap-3">
+                        <div className="h-10 w-10 bg-yellow-500 text-black flex items-center justify-center rounded-xl font-bold shrink-0 mt-0.5">
                           <Trophy className="h-5 w-5" />
                         </div>
                         <div>
                           <div className="text-sm font-bold text-white">Sorteio Concluído</div>
-                          <div className="text-xs text-muted-foreground">
-                            Ganhador: <span className="font-black text-green-400">{selectedRaffle.winner_name}</span>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            Ganhadores: <span className="font-black text-green-400">{selectedRaffle.winner_name}</span>
                           </div>
                         </div>
-                      </div>
-                      <div className="bg-green-500 text-black font-black text-xl px-4 py-2 rounded-xl">
-                        Nº {String(selectedRaffle.winner_number).padStart(2, "0")}
                       </div>
                     </div>
                   )}
@@ -895,7 +892,7 @@ function AdminRifas() {
             <DialogTitle className="text-center text-lg font-black uppercase tracking-widest text-primary">Sorteio Eletrônico</DialogTitle>
           </DialogHeader>
 
-          <div className="flex flex-col items-center justify-center py-10 space-y-6">
+          <div className="flex flex-col items-center justify-center py-6 space-y-6">
             {/* Spinning Slot/Box */}
             <div className={`w-36 h-36 rounded-3xl flex flex-col items-center justify-center border-2 border-primary/50 relative overflow-hidden bg-card shadow-2xl ${isDrawing ? "hw-glow-orange animate-pulse" : "hw-glow-orange border-green-500/60 shadow-green-500/20"}`}>
               {isDrawing && (
@@ -906,27 +903,32 @@ function AdminRifas() {
               </span>
             </div>
 
-            {/* Winner Display name */}
-            <div className="text-center min-h-[48px] px-4">
+            {/* Winner Display list */}
+            <div className="text-center min-h-[48px] px-4 w-full">
               {isDrawing ? (
                 <div className="text-muted-foreground text-sm font-semibold animate-pulse flex items-center justify-center gap-1.5">
                   <Clock className="h-4 w-4 text-primary animate-spin" />
                   Embaralhando números...
                 </div>
               ) : (
-                drawnWinner && (
-                  <div className="space-y-1 animate-in fade-in zoom-in-95 duration-500">
+                drawnWinners.length > 0 && (
+                  <div className="space-y-3 animate-in fade-in zoom-in-95 duration-500 w-full">
                     <div className="text-[10px] font-bold text-green-400 uppercase tracking-widest flex items-center justify-center gap-1.5">
-                      <Trophy className="h-4 w-4 text-yellow-500" /> Vencedor Encontrado!
+                      <Trophy className="h-4 w-4 text-yellow-500" /> Vencedor(es) Encontrado(s)!
                     </div>
-                    <div className="text-2xl font-black text-white leading-tight">
-                      {drawnWinner.name}
+                    <div className="space-y-2 max-h-48 overflow-y-auto px-2">
+                      {drawnWinners.map((winner, idx) => (
+                        <div key={idx} className="bg-[#161616] border border-border/60 rounded-xl p-3 flex items-center justify-between text-left">
+                          <div>
+                            <div className="text-xs font-bold text-muted-foreground">{idx + 1}º Ganhador</div>
+                            <div className="text-base font-black text-white leading-tight">{winner.name}</div>
+                          </div>
+                          <Badge className="bg-green-500 text-black font-black text-sm px-3 py-1">
+                            Nº {String(winner.number).padStart(2, "0")}
+                          </Badge>
+                        </div>
+                      ))}
                     </div>
-                    {drawnWinner.user_id && (
-                      <div className="text-[10px] text-muted-foreground">
-                        Cliente integrado · Recebeu pontos na garagem
-                      </div>
-                    )}
                   </div>
                 )
               )}
