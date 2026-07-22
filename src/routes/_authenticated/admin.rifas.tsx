@@ -329,12 +329,26 @@ function AdminRifas() {
     const reservedOrPaid = tickets?.length || 0;
     const availableCount = selectedRaffle.total_numbers - reservedOrPaid;
 
+    const winnerNumbers = new Set<number>();
+    if (selectedRaffle.winner_name) {
+      const matches = selectedRaffle.winner_name.match(/Nº\s*(\d+)/g);
+      if (matches) {
+        matches.forEach((m) => {
+          const num = parseInt(m.replace(/\D/g, ""), 10);
+          if (!isNaN(num)) winnerNumbers.add(num);
+        });
+      }
+    }
+
     const listLines = Array.from({ length: selectedRaffle.total_numbers })
       .map((_, index) => {
         const num = index + 1;
         const t = ticketMap.get(num);
         const name = t ? t.participant_name : "";
-        return `${String(num).padStart(2, "0")}- ${name}`;
+        const isWinner = winnerNumbers.has(num);
+        const congrats = isWinner ? " 🥳🎉 Parabéns! Você foi um ganhador da rifa!" : "";
+        
+        return `${String(num).padStart(2, "0")}- ${name}${congrats}`;
       })
       .join("\n");
 
