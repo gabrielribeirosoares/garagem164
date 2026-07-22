@@ -317,7 +317,6 @@ function AdminRifas() {
     });
   };
 
-  // WhatsApp share generator
   const copyWhatsAppFormat = () => {
     if (!selectedRaffle) return;
     const ticketMap = new Map<number, any>();
@@ -343,7 +342,6 @@ function AdminRifas() {
     toast.success("Lista de rifa copiada para o WhatsApp!");
   };
 
-  // Electronic Draw logic para múltiplos ganhadores
   const handleStartDraw = () => {
     const paidTickets = tickets?.filter((t) => t.status === "paid") || [];
     if (!paidTickets.length) {
@@ -351,19 +349,30 @@ function AdminRifas() {
       return;
     }
 
-    const targetWinnersCount = Math.min((selectedRaffle as any)?.max_winners || 1, paidTickets.length);
+    const maxWinners = (selectedRaffle as any)?.max_winners || 1;
 
-    setDrawnWinners([]);
+    if (drawnWinners.length >= maxWinners) {
+      toast.info("Todos os ganhadores desta rifa já foram sorteados.");
+      return;
+    }
+
+    const alreadyDrawnNumbers = drawnWinners.map((w) => w.number);
+    const eligibleTickets = paidTickets.filter((t) => !alreadyDrawnNumbers.includes(t.number));
+
+    if (!eligibleTickets.length) {
+      toast.error("Não há mais participantes elegíveis para sortear.");
+      return;
+    }
+
     setIsDrawing(true);
     setDrawOpen(true);
 
-    // Seleciona ganhadores sem repetição
-    const shuffled = [...paidTickets].sort(() => Math.random() - 0.5);
-    const selectedWinnersList = shuffled.slice(0, targetWinnersCount).map((t) => ({
-      number: t.number,
-      name: t.participant_name || "Comprador",
-      user_id: t.user_id,
-    }));
+    const newWinnerTicket = eligibleTickets[Math.floor(Math.random() * eligibleTickets.length)];
+    const newWinner = {
+      number: newWinnerTicket.number,
+      name: newWinnerTicket.participant_name || "Comprador",
+      user_id: newWinnerTicket.user_id,
+    };
 
     let count = 0;
     const maxShuffles = 45;
@@ -378,11 +387,16 @@ function AdminRifas() {
         const delay = count < 25 ? 70 : count < 35 ? 120 : count < 40 ? 250 : 500;
         drawIntervalRef.current = setTimeout(runShuffle, delay);
       } else {
-        setAnimationNumber(String(selectedWinnersList[0].number).padStart(2, "0"));
-        setAnimationName(selectedWinnersList[0].name);
-        setDrawnWinners(selectedWinnersList);
+        setAnimationNumber(String(newWinner.number).padStart(2, "0"));
+        setAnimationName(newWinner.name);
+        
+        const updatedWinners = [...drawnWinners, newWinner];
+        setDrawnWinners(updatedWinners);
         setIsDrawing(false);
-        saveWinners.mutate({ winners: selectedWinnersList });
+        
+        if (updatedWinners.length >= maxWinners) {
+          saveWinners.mutate({ winners: updatedWinners });
+        }
       }
     };
 
