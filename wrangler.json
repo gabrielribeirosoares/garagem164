@@ -1,0 +1,12 @@
+{
+  "name": "garagem164",
+  "compatibility_date": "2026-07-18",
+  "main": ".output/server/index.mjs",
+  "assets": {
+    "binding": "ASSETS",
+    "directory": ".output/public"
+  },
+  "compatibility_flags": [
+    "nodejs_compat"
+  ]
+}
