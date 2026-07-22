@@ -7,8 +7,9 @@ import { useActiveClientStore } from "@/hooks/useStore";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Ticket, Sparkles, Copy, MessageSquare, Info, Trophy, Calendar, CheckCircle2, X } from "lucide-react";
+import { Ticket, Sparkles, Copy, MessageSquare, Info, Trophy, Calendar, CheckCircle2, X, Image as ImageIcon, ExternalLink, ZoomIn } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/rifas")({
   component: ClientRifas,
@@ -21,6 +22,8 @@ function ClientRifas() {
   const qc = useQueryClient();
 
   const [selectedRaffleId, setSelectedRaffleId] = useState<string | null>(null);
+  const [activeImageIndex, setActiveImageIndex] = useState<number>(0);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   // Fetch active store owner's whatsapp for copy PIX contact
   const { data: ownerProfile } = useQuery({
@@ -198,29 +201,44 @@ function ClientRifas() {
               raffles.map((r) => {
                 const isSelected = r.id === selectedRaffleId;
                 const isDrawn = r.status === "drawn";
+                const thumb = r.image_url || (r.image_urls && r.image_urls.length > 0 ? r.image_urls[0] : null);
                 return (
                   <button
                     key={r.id}
-                    onClick={() => setSelectedRaffleId(r.id)}
+                    onClick={() => {
+                      setSelectedRaffleId(r.id);
+                      setActiveImageIndex(0);
+                    }}
                     className={`w-full text-left p-4 rounded-2xl border transition-all cursor-pointer ${
                       isSelected
                         ? "border-primary bg-primary/10 shadow-lg hw-glow-orange"
                         : "border-border bg-card hover:bg-muted/30"
                     }`}
                   >
-                    <div className="flex justify-between items-start gap-2">
-                      <h3 className="font-black text-white text-base truncate flex-1">{r.title}</h3>
-                      {isDrawn ? (
-                        <Badge variant="secondary" className="shrink-0 bg-zinc-800 text-zinc-400">Finalizada</Badge>
-                      ) : (
-                        <Badge variant="default" className="shrink-0 bg-green-500/10 text-green-400 border-green-500/20">Ativa</Badge>
+                    <div className="flex gap-3 items-center">
+                      {thumb && (
+                        <img
+                          src={thumb}
+                          alt={r.title}
+                          className="h-12 w-12 rounded-xl object-cover border border-border/80 shrink-0 bg-black"
+                        />
                       )}
-                    </div>
-                    <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
-                      <span className="font-bold text-primary">R$ {Number(r.price_per_number).toFixed(2)} / nº</span>
-                      <span className="flex items-center gap-1 font-semibold text-secondary">
-                        <Sparkles className="h-3 w-3" /> +{r.points_per_number} pts
-                      </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-start gap-2">
+                          <h3 className="font-black text-white text-base truncate flex-1">{r.title}</h3>
+                          {isDrawn ? (
+                            <Badge variant="secondary" className="shrink-0 bg-zinc-800 text-zinc-400">Finalizada</Badge>
+                          ) : (
+                            <Badge variant="default" className="shrink-0 bg-green-500/10 text-green-400 border-green-500/20">Ativa</Badge>
+                          )}
+                        </div>
+                        <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
+                          <span className="font-bold text-primary">R$ {Number(r.price_per_number).toFixed(2)} / nº</span>
+                          <span className="flex items-center gap-1 font-semibold text-secondary">
+                            <Sparkles className="h-3 w-3" /> +{r.points_per_number} pts
+                          </span>
+                        </div>
+                      </div>
                     </div>
                     {isDrawn && r.winner_number && (
                       <div className="mt-3 pt-3 border-t border-border flex items-center justify-between text-xs text-green-400 bg-green-950/20 px-2 py-1 rounded-xl">
@@ -261,6 +279,68 @@ function ClientRifas() {
                 </CardHeader>
 
                 <CardContent className="p-6 space-y-6">
+                  {/* Prize Images Section in Client View */}
+                  {(() => {
+                    const images = (selectedRaffle.image_urls && selectedRaffle.image_urls.length > 0)
+                      ? selectedRaffle.image_urls
+                      : (selectedRaffle.image_url ? [selectedRaffle.image_url] : []);
+                    if (images.length === 0) return null;
+                    const currentImg = images[activeImageIndex] || images[0];
+
+                    return (
+                      <div className="bg-[#121212] border border-border rounded-2xl p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                            <ImageIcon className="h-4 w-4 text-primary" /> Prêmio(s) em Destaque
+                          </span>
+                          <span className="text-[10px] text-muted-foreground font-semibold">
+                            Clique na imagem para ampliar
+                          </span>
+                        </div>
+
+                        {/* Featured Image */}
+                        <div
+                          className="relative rounded-xl overflow-hidden bg-black aspect-video max-h-80 cursor-pointer group border border-border/60"
+                          onClick={() => setPreviewImage(currentImg)}
+                        >
+                          <img
+                            src={currentImg}
+                            alt={selectedRaffle.title}
+                            className="w-full h-full object-contain bg-black/90 transition-transform duration-300 group-hover:scale-105"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-between p-4">
+                            <span className="text-xs text-white font-bold flex items-center gap-1">
+                              <ZoomIn className="h-4 w-4 text-primary" /> Clique para ampliar
+                            </span>
+                            <Badge className="bg-black/80 text-white border-border text-[10px]">
+                              {activeImageIndex + 1} de {images.length}
+                            </Badge>
+                          </div>
+                        </div>
+
+                        {/* Thumbnails row if multiple */}
+                        {images.length > 1 && (
+                          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin">
+                            {images.map((img, idx) => (
+                              <button
+                                key={idx}
+                                type="button"
+                                onClick={() => setActiveImageIndex(idx)}
+                                className={`relative rounded-xl overflow-hidden shrink-0 h-16 w-20 border-2 transition-all bg-black ${
+                                  activeImageIndex === idx
+                                    ? "border-primary shadow-lg scale-105"
+                                    : "border-border/60 opacity-60 hover:opacity-100"
+                                }`}
+                              >
+                                <img src={img} alt={`Miniatura ${idx + 1}`} className="w-full h-full object-cover" />
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+
                   {/* Points alert info */}
                   <div className="flex items-start gap-3 bg-primary/5 border border-primary/20 p-4 rounded-2xl">
                     <Info className="h-5 w-5 text-primary shrink-0 mt-0.5" />
@@ -438,6 +518,19 @@ function ClientRifas() {
           )}
         </div>
       </div>
+
+      {/* Fullscreen Image Preview Dialog */}
+      <Dialog open={!!previewImage} onOpenChange={() => setPreviewImage(null)}>
+        <DialogContent className="max-w-4xl bg-black/95 border-border p-2 text-white overflow-hidden flex items-center justify-center">
+          {previewImage && (
+            <img
+              src={previewImage}
+              alt="Foto do Prêmio"
+              className="max-h-[85vh] w-auto object-contain rounded-lg shadow-2xl"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

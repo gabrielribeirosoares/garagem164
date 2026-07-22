@@ -29,7 +29,12 @@ import {
   CheckSquare,
   Square,
   Edit3,
-  Check
+  Check,
+  Upload,
+  Image as ImageIcon,
+  ChevronLeft,
+  ChevronRight,
+  ExternalLink
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/rifas")({
@@ -57,6 +62,73 @@ function AdminRifas() {
   const [pixKey, setPixKey] = useState("");
   const [totalNumbers, setTotalNumbers] = useState(50);
   const [maxWinners, setMaxWinners] = useState<number>(1);
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [newImageUrl, setNewImageUrl] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  // Edit Raffle State
+  const [editOpen, setEditOpen] = useState(false);
+  const [editingRaffleId, setEditingRaffleId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editPricePerNumber, setEditPricePerNumber] = useState(5);
+  const [editPointsPerNumber, setEditPointsPerNumber] = useState(10);
+  const [editPixKey, setEditPixKey] = useState("");
+  const [editMaxWinners, setEditMaxWinners] = useState<number>(1);
+  const [editImageUrls, setEditImageUrls] = useState<string[]>([]);
+  const [editNewImageUrl, setEditNewImageUrl] = useState("");
+  const [uploadingEditImage, setUploadingEditImage] = useState(false);
+
+  // Image Upload Handler
+  const handleFileUpload = async (files: FileList | File[], isEdit = false) => {
+    const setter = isEdit ? setEditImageUrls : setImageUrls;
+    const loader = isEdit ? setUploadingEditImage : setUploadingImage;
+    loader(true);
+    try {
+      const uploadedUrls: string[] = [];
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const fileExt = file.name.split(".").pop();
+        const fileName = `raffles/${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+          .from("images")
+          .upload(fileName, file, { cacheControl: "3600", upsert: true });
+
+        if (uploadError) throw uploadError;
+
+        const { data } = supabase.storage.from("images").getPublicUrl(fileName);
+        uploadedUrls.push(data.publicUrl);
+      }
+      setter((prev) => [...prev, ...uploadedUrls]);
+      toast.success(`${uploadedUrls.length} foto(s) do prêmio enviada(s) com sucesso!`);
+    } catch (err: any) {
+      toast.error(`Erro no upload da foto: ${err.message}`);
+    } finally {
+      loader(false);
+    }
+  };
+
+  // Open Edit Raffle Modal
+  const handleOpenEditRaffle = (raffle: any) => {
+    setEditingRaffleId(raffle.id);
+    setEditTitle(raffle.title || "");
+    setEditDescription(raffle.description || "");
+    setEditPricePerNumber(Number(raffle.price_per_number) || 5);
+    setEditPointsPerNumber(Number(raffle.points_per_number) || 10);
+    setEditPixKey(raffle.pix_key || "");
+    setEditMaxWinners(raffle.max_winners || 1);
+    
+    // Load images
+    const urls: string[] = [];
+    if (raffle.image_urls && Array.isArray(raffle.image_urls) && raffle.image_urls.length > 0) {
+      urls.push(...raffle.image_urls);
+    } else if (raffle.image_url) {
+      urls.push(raffle.image_url);
+    }
+    setEditImageUrls(urls);
+    setEditNewImageUrl("");
+    setEditOpen(true);
+  };
 
   // Edit ticket state
   const [ticketStatus, setTicketStatus] = useState<"reserved" | "paid" | "free">("paid");
@@ -156,11 +228,21 @@ function AdminRifas() {
       pix_key: string;
       total_numbers: number;
       max_winners: number;
+      image_urls: string[];
     }) => {
+      const primaryUrl = values.image_urls.length > 0 ? values.image_urls[0] : null;
       const { data, error } = await supabase
         .from("raffles")
         .insert({
-          ...values,
+          title: values.title,
+          description: values.description,
+          price_per_number: values.price_per_number,
+          points_per_number: values.points_per_number,
+          pix_key: values.pix_key,
+          total_numbers: values.total_numbers,
+          max_winners: values.max_winners,
+          image_url: primaryUrl,
+          image_urls: values.image_urls,
           store_id: storeId!,
           status: "active",
         })
@@ -180,6 +262,46 @@ function AdminRifas() {
       setPointsPerNumber(10);
       setPixKey("");
       setMaxWinners(1);
+      setImageUrls([]);
+      setNewImageUrl("");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const updateRaffle = useMutation({
+    mutationFn: async (values: {
+      id: string;
+      title: string;
+      description: string;
+      price_per_number: number;
+      points_per_number: number;
+      pix_key: string;
+      max_winners: number;
+      image_urls: string[];
+    }) => {
+      const primaryUrl = values.image_urls.length > 0 ? values.image_urls[0] : null;
+      const { data, error } = await supabase
+        .from("raffles")
+        .update({
+          title: values.title,
+          description: values.description,
+          price_per_number: values.price_per_number,
+          points_per_number: values.points_per_number,
+          pix_key: values.pix_key,
+          max_winners: values.max_winners,
+          image_url: primaryUrl,
+          image_urls: values.image_urls,
+        })
+        .eq("id", values.id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast.success("Rifa atualizada com sucesso!");
+      qc.invalidateQueries({ queryKey: ["store-raffles", storeId] });
+      setEditOpen(false);
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -466,6 +588,7 @@ function AdminRifas() {
               raffles.map((r) => {
                 const isSelected = r.id === selectedRaffleId;
                 const isDrawn = r.status === "drawn";
+                const thumb = r.image_url || (r.image_urls && r.image_urls.length > 0 ? r.image_urls[0] : null);
                 return (
                   <div
                     key={r.id}
@@ -476,23 +599,42 @@ function AdminRifas() {
                     }`}
                     onClick={() => setSelectedRaffleId(r.id)}
                   >
-                    <div className="flex justify-between items-start gap-2">
-                      <h3 className="font-black text-white text-base truncate flex-1">{r.title}</h3>
-                      {isDrawn ? (
-                        <Badge variant="secondary" className="shrink-0 bg-zinc-800 text-zinc-400">Sorteada</Badge>
-                      ) : (
-                        <Badge className="shrink-0 bg-green-500/10 text-green-400 border-green-500/20">Ativa</Badge>
+                    <div className="flex gap-3 items-center">
+                      {thumb && (
+                        <img
+                          src={thumb}
+                          alt={r.title}
+                          className="h-12 w-12 rounded-xl object-cover border border-border/80 shrink-0 bg-black"
+                        />
                       )}
-                    </div>
-                    <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
-                      <span className="font-bold text-primary">R$ {Number(r.price_per_number).toFixed(2)} / nº</span>
-                      <span className="font-semibold text-secondary flex items-center gap-1">
-                        <Sparkles className="h-3 w-3" /> +{r.points_per_number} pts
-                      </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-start gap-2">
+                          <h3 className="font-black text-white text-base truncate flex-1">{r.title}</h3>
+                          {isDrawn ? (
+                            <Badge variant="secondary" className="shrink-0 bg-zinc-800 text-zinc-400">Sorteada</Badge>
+                          ) : (
+                            <Badge className="shrink-0 bg-green-500/10 text-green-400 border-green-500/20">Ativa</Badge>
+                          )}
+                        </div>
+                        <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
+                          <span className="font-bold text-primary">R$ {Number(r.price_per_number).toFixed(2)} / nº</span>
+                          <span className="font-semibold text-secondary flex items-center gap-1">
+                            <Sparkles className="h-3 w-3" /> +{r.points_per_number} pts
+                          </span>
+                        </div>
+                      </div>
                     </div>
 
                     {isSelected && (
                       <div className="mt-4 pt-3 border-t border-border/60 flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 px-2 text-xs border-border hover:bg-muted text-white font-semibold"
+                          onClick={() => handleOpenEditRaffle(r)}
+                        >
+                          <Edit3 className="h-3.5 w-3.5 mr-1" /> Editar
+                        </Button>
                         <Button
                           variant="ghost"
                           size="icon"
@@ -527,7 +669,16 @@ function AdminRifas() {
                       {selectedRaffle.description || "Sem descrição."}
                     </p>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 flex-wrap">
+                    <Button
+                      onClick={() => handleOpenEditRaffle(selectedRaffle)}
+                      variant="outline"
+                      size="sm"
+                      className="h-9 px-3 border border-border hover:bg-muted font-bold text-xs text-white"
+                    >
+                      <Edit3 className="h-3.5 w-3.5 mr-1.5" /> Editar Rifa
+                    </Button>
+
                     <Button
                       onClick={copyWhatsAppFormat}
                       variant="secondary"
@@ -547,6 +698,43 @@ function AdminRifas() {
                     )}
                   </div>
                 </div>
+
+                {/* Prize Image Gallery Preview in Admin */}
+                {(() => {
+                  const images = (selectedRaffle.image_urls && selectedRaffle.image_urls.length > 0)
+                    ? selectedRaffle.image_urls
+                    : (selectedRaffle.image_url ? [selectedRaffle.image_url] : []);
+                  if (images.length === 0) return null;
+                  return (
+                    <div className="px-6 pt-6">
+                      <div className="relative rounded-2xl overflow-hidden bg-[#0e0e0e] border border-border/80 p-3">
+                        <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2 flex items-center gap-1.5">
+                          <ImageIcon className="h-3.5 w-3.5 text-primary" /> Prêmios da Rifa ({images.length})
+                        </div>
+                        <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-thin">
+                          {images.map((img, i) => (
+                            <a
+                              key={i}
+                              href={img}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="relative rounded-xl overflow-hidden shrink-0 border border-border/60 hover:border-primary transition-all group/item bg-black"
+                            >
+                              <img
+                                src={img}
+                                alt={`Prêmio ${i + 1}`}
+                                className="h-36 md:h-44 w-auto object-cover rounded-xl"
+                              />
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/item:opacity-100 transition-opacity flex items-center justify-center">
+                                <ExternalLink className="h-5 w-5 text-white" />
+                              </div>
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* Dashboard Stats */}
                 <div className="grid grid-cols-3 border-b border-border bg-[#161616]/40 text-center divide-x divide-border">
@@ -720,7 +908,7 @@ function AdminRifas() {
 
       {/* Dialog: Create Raffle */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="sm:max-w-[500px] bg-card border-border text-foreground">
+        <DialogContent className="sm:max-w-[540px] bg-card border-border text-foreground max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-2xl font-black flex items-center gap-2">
               <Ticket className="h-6 w-6 text-primary" /> Criar Nova Rifa
@@ -740,6 +928,7 @@ function AdminRifas() {
                 pix_key: pixKey,
                 total_numbers: Number(totalNumbers),
                 max_winners: Number(maxWinners),
+                image_urls: imageUrls,
               });
             }}
             className="space-y-4 pt-4"
@@ -754,6 +943,85 @@ function AdminRifas() {
                 className="bg-[#121212] border-border text-white"
               />
             </div>
+
+            {/* Prize Images Section */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                  Fotos do Prêmio / Prêmios (Opcional)
+                </Label>
+                <span className="text-[10px] text-muted-foreground font-semibold">
+                  {imageUrls.length} imagem(ns)
+                </span>
+              </div>
+
+              <div className="space-y-2">
+                <label className="flex cursor-pointer bg-[#121212] border border-dashed border-border hover:border-primary/60 rounded-xl p-3 items-center justify-center gap-2 text-xs font-bold text-muted-foreground hover:text-white transition-all">
+                  <Upload className="h-4 w-4 text-primary" />
+                  <span>{uploadingImage ? "Enviando arquivo(s)..." : "Fazer Upload de Imagem(ns)"}</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    disabled={uploadingImage}
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files.length > 0) {
+                        handleFileUpload(e.target.files, false);
+                      }
+                    }}
+                    className="hidden"
+                  />
+                </label>
+
+                <div className="flex gap-2">
+                  <Input
+                    type="url"
+                    value={newImageUrl}
+                    onChange={(e) => setNewImageUrl(e.target.value)}
+                    placeholder="Ou cole a URL da imagem (https://...)"
+                    className="bg-[#121212] border-border text-white text-xs h-9"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => {
+                      if (newImageUrl.trim()) {
+                        setImageUrls((prev) => [...prev, newImageUrl.trim()]);
+                        setNewImageUrl("");
+                      }
+                    }}
+                    className="h-9 text-xs font-bold shrink-0"
+                  >
+                    <Plus className="h-3.5 w-3.5 mr-1" /> Adicionar
+                  </Button>
+                </div>
+              </div>
+
+              {imageUrls.length > 0 && (
+                <div className="grid grid-cols-4 gap-2 pt-2">
+                  {imageUrls.map((url, idx) => (
+                    <div key={idx} className="relative group rounded-xl overflow-hidden border border-border aspect-square bg-black">
+                      <img src={url} alt={`Prêmio ${idx + 1}`} className="w-full h-full object-cover" />
+                      {idx === 0 && (
+                        <Badge className="absolute top-1 left-1 text-[8px] bg-primary text-black font-black px-1 py-0 h-4">
+                          Capa
+                        </Badge>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setImageUrls((prev) => prev.filter((_, i) => i !== idx))}
+                        className="absolute top-1 right-1 bg-black/80 text-red-400 p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-950"
+                        title="Remover imagem"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div className="space-y-2">
               <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Descrição / Regulamento</Label>
               <Textarea
@@ -828,8 +1096,192 @@ function AdminRifas() {
               <Button type="button" variant="ghost" onClick={() => setCreateOpen(false)}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={createRaffle.isPending} className="hw-gradient-orange text-white font-bold">
+              <Button type="submit" disabled={createRaffle.isPending || uploadingImage} className="hw-gradient-orange text-white font-bold">
                 {createRaffle.isPending ? "Criando..." : "Criar Rifa"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog: Edit Raffle */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="sm:max-w-[540px] bg-card border-border text-foreground max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-black flex items-center gap-2">
+              <Edit3 className="h-6 w-6 text-primary" /> Editar Rifa
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              Atualize as fotos do prêmio, título, preços e informações desta rifa.
+            </DialogDescription>
+          </DialogHeader>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!editingRaffleId) return;
+              updateRaffle.mutate({
+                id: editingRaffleId,
+                title: editTitle,
+                description: editDescription,
+                price_per_number: Number(editPricePerNumber),
+                points_per_number: Number(editPointsPerNumber),
+                pix_key: editPixKey,
+                max_winners: Number(editMaxWinners),
+                image_urls: editImageUrls,
+              });
+            }}
+            className="space-y-4 pt-4"
+          >
+            <div className="space-y-2">
+              <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Título do Sorteio</Label>
+              <Input
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                placeholder="Ex: Skyline GT-R R34 Super Treasure Hunt"
+                required
+                className="bg-[#121212] border-border text-white"
+              />
+            </div>
+
+            {/* Prize Images Section (Edit) */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                  Fotos do Prêmio / Prêmios
+                </Label>
+                <span className="text-[10px] text-muted-foreground font-semibold">
+                  {editImageUrls.length} imagem(ns)
+                </span>
+              </div>
+
+              <div className="space-y-2">
+                <label className="flex cursor-pointer bg-[#121212] border border-dashed border-border hover:border-primary/60 rounded-xl p-3 items-center justify-center gap-2 text-xs font-bold text-muted-foreground hover:text-white transition-all">
+                  <Upload className="h-4 w-4 text-primary" />
+                  <span>{uploadingEditImage ? "Enviando arquivo(s)..." : "Fazer Upload de Imagem(ns)"}</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    disabled={uploadingEditImage}
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files.length > 0) {
+                        handleFileUpload(e.target.files, true);
+                      }
+                    }}
+                    className="hidden"
+                  />
+                </label>
+
+                <div className="flex gap-2">
+                  <Input
+                    type="url"
+                    value={editNewImageUrl}
+                    onChange={(e) => setEditNewImageUrl(e.target.value)}
+                    placeholder="Ou cole a URL da imagem (https://...)"
+                    className="bg-[#121212] border-border text-white text-xs h-9"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => {
+                      if (editNewImageUrl.trim()) {
+                        setEditImageUrls((prev) => [...prev, editNewImageUrl.trim()]);
+                        setEditNewImageUrl("");
+                      }
+                    }}
+                    className="h-9 text-xs font-bold shrink-0"
+                  >
+                    <Plus className="h-3.5 w-3.5 mr-1" /> Adicionar
+                  </Button>
+                </div>
+              </div>
+
+              {editImageUrls.length > 0 && (
+                <div className="grid grid-cols-4 gap-2 pt-2">
+                  {editImageUrls.map((url, idx) => (
+                    <div key={idx} className="relative group rounded-xl overflow-hidden border border-border aspect-square bg-black">
+                      <img src={url} alt={`Prêmio ${idx + 1}`} className="w-full h-full object-cover" />
+                      {idx === 0 && (
+                        <Badge className="absolute top-1 left-1 text-[8px] bg-primary text-black font-black px-1 py-0 h-4">
+                          Capa
+                        </Badge>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setEditImageUrls((prev) => prev.filter((_, i) => i !== idx))}
+                        className="absolute top-1 right-1 bg-black/80 text-red-400 p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-950"
+                        title="Remover imagem"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Descrição / Regulamento</Label>
+              <Textarea
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+                placeholder="Detalhes adicionais, regras do sorteio..."
+                className="bg-[#121212] border-border text-white h-20"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Valor por Número (R$)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={editPricePerNumber}
+                  onChange={(e) => setEditPricePerNumber(Number(e.target.value))}
+                  required
+                  className="bg-[#121212] border-border text-white"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Pontos por Número</Label>
+                <Input
+                  type="number"
+                  value={editPointsPerNumber}
+                  onChange={(e) => setEditPointsPerNumber(Number(e.target.value))}
+                  required
+                  className="bg-[#121212] border-border text-white"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Chave PIX</Label>
+              <Input
+                value={editPixKey}
+                onChange={(e) => setEditPixKey(e.target.value)}
+                placeholder="Ex: celular, e-mail ou aleatória"
+                className="bg-[#121212] border-border text-white"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Qtd. de Ganhadores</Label>
+              <Input
+                type="number"
+                min={1}
+                max={20}
+                value={editMaxWinners}
+                onChange={(e) => setEditMaxWinners(Math.max(1, parseInt(e.target.value) || 1))}
+                placeholder="Ex: 1"
+                required
+                className="bg-[#121212] border-border text-white"
+              />
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4 border-t border-border/60">
+              <Button type="button" variant="ghost" onClick={() => setEditOpen(false)}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={updateRaffle.isPending || uploadingEditImage} className="hw-gradient-orange text-white font-bold">
+                {updateRaffle.isPending ? "Salvando..." : "Salvar Alterações"}
               </Button>
             </div>
           </form>

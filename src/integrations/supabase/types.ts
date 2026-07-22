@@ -199,6 +199,8 @@ export type Database = {
           description: string | null
           drawn_at: string | null
           id: string
+          image_url: string | null
+          image_urls: string[] | null
           max_winners: number
           pix_key: string | null
           points_per_number: number
@@ -216,6 +218,8 @@ export type Database = {
           description?: string | null
           drawn_at?: string | null
           id?: string
+          image_url?: string | null
+          image_urls?: string[] | null
           max_winners?: number
           pix_key?: string | null
           points_per_number?: number
@@ -233,6 +237,8 @@ export type Database = {
           description?: string | null
           drawn_at?: string | null
           id?: string
+          image_url?: string | null
+          image_urls?: string[] | null
           max_winners?: number
           pix_key?: string | null
           points_per_number?: number
