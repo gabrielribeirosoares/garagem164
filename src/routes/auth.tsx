@@ -9,6 +9,9 @@ import { useSession } from "@/hooks/useAuth";
 import { lovable } from "@/integrations/lovable";
 
 export const Route = createFileRoute("/auth")({
+  validateSearch: (s: Record<string, unknown>) => ({
+    next: typeof s.next === "string" ? s.next : undefined,
+  }),
   component: AuthPage,
 });
 
@@ -36,12 +39,22 @@ const GoogleIcon = () => (
 function AuthPage() {
   const navigate = useNavigate();
   const user = useSession();
+  const { next } = Route.useSearch();
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
 
+  // Only allow same-origin relative paths for the post-auth redirect.
+  const safeNext = next && next.startsWith("/") && !next.startsWith("//") ? next : null;
+  const redirectTarget = safeNext ?? "/";
+  const absoluteRedirect =
+    typeof window !== "undefined" ? new URL(redirectTarget, window.location.origin).toString() : redirectTarget;
+
   useEffect(() => {
-    if (user) navigate({ to: "/", replace: true });
-  }, [user, navigate]);
+    if (user) {
+      if (safeNext) window.location.replace(safeNext);
+      else navigate({ to: "/", replace: true });
+    }
+  }, [user, navigate, safeNext]);
 
   async function handleSignIn(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -64,7 +77,7 @@ function AuthPage() {
       email: String(form.get("email")),
       password: String(form.get("password")),
       options: {
-        emailRedirectTo: window.location.origin,
+        emailRedirectTo: absoluteRedirect,
         data: { 
           full_name: String(form.get("full_name")),
           whatsapp: String(form.get("whatsapp")),
@@ -79,7 +92,7 @@ function AuthPage() {
   async function handleGoogleSignIn() {
     setLoading(true);
     const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
+      redirect_uri: absoluteRedirect,
     });
     setLoading(false);
     if (result.error) return toast.error(result.error.message);

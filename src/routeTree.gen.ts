@@ -34,6 +34,7 @@ import { Route as AuthenticatedAdminGaragensRouteImport } from './routes/_authen
 import { Route as AuthenticatedAdminEstoqueRouteImport } from './routes/_authenticated/admin.estoque'
 import { Route as AuthenticatedAdminCarrosRouteImport } from './routes/_authenticated/admin.carros'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
+import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 
 const SaasRoute = SaasRouteImport.update({
   id: '/saas',
@@ -168,6 +169,11 @@ const Char91DotmcpChar93InvokeToolToolRoute =
     path: '/.mcp/invoke-tool/$tool',
     getParentRoute: () => rootRouteImport,
   } as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -186,6 +192,7 @@ export interface FileRoutesByFullPath {
   '/recompensas': typeof AuthenticatedRecompensasRoute
   '/rifas': typeof AuthenticatedRifasRoute
   '/$storeSlug/': typeof StoreSlugIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/carros': typeof AuthenticatedAdminCarrosRoute
   '/admin/estoque': typeof AuthenticatedAdminEstoqueRoute
@@ -210,6 +217,7 @@ export interface FileRoutesByTo {
   '/recompensas': typeof AuthenticatedRecompensasRoute
   '/rifas': typeof AuthenticatedRifasRoute
   '/$storeSlug': typeof StoreSlugIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/carros': typeof AuthenticatedAdminCarrosRoute
   '/admin/estoque': typeof AuthenticatedAdminEstoqueRoute
@@ -238,6 +246,7 @@ export interface FileRoutesById {
   '/_authenticated/recompensas': typeof AuthenticatedRecompensasRoute
   '/_authenticated/rifas': typeof AuthenticatedRifasRoute
   '/$storeSlug/': typeof StoreSlugIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/_authenticated/admin/carros': typeof AuthenticatedAdminCarrosRoute
   '/_authenticated/admin/estoque': typeof AuthenticatedAdminEstoqueRoute
@@ -266,6 +275,7 @@ export interface FileRouteTypes {
     | '/recompensas'
     | '/rifas'
     | '/$storeSlug/'
+    | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/admin/carros'
     | '/admin/estoque'
@@ -290,6 +300,7 @@ export interface FileRouteTypes {
     | '/recompensas'
     | '/rifas'
     | '/$storeSlug'
+    | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/admin/carros'
     | '/admin/estoque'
@@ -317,6 +328,7 @@ export interface FileRouteTypes {
     | '/_authenticated/recompensas'
     | '/_authenticated/rifas'
     | '/$storeSlug/'
+    | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/_authenticated/admin/carros'
     | '/_authenticated/admin/estoque'
@@ -337,6 +349,7 @@ export interface RootRouteChildren {
   SaasRoute: typeof SaasRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
 }
 
@@ -517,6 +530,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/.lovable/oauth/consent': {
+      id: '/.lovable/oauth/consent'
+      path: '/.lovable/oauth/consent'
+      fullPath: '/.lovable/oauth/consent'
+      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -589,6 +609,7 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
+  DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
 }
 export const routeTree = rootRouteImport
