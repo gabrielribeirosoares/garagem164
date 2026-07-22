@@ -1,5 +1,4 @@
 import { defineTool } from "@lovable.dev/mcp-js";
-import { z } from "zod";
 import { requireAuth, supabaseForUser } from "../supabase";
 
 export default defineTool({
@@ -24,6 +23,3 @@ export default defineTool({
     };
   },
 });
-
-// re-export z so the tsc doesn't complain about unused import
-export const _z = z;
