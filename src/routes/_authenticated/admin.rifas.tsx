@@ -250,7 +250,9 @@ function AdminRifas() {
     }: {
       winners: Array<{ number: number; name: string; user_id: string | null }>;
     }) => {
-      const winnerNameFormatted = winners.map((w, i) => `${i + 1}º: ${w.name}`).join(", ");
+      const winnerNameFormatted = winners
+        .map((w, i) => `${i + 1}º: ${w.name} (Nº ${String(w.number).padStart(2, "0")})`)
+        .join(", ");
       const firstWinnerNumber = winners[0]?.number || null;
       const firstWinnerUserId = winners[0]?.user_id || null;
 

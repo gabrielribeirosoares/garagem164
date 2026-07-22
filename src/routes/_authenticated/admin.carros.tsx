@@ -21,6 +21,7 @@ function AddCarros() {
   const storeId = store?.id;
   const [userId, setUserId] = useState<string>("");
   const [name, setName] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
   const [uploadingImage, setUploadingImage] = useState(false);
 
   const handleFileUpload = async (file: File) => {
