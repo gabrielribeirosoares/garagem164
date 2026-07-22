@@ -476,7 +476,35 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      raffle_ticket_numbers: {
+        Row: {
+          id: string | null
+          number: number | null
+          raffle_id: string | null
+          status: string | null
+        }
+        Insert: {
+          id?: string | null
+          number?: number | null
+          raffle_id?: string | null
+          status?: string | null
+        }
+        Update: {
+          id?: string | null
+          number?: number | null
+          raffle_id?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "raffle_tickets_raffle_id_fkey"
+            columns: ["raffle_id"]
+            isOneToOne: false
+            referencedRelation: "raffles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       get_store_customers: {
