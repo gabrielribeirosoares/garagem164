@@ -1,0 +1,117 @@
+{
+  "version": 1,
+  "sdk_version": "0.24.0",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://knziwcbpljokyrsnuhui.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "minishub-mcp",
+      "version": "0.1.0",
+      "title": "MinisHub"
+    },
+    "tools": [
+      {
+        "name": "list_my_garage",
+        "title": "List my garage",
+        "description": "List all Hot Wheels cars in the signed-in user's garage across every store, with points earned per car.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_my_points",
+        "title": "List my points balances",
+        "description": "Return the signed-in user's loyalty point balance for every store they belong to.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_rewards",
+        "title": "List available rewards",
+        "description": "List active rewards. Optionally filter by store slug to see rewards from a specific store.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "store_slug": {
+              "description": "Filter by store slug. Omit to list rewards from every store.",
+              "type": "string"
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "redeem_reward",
+        "title": "Redeem a reward",
+        "description": "Redeem a reward by its ID. Points are automatically deducted server-side and the redemption is created in pending status for store admin approval.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "reward_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "description": "UUID of the reward to redeem. Get it from list_rewards."
+            }
+          },
+          "required": [
+            "reward_id"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_my_redemptions",
+        "title": "List my redemptions",
+        "description": "List the signed-in user's reward redemption history, including status (pending, completed, cancelled).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}

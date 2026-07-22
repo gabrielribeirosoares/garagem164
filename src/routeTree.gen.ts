@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SaasRouteImport } from './routes/saas'
+import { Route as McpRouteImport } from './routes/mcp'
 import { Route as CreateStoreRouteImport } from './routes/create-store'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as StoreSlugRouteImport } from './routes/$storeSlug'
@@ -22,6 +23,8 @@ import { Route as AuthenticatedRankingRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedLojaRouteImport } from './routes/_authenticated/loja'
 import { Route as AuthenticatedGaragemRouteImport } from './routes/_authenticated/garagem'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as StoreSlugLoginRouteImport } from './routes/$storeSlug.login'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedAdminRifasRouteImport } from './routes/_authenticated/admin.rifas'
@@ -30,10 +33,17 @@ import { Route as AuthenticatedAdminRecompensasRouteImport } from './routes/_aut
 import { Route as AuthenticatedAdminGaragensRouteImport } from './routes/_authenticated/admin.garagens'
 import { Route as AuthenticatedAdminEstoqueRouteImport } from './routes/_authenticated/admin.estoque'
 import { Route as AuthenticatedAdminCarrosRouteImport } from './routes/_authenticated/admin.carros'
+import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
+import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 
 const SaasRoute = SaasRouteImport.update({
   id: '/saas',
   path: '/saas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const McpRoute = McpRouteImport.update({
+  id: '/mcp',
+  path: '/mcp',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CreateStoreRoute = CreateStoreRouteImport.update({
@@ -96,6 +106,18 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const Char91DotwellKnownChar93OauthProtectedResourceRoute =
+  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
+    id: '/.well-known/oauth-protected-resource',
+    path: '/.well-known/oauth-protected-resource',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const Char91DotmcpChar93ListToolsRoute =
+  Char91DotmcpChar93ListToolsRouteImport.update({
+    id: '/.mcp/list-tools',
+    path: '/.mcp/list-tools',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const StoreSlugLoginRoute = StoreSlugLoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -141,14 +163,28 @@ const AuthenticatedAdminCarrosRoute =
     path: '/carros',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const Char91DotmcpChar93InvokeToolToolRoute =
+  Char91DotmcpChar93InvokeToolToolRouteImport.update({
+    id: '/.mcp/invoke-tool/$tool',
+    path: '/.mcp/invoke-tool/$tool',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$storeSlug': typeof StoreSlugRouteWithChildren
   '/auth': typeof AuthRoute
   '/create-store': typeof CreateStoreRoute
+  '/mcp': typeof McpRoute
   '/saas': typeof SaasRoute
   '/$storeSlug/login': typeof StoreSlugLoginRoute
+  '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/garagem': typeof AuthenticatedGaragemRoute
   '/loja': typeof AuthenticatedLojaRoute
@@ -156,6 +192,8 @@ export interface FileRoutesByFullPath {
   '/recompensas': typeof AuthenticatedRecompensasRoute
   '/rifas': typeof AuthenticatedRifasRoute
   '/$storeSlug/': typeof StoreSlugIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
+  '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/carros': typeof AuthenticatedAdminCarrosRoute
   '/admin/estoque': typeof AuthenticatedAdminEstoqueRoute
   '/admin/garagens': typeof AuthenticatedAdminGaragensRoute
@@ -168,14 +206,19 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/create-store': typeof CreateStoreRoute
+  '/mcp': typeof McpRoute
   '/saas': typeof SaasRoute
   '/$storeSlug/login': typeof StoreSlugLoginRoute
+  '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/garagem': typeof AuthenticatedGaragemRoute
   '/loja': typeof AuthenticatedLojaRoute
   '/ranking': typeof AuthenticatedRankingRoute
   '/recompensas': typeof AuthenticatedRecompensasRoute
   '/rifas': typeof AuthenticatedRifasRoute
   '/$storeSlug': typeof StoreSlugIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
+  '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/carros': typeof AuthenticatedAdminCarrosRoute
   '/admin/estoque': typeof AuthenticatedAdminEstoqueRoute
   '/admin/garagens': typeof AuthenticatedAdminGaragensRoute
@@ -191,8 +234,11 @@ export interface FileRoutesById {
   '/$storeSlug': typeof StoreSlugRouteWithChildren
   '/auth': typeof AuthRoute
   '/create-store': typeof CreateStoreRoute
+  '/mcp': typeof McpRoute
   '/saas': typeof SaasRoute
   '/$storeSlug/login': typeof StoreSlugLoginRoute
+  '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/garagem': typeof AuthenticatedGaragemRoute
   '/_authenticated/loja': typeof AuthenticatedLojaRoute
@@ -200,6 +246,8 @@ export interface FileRoutesById {
   '/_authenticated/recompensas': typeof AuthenticatedRecompensasRoute
   '/_authenticated/rifas': typeof AuthenticatedRifasRoute
   '/$storeSlug/': typeof StoreSlugIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
+  '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/_authenticated/admin/carros': typeof AuthenticatedAdminCarrosRoute
   '/_authenticated/admin/estoque': typeof AuthenticatedAdminEstoqueRoute
   '/_authenticated/admin/garagens': typeof AuthenticatedAdminGaragensRoute
@@ -215,8 +263,11 @@ export interface FileRouteTypes {
     | '/$storeSlug'
     | '/auth'
     | '/create-store'
+    | '/mcp'
     | '/saas'
     | '/$storeSlug/login'
+    | '/.mcp/list-tools'
+    | '/.well-known/oauth-protected-resource'
     | '/admin'
     | '/garagem'
     | '/loja'
@@ -224,6 +275,8 @@ export interface FileRouteTypes {
     | '/recompensas'
     | '/rifas'
     | '/$storeSlug/'
+    | '/.lovable/oauth/consent'
+    | '/.mcp/invoke-tool/$tool'
     | '/admin/carros'
     | '/admin/estoque'
     | '/admin/garagens'
@@ -236,14 +289,19 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/create-store'
+    | '/mcp'
     | '/saas'
     | '/$storeSlug/login'
+    | '/.mcp/list-tools'
+    | '/.well-known/oauth-protected-resource'
     | '/garagem'
     | '/loja'
     | '/ranking'
     | '/recompensas'
     | '/rifas'
     | '/$storeSlug'
+    | '/.lovable/oauth/consent'
+    | '/.mcp/invoke-tool/$tool'
     | '/admin/carros'
     | '/admin/estoque'
     | '/admin/garagens'
@@ -258,8 +316,11 @@ export interface FileRouteTypes {
     | '/$storeSlug'
     | '/auth'
     | '/create-store'
+    | '/mcp'
     | '/saas'
     | '/$storeSlug/login'
+    | '/.mcp/list-tools'
+    | '/.well-known/oauth-protected-resource'
     | '/_authenticated/admin'
     | '/_authenticated/garagem'
     | '/_authenticated/loja'
@@ -267,6 +328,8 @@ export interface FileRouteTypes {
     | '/_authenticated/recompensas'
     | '/_authenticated/rifas'
     | '/$storeSlug/'
+    | '/.lovable/oauth/consent'
+    | '/.mcp/invoke-tool/$tool'
     | '/_authenticated/admin/carros'
     | '/_authenticated/admin/estoque'
     | '/_authenticated/admin/garagens'
@@ -282,7 +345,12 @@ export interface RootRouteChildren {
   StoreSlugRoute: typeof StoreSlugRouteWithChildren
   AuthRoute: typeof AuthRoute
   CreateStoreRoute: typeof CreateStoreRoute
+  McpRoute: typeof McpRoute
   SaasRoute: typeof SaasRoute
+  Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
+  Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
+  Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -292,6 +360,13 @@ declare module '@tanstack/react-router' {
       path: '/saas'
       fullPath: '/saas'
       preLoaderRoute: typeof SaasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mcp': {
+      id: '/mcp'
+      path: '/mcp'
+      fullPath: '/mcp'
+      preLoaderRoute: typeof McpRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/create-store': {
@@ -378,6 +453,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/.well-known/oauth-protected-resource': {
+      id: '/.well-known/oauth-protected-resource'
+      path: '/.well-known/oauth-protected-resource'
+      fullPath: '/.well-known/oauth-protected-resource'
+      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.mcp/list-tools': {
+      id: '/.mcp/list-tools'
+      path: '/.mcp/list-tools'
+      fullPath: '/.mcp/list-tools'
+      preLoaderRoute: typeof Char91DotmcpChar93ListToolsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/$storeSlug/login': {
       id: '/$storeSlug/login'
       path: '/login'
@@ -433,6 +522,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/carros'
       preLoaderRoute: typeof AuthenticatedAdminCarrosRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/.mcp/invoke-tool/$tool': {
+      id: '/.mcp/invoke-tool/$tool'
+      path: '/.mcp/invoke-tool/$tool'
+      fullPath: '/.mcp/invoke-tool/$tool'
+      preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.lovable/oauth/consent': {
+      id: '/.lovable/oauth/consent'
+      path: '/.lovable/oauth/consent'
+      fullPath: '/.lovable/oauth/consent'
+      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
@@ -501,8 +604,24 @@ const rootRouteChildren: RootRouteChildren = {
   StoreSlugRoute: StoreSlugRouteWithChildren,
   AuthRoute: AuthRoute,
   CreateStoreRoute: CreateStoreRoute,
+  McpRoute: McpRoute,
   SaasRoute: SaasRoute,
+  Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
+  Char91DotwellKnownChar93OauthProtectedResourceRoute:
+    Char91DotwellKnownChar93OauthProtectedResourceRoute,
+  DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
+  Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
