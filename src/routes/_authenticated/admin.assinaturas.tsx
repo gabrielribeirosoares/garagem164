@@ -23,11 +23,28 @@ export function AdminAssinaturas() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("all");
 
+  // Query the very first store created on the platform (Master Admin Store)
+  const { data: firstStore } = useQuery({
+    queryKey: ["first-store-owner"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("stores")
+        .select("owner_id, slug")
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+  });
+
   const isMasterAdmin =
-    user?.email === "minishub01@gmail.com" ||
+    user?.email?.toLowerCase() === "gabrielribeirosoares@hotmail.com" ||
+    user?.email?.toLowerCase() === "minishub01@gmail.com" ||
     user?.email?.toLowerCase().includes("triade") ||
+    user?.email?.toLowerCase().includes("garagem") ||
     ownedStore?.slug === "garagem164" ||
-    ownedStore?.slug === "gonzagaminis";
+    ownedStore?.slug === "gonzagaminis" ||
+    (firstStore && firstStore.owner_id === user?.id);
 
   // Fetch all stores with profile details of owner
   const { data: stores, isLoading } = useQuery({

@@ -6,7 +6,7 @@ import { useOwnedStore, useActiveClientStore, useCustomerPoints, useMyStores, se
 import { useTheme } from "@/hooks/useTheme";
 import { Button } from "@/components/ui/button";
 import { Flame, Car, Gift, LayoutDashboard, Package, PlusCircle, LogOut, Trophy, Store, User as UserIcon, ChevronDown, Ticket, ShoppingBag, Boxes, Sun, Moon, Monitor, ShieldCheck } from "lucide-react";
-import { useQueryClient, useMutation } from "@tanstack/react-query";
+import { useQueryClient, useMutation, useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -396,11 +396,27 @@ function AuthedLayout() {
     { to: "/ranking", label: "Ranking", icon: Trophy },
   ] as const;
 
+  const { data: firstStore } = useQuery({
+    queryKey: ["first-store-owner"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("stores")
+        .select("owner_id, slug")
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+  });
+
   const isMasterAdmin =
-    user?.email === "minishub01@gmail.com" ||
+    user?.email?.toLowerCase() === "gabrielribeirosoares@hotmail.com" ||
+    user?.email?.toLowerCase() === "minishub01@gmail.com" ||
     user?.email?.toLowerCase().includes("triade") ||
+    user?.email?.toLowerCase().includes("garagem") ||
     ownedStore?.slug === "garagem164" ||
-    ownedStore?.slug === "gonzagaminis";
+    ownedStore?.slug === "gonzagaminis" ||
+    (firstStore && firstStore.owner_id === user?.id);
 
   const adminNav = [
     { to: "/admin", label: "Dashboard", icon: LayoutDashboard },
