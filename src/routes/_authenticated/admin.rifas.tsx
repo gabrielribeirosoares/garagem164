@@ -50,7 +50,8 @@ export const Route = createFileRoute("/_authenticated/admin/rifas")({
 
 function AdminRifas() {
   const qc = useQueryClient();
-  const { storeId } = useOwnedStore();
+  const { data: store, isLoading: isLoadingStore } = useOwnedStore();
+  const storeId = store?.id;
 
   const [selectedRaffleId, setSelectedRaffleId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
@@ -627,6 +628,15 @@ function AdminRifas() {
       if (drawIntervalRef.current) clearTimeout(drawIntervalRef.current);
     };
   }, []);
+
+  if (isLoadingStore) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-muted-foreground space-y-3">
+        <Ticket className="h-10 w-10 animate-bounce text-primary" />
+        <p className="text-sm font-semibold">Carregando dados da sua loja...</p>
+      </div>
+    );
+  }
 
   if (!storeId) {
     return (
