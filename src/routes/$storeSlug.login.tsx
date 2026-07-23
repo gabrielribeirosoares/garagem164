@@ -9,6 +9,7 @@ import { useSession, useRole } from "@/hooks/useAuth";
 import { lovable } from "@/integrations/lovable";
 import { useStoreBySlug, setActiveStoreSlug } from "@/hooks/useStore";
 import { Store } from "lucide-react";
+import { TermsModal } from "@/components/TermsModal";
 
 export const Route = createFileRoute("/$storeSlug/login")({
   component: StoreLogin,
@@ -22,6 +23,8 @@ function StoreLogin() {
   const { data: role } = useRole();
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [termsOpen, setTermsOpen] = useState(false);
 
   // Sync active store slug on load
   useEffect(() => {
@@ -61,6 +64,10 @@ function StoreLogin() {
 
   async function handleSignUp(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (!acceptedTerms) {
+      toast.error("Você precisa aceitar os Termos de Uso e Política de Privacidade (LGPD) para criar sua conta.");
+      return;
+    }
     const form = new FormData(e.currentTarget);
     setLoading(true);
     const { data: signUpData, error } = await supabase.auth.signUp({
@@ -71,7 +78,9 @@ function StoreLogin() {
         data: { 
           full_name: String(form.get("full_name")),
           whatsapp: String(form.get("whatsapp")),
-          register_store_id: store?.id
+          register_store_id: store?.id,
+          accepted_terms: true,
+          accepted_terms_at: new Date().toISOString(),
         },
       },
     });
@@ -156,7 +165,43 @@ function StoreLogin() {
               <Label>Senha (mín. 6)</Label>
               <Input name="password" type="password" required minLength={6} />
             </div>
-            <Button type="submit" disabled={loading} className="w-full font-black" style={{ background: primary, color: "#fff" }}>
+
+            <div className="flex items-start gap-2.5 pt-1">
+              <input
+                type="checkbox"
+                id="accept_terms_store"
+                checked={acceptedTerms}
+                onChange={(e) => setAcceptedTerms(e.target.checked)}
+                required
+                className="mt-0.5 h-4 w-4 rounded border-border bg-[#121212] text-primary focus:ring-primary cursor-pointer shrink-0"
+              />
+              <label htmlFor="accept_terms_store" className="text-[11px] text-muted-foreground leading-snug cursor-pointer select-none">
+                Li e concordo com os{" "}
+                <button
+                  type="button"
+                  onClick={() => setTermsOpen(true)}
+                  className="text-primary font-bold underline hover:text-primary/80"
+                >
+                  Termos de Uso
+                </button>{" "}
+                e a{" "}
+                <button
+                  type="button"
+                  onClick={() => setTermsOpen(true)}
+                  className="text-primary font-bold underline hover:text-primary/80"
+                >
+                  Política de Privacidade (LGPD)
+                </button>
+                .
+              </label>
+            </div>
+
+            <Button
+              type="submit"
+              disabled={loading || !acceptedTerms}
+              className="w-full font-black disabled:opacity-50"
+              style={{ background: primary, color: "#fff" }}
+            >
               {loading ? "Criando..." : "CRIAR CONTA"}
             </Button>
           </form>
@@ -168,6 +213,12 @@ function StoreLogin() {
           </button>
         </div>
       </div>
+
+      <TermsModal
+        open={termsOpen}
+        onOpenChange={setTermsOpen}
+        onAccept={() => setAcceptedTerms(true)}
+      />
     </div>
   );
 }

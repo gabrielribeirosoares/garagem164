@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TermosRouteImport } from './routes/termos'
 import { Route as SaasRouteImport } from './routes/saas'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as CreateStoreRouteImport } from './routes/create-store'
@@ -36,6 +37,11 @@ import { Route as AuthenticatedAdminCarrosRouteImport } from './routes/_authenti
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 
+const TermosRoute = TermosRouteImport.update({
+  id: '/termos',
+  path: '/termos',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SaasRoute = SaasRouteImport.update({
   id: '/saas',
   path: '/saas',
@@ -182,6 +188,7 @@ export interface FileRoutesByFullPath {
   '/create-store': typeof CreateStoreRoute
   '/mcp': typeof McpRoute
   '/saas': typeof SaasRoute
+  '/termos': typeof TermosRoute
   '/$storeSlug/login': typeof StoreSlugLoginRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -208,6 +215,7 @@ export interface FileRoutesByTo {
   '/create-store': typeof CreateStoreRoute
   '/mcp': typeof McpRoute
   '/saas': typeof SaasRoute
+  '/termos': typeof TermosRoute
   '/$storeSlug/login': typeof StoreSlugLoginRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -236,6 +244,7 @@ export interface FileRoutesById {
   '/create-store': typeof CreateStoreRoute
   '/mcp': typeof McpRoute
   '/saas': typeof SaasRoute
+  '/termos': typeof TermosRoute
   '/$storeSlug/login': typeof StoreSlugLoginRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -265,6 +274,7 @@ export interface FileRouteTypes {
     | '/create-store'
     | '/mcp'
     | '/saas'
+    | '/termos'
     | '/$storeSlug/login'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
@@ -291,6 +301,7 @@ export interface FileRouteTypes {
     | '/create-store'
     | '/mcp'
     | '/saas'
+    | '/termos'
     | '/$storeSlug/login'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
@@ -318,6 +329,7 @@ export interface FileRouteTypes {
     | '/create-store'
     | '/mcp'
     | '/saas'
+    | '/termos'
     | '/$storeSlug/login'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
@@ -347,6 +359,7 @@ export interface RootRouteChildren {
   CreateStoreRoute: typeof CreateStoreRoute
   McpRoute: typeof McpRoute
   SaasRoute: typeof SaasRoute
+  TermosRoute: typeof TermosRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
@@ -355,6 +368,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/termos': {
+      id: '/termos'
+      path: '/termos'
+      fullPath: '/termos'
+      preLoaderRoute: typeof TermosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/saas': {
       id: '/saas'
       path: '/saas'
@@ -606,6 +626,7 @@ const rootRouteChildren: RootRouteChildren = {
   CreateStoreRoute: CreateStoreRoute,
   McpRoute: McpRoute,
   SaasRoute: SaasRoute,
+  TermosRoute: TermosRoute,
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
