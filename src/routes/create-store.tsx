@@ -126,13 +126,13 @@ function CreateStore() {
 
         <div className="space-y-2">
           <Label>Nome da loja</Label>
-          <Input value={name} onChange={(e) => handleNameChange(e.target.value)} required placeholder="Ex: Gonzaga Minis" />
+          <Input value={name} onChange={(e) => handleNameChange(e.target.value)} required placeholder="Ex: Gabriel Minis" />
         </div>
         <div className="space-y-2">
           <Label>Slug (URL)</Label>
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground">/</span>
-            <Input value={slug} onChange={(e) => handleSlugChange(e.target.value)} required placeholder="gonzaga-minis" />
+            <Input value={slug} onChange={(e) => handleSlugChange(e.target.value)} required placeholder="gabriel-minis" />
           </div>
           <p className="text-xs text-muted-foreground">Sua loja ficará em <code>/{slug || "minha-loja"}</code></p>
         </div>
