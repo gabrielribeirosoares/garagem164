@@ -280,8 +280,9 @@ function AdminRifas() {
         .single();
       
       if (error) {
-        if (error.message?.includes("image_url") || error.message?.includes("draw_date") || error.message?.includes("column")) {
-          // Schema cache hasn't updated on server yet -> retry without extra fields
+        if (error.message?.includes("image_url") || error.message?.includes("draw_date") || error.message?.includes("max_winners") || error.message?.includes("column")) {
+          // Schema cache hasn't updated on server yet or column missing -> retry without extra fields
+          delete payload.max_winners;
           delete payload.image_url;
           delete payload.image_urls;
           delete payload.draw_date;
@@ -352,8 +353,9 @@ function AdminRifas() {
         .single();
       
       if (error) {
-        if (error.message?.includes("image_url") || error.message?.includes("draw_date") || error.message?.includes("column")) {
-          // Schema cache hasn't updated on server yet -> retry without extra fields
+        if (error.message?.includes("image_url") || error.message?.includes("draw_date") || error.message?.includes("max_winners") || error.message?.includes("column")) {
+          // Schema cache hasn't updated on server yet or column missing -> retry without extra fields
+          delete payload.max_winners;
           delete payload.image_url;
           delete payload.image_urls;
           delete payload.draw_date;
