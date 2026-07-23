@@ -1809,7 +1809,7 @@ function AdminRifas() {
               <select
                 value={ticketStatus}
                 onChange={(e) => setTicketStatus(e.target.value as any)}
-                className="w-full bg-[#121212] border border-border text-white h-10 px-3 rounded-xl text-sm focus-visible:outline-none focus:border-primary"
+                className="w-full bg-background border border-border text-foreground h-10 px-3 rounded-xl text-sm focus-visible:outline-none focus:border-primary"
               >
                 <option value="paid">Confirmado / Pago (Concede Pontos)</option>
                 <option value="reserved">Reservado</option>
@@ -1839,13 +1839,16 @@ function AdminRifas() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Nome do Comprador / Participante</Label>
+                  <div className="flex justify-between items-center">
+                    <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Nome do Comprador / Participante</Label>
+                    <span className="text-[10px] text-primary font-semibold">Qualquer nome (cadastrado ou não)</span>
+                  </div>
                   <Input
                     value={participantName}
                     onChange={(e) => setParticipantName(e.target.value)}
-                    placeholder="Nome que aparecerá na lista da rifa"
+                    placeholder="Ex: João da Silva (Cliente sem cadastro)"
                     required
-                    className="bg-[#121212] border-border text-white"
+                    className="bg-background border-border text-foreground"
                   />
                 </div>
               </>
@@ -1865,18 +1868,18 @@ function AdminRifas() {
 
       {/* Dialog: Draw Animation Overlay */}
       <Dialog open={drawOpen} onOpenChange={(open) => !isDrawing && setDrawOpen(open)}>
-        <DialogContent className="sm:max-w-[480px] bg-[#0c0c0c] border border-border/80 text-foreground overflow-hidden">
+        <DialogContent className="sm:max-w-[480px] bg-card border border-border text-foreground overflow-hidden">
           <DialogHeader>
             <DialogTitle className="text-center text-lg font-black uppercase tracking-widest text-primary">Sorteio Eletrônico</DialogTitle>
           </DialogHeader>
 
           <div className="flex flex-col items-center justify-center py-6 space-y-6">
             {/* Spinning Slot/Box */}
-            <div className={`w-36 h-36 rounded-3xl flex flex-col items-center justify-center border-2 border-primary/50 relative overflow-hidden bg-card shadow-2xl ${isDrawing ? "hw-glow-orange animate-pulse" : "hw-glow-orange border-green-500/60 shadow-green-500/20"}`}>
+            <div className={`w-36 h-36 rounded-3xl flex flex-col items-center justify-center border-2 border-primary/50 relative overflow-hidden bg-muted/30 shadow-2xl ${isDrawing ? "hw-glow-orange animate-pulse" : "hw-glow-orange border-green-500/60 shadow-green-500/20"}`}>
               {isDrawing && (
                 <div className="absolute inset-0 bg-gradient-to-t from-primary/10 via-transparent to-primary/10 animate-pulse pointer-events-none" />
               )}
-              <span className="text-5xl font-black text-white tracking-tighter leading-none select-none font-mono">
+              <span className="text-5xl font-black text-foreground tracking-tighter leading-none select-none font-mono">
                 {animationNumber}
               </span>
             </div>
@@ -1891,15 +1894,15 @@ function AdminRifas() {
               ) : (
                 drawnWinners.length > 0 && (
                   <div className="space-y-3 animate-in fade-in zoom-in-95 duration-500 w-full">
-                    <div className="text-[10px] font-bold text-green-400 uppercase tracking-widest flex items-center justify-center gap-1.5">
+                    <div className="text-[10px] font-bold text-green-500 uppercase tracking-widest flex items-center justify-center gap-1.5">
                       <Trophy className="h-4 w-4 text-yellow-500" /> Vencedor(es) Encontrado(s)!
                     </div>
                     <div className="space-y-2 max-h-48 overflow-y-auto px-2">
                       {drawnWinners.map((winner, idx) => (
-                        <div key={idx} className="bg-[#161616] border border-border/60 rounded-xl p-3 flex items-center justify-between text-left">
+                        <div key={idx} className="bg-muted/40 border border-border rounded-xl p-3 flex items-center justify-between text-left">
                           <div>
                             <div className="text-xs font-bold text-muted-foreground">{idx + 1}º Ganhador</div>
-                            <div className="text-base font-black text-white leading-tight">{winner.name}</div>
+                            <div className="text-base font-black text-foreground leading-tight">{winner.name}</div>
                           </div>
                           <Badge className="bg-green-500 text-black font-black text-sm px-3 py-1">
                             Nº {String(winner.number).padStart(2, "0")}
@@ -1998,13 +2001,13 @@ function CustomerCombobox({
               }
             }, 250);
           }}
-          className="w-full bg-[#121212] border border-border text-foreground h-11 px-4 pr-10 rounded-xl text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary cursor-text text-white placeholder:text-muted-foreground"
+          className="w-full bg-background border border-border text-foreground h-11 px-4 pr-10 rounded-xl text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary cursor-text placeholder:text-muted-foreground"
         />
         <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
       </div>
 
       {isOpen && (
-        <div className="absolute z-50 w-full mt-1 bg-[#1a1a1a] border border-border rounded-xl shadow-xl max-h-60 overflow-y-auto divide-y divide-border/40">
+        <div className="absolute z-50 w-full mt-1 bg-card border border-border rounded-xl shadow-xl max-h-60 overflow-y-auto divide-y divide-border/40">
           {filtered.length > 0 ? (
             filtered.map((c) => (
               <button
@@ -2014,7 +2017,7 @@ function CustomerCombobox({
                   onChange(c.id);
                   setIsOpen(false);
                 }}
-                className="w-full text-left px-4 py-3 hover:bg-muted/30 text-sm transition-colors text-white flex justify-between items-center"
+                className="w-full text-left px-4 py-3 hover:bg-muted text-sm transition-colors text-foreground flex justify-between items-center"
               >
                 <div>
                   <div className="font-bold">{c.full_name || "Sem nome"}</div>
@@ -2028,7 +2031,7 @@ function CustomerCombobox({
               </button>
             ))
           ) : (
-            <div className="p-3 text-xs text-muted-foreground text-center text-white">Nenhum cliente cadastrado.</div>
+            <div className="p-3 text-xs text-muted-foreground text-center">Nenhum cliente cadastrado.</div>
           )}
         </div>
       )}
