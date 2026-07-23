@@ -9,14 +9,25 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Store, ShieldCheck, Clock, CheckCircle2, XCircle, Search, Calendar, MessageCircle, RefreshCw, AlertTriangle, ExternalLink } from "lucide-react";
 
+import { useSession } from "@/hooks/useAuth";
+import { useOwnedStore } from "@/hooks/useStore";
+
 export const Route = createFileRoute("/_authenticated/admin/assinaturas")({
   component: AdminAssinaturas,
 });
 
 export function AdminAssinaturas() {
+  const user = useSession();
+  const { data: ownedStore } = useOwnedStore();
   const qc = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("all");
+
+  const isMasterAdmin =
+    user?.email === "minishub01@gmail.com" ||
+    user?.email?.toLowerCase().includes("triade") ||
+    ownedStore?.slug === "garagem164" ||
+    ownedStore?.slug === "gonzagaminis";
 
   // Fetch all stores with profile details of owner
   const { data: stores, isLoading } = useQuery({
@@ -154,6 +165,16 @@ export function AdminAssinaturas() {
     if (activeTab === "past_due") return matchesSearch && (s.calculated_status === "past_due" || s.calculated_status === "blocked");
     return matchesSearch;
   });
+
+  if (!isMasterAdmin) {
+    return (
+      <div className="rounded-3xl border border-dashed border-border p-12 text-center text-muted-foreground bg-card max-w-lg mx-auto py-20 space-y-3">
+        <ShieldCheck className="h-12 w-12 text-red-500/60 animate-pulse mx-auto" />
+        <h3 className="font-bold text-white text-lg">Acesso Exclusivo do Administrador Master</h3>
+        <p className="text-sm text-muted-foreground">Esta página de Gestão SaaS é de uso exclusivo do fundador/administrador master da plataforma.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

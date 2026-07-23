@@ -396,6 +396,12 @@ function AuthedLayout() {
     { to: "/ranking", label: "Ranking", icon: Trophy },
   ] as const;
 
+  const isMasterAdmin =
+    user?.email === "minishub01@gmail.com" ||
+    user?.email?.toLowerCase().includes("triade") ||
+    ownedStore?.slug === "garagem164" ||
+    ownedStore?.slug === "gonzagaminis";
+
   const adminNav = [
     { to: "/admin", label: "Dashboard", icon: LayoutDashboard },
     { to: "/admin/estoque", label: "Estoque", icon: Boxes },
@@ -404,8 +410,8 @@ function AuthedLayout() {
     { to: "/admin/recompensas", label: "Recompensas", icon: Package },
     { to: "/admin/resgates", label: "Resgates", icon: Gift },
     { to: "/admin/rifas", label: "Rifas", icon: Ticket },
-    { to: "/admin/assinaturas", label: "Gestão SaaS", icon: ShieldCheck },
-  ] as const;
+    ...(isMasterAdmin ? [{ to: "/admin/assinaturas", label: "Gestão SaaS", icon: ShieldCheck }] : []),
+  ];
 
   const nav = isAdminView ? adminNav : clientNav;
 
