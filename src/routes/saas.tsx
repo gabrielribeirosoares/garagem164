@@ -18,7 +18,7 @@ function SaasLanding() {
               <Flame className="h-5 w-5" />
             </div>
             <span className="font-black text-xl tracking-tight text-white uppercase">
-              Gonzaga<span className="text-primary">SaaS</span>
+              Minis<span className="text-primary">Hub</span>
             </span>
           </div>
 

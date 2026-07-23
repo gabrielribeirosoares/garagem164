@@ -28,7 +28,7 @@ function TermsPage() {
               <Shield className="h-8 w-8 text-primary" /> Termos de Uso & Política de Privacidade (LGPD)
             </h1>
             <p className="text-sm text-muted-foreground">
-              Transparência, proteção de dados e regras oficiais da plataforma Gonzaga Minis.
+              Transparência, proteção de dados e regras oficiais da plataforma MinisHub.
             </p>
 
             {/* Navigation Tabs */}
@@ -61,7 +61,7 @@ function TermsPage() {
                   <Info className="h-5 w-5 text-primary" /> 1. Aceitação dos Termos
                 </h3>
                 <p>
-                  Ao se cadastrar ou utilizar os serviços do <strong>Gonzaga Minis</strong>, você declara ter lido, compreendido e concordado com todos os termos descritos neste documento. Estes termos regem a participação em rifas, o acúmulo de pontos na garagem e a navegação no sistema.
+                  Ao se cadastrar ou utilizar os serviços do <strong>MinisHub</strong>, você declara ter lido, compreendido e concordado com todos os termos descritos neste documento. Estes termos regem a participação em rifas, o acúmulo de pontos na garagem e a navegação no sistema.
                 </p>
               </section>
 
@@ -132,7 +132,7 @@ function TermsPage() {
           )}
 
           <div className="pt-6 border-t border-border flex justify-between items-center text-xs text-muted-foreground">
-            <span>Gonzaga Minis © 2026</span>
+            <span>MinisHub © 2026</span>
             <span>Documentação em conformidade com a LGPD</span>
           </div>
         </div>

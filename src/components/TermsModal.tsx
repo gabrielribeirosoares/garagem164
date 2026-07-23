@@ -20,7 +20,7 @@ export function TermsModal({ open, onOpenChange, onAccept }: TermsModalProps) {
             <Shield className="h-6 w-6 text-primary" /> Termos de Uso & Política de Privacidade (LGPD)
           </DialogTitle>
           <DialogDescription className="text-xs text-muted-foreground">
-            Conheça as regras da plataforma Gonzaga Minis e como garantimos a proteção absoluta dos seus dados pessoais.
+            Conheça as regras da plataforma MinisHub e como garantimos a proteção absoluta dos seus dados pessoais.
           </DialogDescription>
 
           {/* Navigation Tabs inside modal */}
@@ -53,7 +53,7 @@ export function TermsModal({ open, onOpenChange, onAccept }: TermsModalProps) {
                 <Info className="h-4 w-4 text-primary" /> 1. Aceitação dos Termos
               </h4>
               <p>
-                Ao criar uma conta ou utilizar os serviços do <strong>Gonzaga Minis</strong>, você concorda com estes Termos de Uso. Caso não concorde com qualquer disposição, solicitamos que não utilize a plataforma.
+                Ao criar uma conta ou utilizar os serviços do <strong>MinisHub</strong>, você concorda com estes Termos de Uso. Caso não concorde com qualquer disposição, solicitamos que não utilize a plataforma.
               </p>
             </div>
 
@@ -94,7 +94,7 @@ export function TermsModal({ open, onOpenChange, onAccept }: TermsModalProps) {
                 <Lock className="h-4 w-4 text-primary" /> 1. Compromisso com a LGPD (Lei nº 13.709/2018)
               </h4>
               <p>
-                O Gonzaga Minis respeita a sua privacidade e cumpre rigorosamente as diretrizes da Lei Geral de Proteção de Dados Pessoais (LGPD). Todos os seus dados são tratados com o máximo sigilo e segurança.
+                O MinisHub respeita a sua privacidade e cumpre rigorosamente as diretrizes da Lei Geral de Proteção de Dados Pessoais (LGPD). Todos os seus dados são tratados com o máximo sigilo e segurança.
               </p>
             </div>
 

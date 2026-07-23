@@ -84,11 +84,11 @@ function Garagem() {
   };
 
   const handleShareWhatsAppReferral = () => {
-    const text = `Olá! Venha criar sua garagem de miniaturas na loja "${store?.name || "Gonzaga Minis"}" e ganhe pontos no seu cadastro! Use meu link exclusivo:\n\n${referralLink}`;
+    const text = `Olá! Venha criar sua garagem de miniaturas na loja "${store?.name || "MinisHub"}" e ganhe pontos no seu cadastro! Use meu link exclusivo:\n\n${referralLink}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   };
 
-  const shareText = `🚗 Minha Garagem na ${store?.name || "Gonzaga Minis"}:\n• ${carCount} miniaturas na coleção\n• ${pointsBalance ?? 0} pontos acumulados\n• Nível: ${vipTier}\n\nVenha conhecer minha coleção!`;
+  const shareText = `🚗 Minha Garagem na ${store?.name || "MinisHub"}:\n• ${carCount} miniaturas na coleção\n• ${pointsBalance ?? 0} pontos acumulados\n• Nível: ${vipTier}\n\nVenha conhecer minha coleção!`;
 
   return (
     <div className="space-y-6">
@@ -284,7 +284,7 @@ function Garagem() {
           {/* Card Preview */}
           <div className="p-6 rounded-3xl border border-primary/40 bg-gradient-to-b from-[#181818] to-[#0d0d0d] space-y-6 hw-glow-orange text-center relative overflow-hidden">
             <div className="flex flex-col items-center space-y-1">
-              <span className="text-[10px] font-bold text-primary uppercase tracking-widest">{store?.name || "Gonzaga Minis"}</span>
+              <span className="text-[10px] font-bold text-primary uppercase tracking-widest">{store?.name || "MinisHub"}</span>
               <h3 className="font-black text-2xl text-white">{profile?.full_name || "Colecionador"}</h3>
               <Badge className={`text-[10px] ${vipColor}`}>{vipTier}</Badge>
             </div>
