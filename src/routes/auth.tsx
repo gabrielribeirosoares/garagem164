@@ -6,8 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useSession } from "@/hooks/useAuth";
-import { lovable } from "@/integrations/lovable";
-
 import { TermsModal } from "@/components/TermsModal";
 
 export const Route = createFileRoute("/auth")({
@@ -16,27 +14,6 @@ export const Route = createFileRoute("/auth")({
   }),
   component: AuthPage,
 });
-
-const GoogleIcon = () => (
-  <svg className="mr-2 h-5 w-5 shrink-0" viewBox="0 0 24 24">
-    <path
-      fill="#4285F4"
-      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-    />
-    <path
-      fill="#34A853"
-      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-    />
-    <path
-      fill="#FBBC05"
-      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-    />
-    <path
-      fill="#EA4335"
-      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-    />
-  </svg>
-);
 
 function AuthPage() {
   const navigate = useNavigate();
@@ -47,7 +24,6 @@ function AuthPage() {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [termsOpen, setTermsOpen] = useState(false);
 
-  // Only allow same-origin relative paths for the post-auth redirect.
   const safeNext = next && next.startsWith("/") && !next.startsWith("//") ? next : null;
   const redirectTarget = safeNext ?? "/";
   const absoluteRedirect =
@@ -99,15 +75,6 @@ function AuthPage() {
     toast.success("Conta criada! Verifique seu e-mail se necessário ou faça login.");
   }
 
-  async function handleGoogleSignIn() {
-    setLoading(true);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: absoluteRedirect,
-    });
-    setLoading(false);
-    if (result.error) return toast.error(result.error.message);
-  }
-
   async function handleForgotPassword() {
     const emailInput = document.getElementById("si-email") as HTMLInputElement;
     const email = emailInput?.value;
@@ -127,11 +94,9 @@ function AuthPage() {
     <div className="min-h-screen flex items-center justify-center bg-black px-4 font-sans select-none">
       <div className="w-full max-w-[420px]">
         <div className="relative rounded-2xl border border-border bg-card p-8 shadow-2xl overflow-hidden transition-all duration-300">
-          {/* Subtle red glow at top-right */}
           <div className="absolute -top-16 -right-16 w-36 h-36 bg-primary/20 rounded-full blur-2xl pointer-events-none" />
 
           {!isSignUp ? (
-            // SIGN IN FLOW
             <div className="space-y-6">
               <div className="text-center space-y-1">
                 <h1 className="font-black text-3xl tracking-wide text-white uppercase font-sans">
@@ -194,16 +159,6 @@ function AuthPage() {
                   >
                     {loading ? "Entrando..." : "ENTRAR"}
                   </Button>
-
-                  <Button
-                    type="button"
-                    onClick={handleGoogleSignIn}
-                    disabled={loading}
-                    className="w-full bg-white hover:bg-gray-100 text-black font-bold text-sm h-11 rounded-md border-none flex items-center justify-center transition-colors shadow-sm"
-                  >
-                    <GoogleIcon />
-                    Entrar com Google
-                  </Button>
                 </div>
               </form>
 
@@ -221,7 +176,6 @@ function AuthPage() {
               </div>
             </div>
           ) : (
-            // SIGN UP FLOW
             <div className="space-y-6">
               <div className="text-center space-y-1">
                 <h1 className="font-black text-3xl tracking-wide text-white uppercase font-sans">
