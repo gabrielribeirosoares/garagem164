@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useSession, useRole } from "@/hooks/useAuth";
-import { useActiveClientStore, setActiveStoreSlug } from "@/hooks/useStore";
+import { useActiveClientStore, setActiveStoreSlug, useMyStores } from "@/hooks/useStore";
 import { Store, Trophy, Sparkles } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +15,7 @@ function Landing() {
   const user = useSession();
   const { data: role } = useRole();
   const { data: activeStore } = useActiveClientStore();
+  const { data: myStores, isLoading: loadingMyStores } = useMyStores();
   const navigate = useNavigate();
   const qc = useQueryClient();
 
@@ -28,19 +29,23 @@ function Landing() {
   });
 
   useEffect(() => {
-    if (!user || !role) return;
+    if (!user || !role || loadingMyStores) return;
     if (role === "admin") {
       navigate({ to: "/admin", replace: true });
     } else if (role === "client") {
       if (activeStore) {
         navigate({ to: "/garagem", replace: true });
-      } else if (stores && stores.length === 1) {
-        // If there's only one store, auto-select it and redirect
-        setActiveStoreSlug(stores[0].slug);
-        navigate({ to: "/garagem", replace: true });
+      } else if (myStores && myStores.length > 0) {
+        if (myStores[0]?.slug) {
+          setActiveStoreSlug(myStores[0].slug);
+          navigate({ to: "/garagem", replace: true });
+        }
+      } else {
+        // Novo usuário sem loja vinculada (cadastro direto sem link de indicação de loja) -> direciona para criar loja
+        navigate({ to: "/create-store", replace: true });
       }
     }
-  }, [user, role, activeStore, stores, navigate]);
+  }, [user, role, activeStore, myStores, loadingMyStores, navigate]);
 
   async function handleSignOut() {
     await qc.cancelQueries();
