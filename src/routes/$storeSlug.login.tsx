@@ -95,15 +95,6 @@ function StoreLogin() {
     toast.success("Conta criada! Verifique seu e-mail se necessário.");
   }
 
-  async function handleGoogle() {
-    setLoading(true);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: `${window.location.origin}/${storeSlug}`,
-    });
-    setLoading(false);
-    if (result.error) toast.error(result.error.message);
-  }
-
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-[420px] rounded-2xl border border-border bg-card p-8 shadow-2xl space-y-6">
@@ -144,9 +135,6 @@ function StoreLogin() {
             </div>
             <Button type="submit" disabled={loading} className="w-full font-black" style={{ background: primary, color: "#fff" }}>
               {loading ? "Entrando..." : "ENTRAR"}
-            </Button>
-            <Button type="button" onClick={handleGoogle} disabled={loading} variant="outline" className="w-full">
-              Entrar com Google
             </Button>
           </form>
         ) : (

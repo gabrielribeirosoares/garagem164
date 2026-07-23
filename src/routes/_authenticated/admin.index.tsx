@@ -2,9 +2,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Bell, Users, Gift, Clock, Trophy, Sparkles, Search } from "lucide-react";
+import { Bell, Users, Gift, Clock, Trophy, Sparkles, Search, Palette } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useOwnedStore } from "@/hooks/useStore";
 
@@ -18,6 +21,75 @@ function AdminDashboard() {
   const storeId = store?.id;
 
   const [customerSearch, setCustomerSearch] = useState("");
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [storeName, setStoreName] = useState("");
+  const [primaryColor, setPrimaryColor] = useState("#f97316");
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [faviconUrl, setFaviconUrl] = useState<string | null>(null);
+  const [savingSettings, setSavingSettings] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadingFavicon, setUploadingFavicon] = useState(false);
+
+  useEffect(() => {
+    if (store) {
+      setStoreName(store.name || "");
+      setPrimaryColor(store.primary_color || "#f97316");
+      setLogoUrl(store.logo_url || null);
+      setFaviconUrl(store.favicon_url || null);
+    }
+  }, [store]);
+
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>, type: "logo" | "favicon") {
+    const file = e.target.files?.[0];
+    if (!file || !store) return;
+    if (type === "logo") setUploadingLogo(true);
+    else setUploadingFavicon(true);
+
+    try {
+      const ext = file.name.split(".").pop();
+      const fileName = `${store.id}-${type}-${Math.random().toString(36).slice(2)}.${ext}`;
+      const filePath = `stores/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("images")
+        .upload(filePath, file, { cacheControl: "3600", upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage.from("images").getPublicUrl(filePath);
+      if (type === "logo") setLogoUrl(data.publicUrl);
+      else setFaviconUrl(data.publicUrl);
+
+      toast.success(`${type === "logo" ? "Logo" : "Favicon"} enviado com sucesso!`);
+    } catch (err: any) {
+      toast.error(`Erro no upload: ${err.message}`);
+    } finally {
+      if (type === "logo") setUploadingLogo(false);
+      else setUploadingFavicon(false);
+    }
+  }
+
+  async function handleSaveSettings(e: React.FormEvent) {
+    e.preventDefault();
+    if (!store) return;
+    setSavingSettings(true);
+    const { error } = await supabase
+      .from("stores")
+      .update({
+        name: storeName,
+        primary_color: primaryColor,
+        logo_url: logoUrl,
+        favicon_url: faviconUrl,
+      })
+      .eq("id", store.id);
+    setSavingSettings(false);
+    if (error) return toast.error(error.message);
+    toast.success("Configurações e cores da loja salvas com sucesso!");
+    await qc.invalidateQueries({ queryKey: ["owned-store"] });
+    await qc.invalidateQueries({ queryKey: ["all-stores"] });
+    await qc.invalidateQueries({ queryKey: ["active-client-store"] });
+    setSettingsOpen(false);
+  }
 
   const { data: customers } = useQuery({
     queryKey: ["admin-customers", storeId],
@@ -80,16 +152,25 @@ function AdminDashboard() {
           <h1 className="text-3xl md:text-4xl font-black">Dashboard</h1>
         </div>
         {store && (
-          <Button
-            className="hw-gradient-orange text-white font-bold h-9"
-            onClick={() => {
-              const link = `${window.location.origin}/${store.slug}`;
-              navigator.clipboard.writeText(link);
-              toast.success("Link de convite copiado!");
-            }}
-          >
-            <Sparkles className="h-4 w-4 mr-2" /> Copiar Link de Convite
-          </Button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button
+              variant="outline"
+              className="h-9 font-bold border-border hover:bg-card"
+              onClick={() => setSettingsOpen(true)}
+            >
+              <Palette className="h-4 w-4 mr-2 text-primary" /> Editar Cores & Loja
+            </Button>
+            <Button
+              className="hw-gradient-orange text-white font-bold h-9"
+              onClick={() => {
+                const link = `${window.location.origin}/${store.slug}`;
+                navigator.clipboard.writeText(link);
+                toast.success("Link de convite copiado!");
+              }}
+            >
+              <Sparkles className="h-4 w-4 mr-2" /> Copiar Link de Convite
+            </Button>
+          </div>
         )}
       </div>
 
@@ -185,6 +266,92 @@ function AdminDashboard() {
           )}
         </div>
       </section>
+
+      {/* Dialog para Editar Cores e Configurações da Loja */}
+      <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+        <DialogContent className="sm:max-w-[480px] bg-card border-border text-foreground">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-black flex items-center gap-2">
+              <Palette className="h-6 w-6 text-primary" /> Editar Cores & Loja
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSaveSettings} className="space-y-5 pt-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Nome da Loja</Label>
+              <Input value={storeName} onChange={(e) => setStoreName(e.target.value)} required className="bg-[#121212] border-border text-foreground" />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Cor Primária da Loja</Label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="color"
+                  value={primaryColor}
+                  onChange={(e) => setPrimaryColor(e.target.value)}
+                  className="h-10 w-14 rounded border border-border bg-transparent cursor-pointer shrink-0"
+                />
+                <Input
+                  value={primaryColor}
+                  onChange={(e) => setPrimaryColor(e.target.value)}
+                  placeholder="#f97316"
+                  className="font-mono bg-[#121212] border-border text-foreground max-w-[140px]"
+                />
+                <div
+                  className="h-10 px-4 flex items-center justify-center rounded-lg text-white font-black text-xs shadow-md transition-colors"
+                  style={{ background: primaryColor }}
+                >
+                  Preview
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Logo da Loja</Label>
+              {logoUrl ? (
+                <div className="flex items-center gap-3 p-3 rounded-xl border border-border bg-background/50">
+                  <img src={logoUrl} alt="Logo" className="h-10 w-10 rounded object-cover" />
+                  <span className="text-xs text-muted-foreground flex-1 truncate">Logo carregada</span>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => setLogoUrl(null)} className="text-xs text-destructive hover:bg-destructive/10">Remover</Button>
+                </div>
+              ) : (
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleFileUpload(e, "logo")}
+                  disabled={uploadingLogo}
+                  className="bg-[#121212] border-border text-foreground"
+                />
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Favicon da Loja</Label>
+              {faviconUrl ? (
+                <div className="flex items-center gap-3 p-3 rounded-xl border border-border bg-background/50">
+                  <img src={faviconUrl} alt="Favicon" className="h-8 w-8 rounded object-cover" />
+                  <span className="text-xs text-muted-foreground flex-1 truncate">Favicon carregado</span>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => setFaviconUrl(null)} className="text-xs text-destructive hover:bg-destructive/10">Remover</Button>
+                </div>
+              ) : (
+                <Input
+                  type="file"
+                  accept="image/x-icon,image/png,image/jpeg"
+                  onChange={(e) => handleFileUpload(e, "favicon")}
+                  disabled={uploadingFavicon}
+                  className="bg-[#121212] border-border text-foreground"
+                />
+              )}
+            </div>
+
+            <div className="flex justify-end gap-3 pt-3 border-t border-border">
+              <Button type="button" variant="ghost" onClick={() => setSettingsOpen(false)}>Cancelar</Button>
+              <Button type="submit" disabled={savingSettings} className="font-bold text-white" style={{ background: primaryColor }}>
+                {savingSettings ? "Salvando..." : "Salvar Alterações"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

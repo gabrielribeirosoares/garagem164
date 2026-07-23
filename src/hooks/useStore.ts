@@ -122,8 +122,8 @@ export function useMyStores() {
         .eq("user_id", user!.id);
       if (error) throw error;
       return (data ?? [])
-        .map((cp: any) => cp.stores ? { ...cp.stores, points: cp.points } : null)
-        .filter(Boolean);
+        .map((cp: any) => (cp.stores ? { ...cp.stores, points: cp.points } : null))
+        .filter((s: any) => s && s.owner_id !== user!.id);
     },
   });
 }

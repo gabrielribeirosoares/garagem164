@@ -32,12 +32,25 @@ function CreateStore() {
 
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
+  const [isCustomSlug, setIsCustomSlug] = useState(false);
   const [logoUrl, setLogoUrl] = useState("");
   const [faviconUrl, setFaviconUrl] = useState("");
   const [color, setColor] = useState("#f97316");
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingFavicon, setUploadingFavicon] = useState(false);
+
+  function handleNameChange(val: string) {
+    setName(val);
+    if (!isCustomSlug) {
+      setSlug(slugify(val));
+    }
+  }
+
+  function handleSlugChange(val: string) {
+    setSlug(slugify(val));
+    setIsCustomSlug(true);
+  }
 
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>, type: "logo" | "favicon") {
     const file = e.target.files?.[0];
@@ -113,13 +126,13 @@ function CreateStore() {
 
         <div className="space-y-2">
           <Label>Nome da loja</Label>
-          <Input value={name} onChange={(e) => { setName(e.target.value); if (!slug) setSlug(slugify(e.target.value)); }} required />
+          <Input value={name} onChange={(e) => handleNameChange(e.target.value)} required placeholder="Ex: Gonzaga Minis" />
         </div>
         <div className="space-y-2">
           <Label>Slug (URL)</Label>
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground">/</span>
-            <Input value={slug} onChange={(e) => setSlug(slugify(e.target.value))} required placeholder="minha-loja" />
+            <Input value={slug} onChange={(e) => handleSlugChange(e.target.value)} required placeholder="gonzaga-minis" />
           </div>
           <p className="text-xs text-muted-foreground">Sua loja ficará em <code>/{slug || "minha-loja"}</code></p>
         </div>

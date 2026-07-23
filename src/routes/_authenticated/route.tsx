@@ -3,8 +3,9 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession, useRole, useProfile } from "@/hooks/useAuth";
 import { useOwnedStore, useActiveClientStore, useCustomerPoints, useMyStores, setActiveStoreSlug } from "@/hooks/useStore";
+import { useTheme } from "@/hooks/useTheme";
 import { Button } from "@/components/ui/button";
-import { Flame, Car, Gift, LayoutDashboard, Package, PlusCircle, LogOut, Trophy, Store, User as UserIcon, ChevronDown, Ticket, ShoppingBag, Boxes } from "lucide-react";
+import { Flame, Car, Gift, LayoutDashboard, Package, PlusCircle, LogOut, Trophy, Store, User as UserIcon, ChevronDown, Ticket, ShoppingBag, Boxes, Sun, Moon, Monitor } from "lucide-react";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -36,6 +37,7 @@ export const Route = createFileRoute("/_authenticated")({
 
 function AuthedLayout() {
   const user = useSession();
+  const { theme, setTheme } = useTheme();
   const { data: role } = useRole();
   const { data: ownedStore } = useOwnedStore();
   const { data: activeStore } = useActiveClientStore();
@@ -143,8 +145,10 @@ function AuthedLayout() {
 
   const nav = isAdminView ? adminNav : clientNav;
 
+  const clientStores = (myStores ?? []).filter((s: any) => s.id !== ownedStore?.id);
+
   return (
-    <div className="min-h-screen pb-24 md:pb-8" style={{ "--store-primary": primaryColor } as React.CSSProperties}>
+    <div className="min-h-screen pb-24 md:pb-8 transition-colors duration-300" style={{ "--store-primary": primaryColor, "--primary": primaryColor, "--ring": primaryColor } as React.CSSProperties}>
       {/* Top bar */}
       <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur">
         <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between gap-4">
@@ -168,7 +172,7 @@ function AuthedLayout() {
                   Minhas Lojas
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator className="bg-border" />
-                {myStores?.map((s: any) => (
+                {clientStores.map((s: any) => (
                   <DropdownMenuItem
                     key={s.id}
                     onClick={async () => {
@@ -193,7 +197,7 @@ function AuthedLayout() {
                     </span>
                   </DropdownMenuItem>
                 ))}
-                {(!myStores || myStores.length === 0) && (
+                {clientStores.length === 0 && (
                   <div className="p-3 text-xs text-muted-foreground text-center">
                     Nenhuma loja vinculada.
                   </div>
@@ -245,13 +249,13 @@ function AuthedLayout() {
                   <LayoutDashboard className="h-4 w-4" />
                   {ownedStore?.name ?? "Painel Admin"}
                 </DropdownMenuItem>
-                {myStores && myStores.length > 0 && (
+                {clientStores.length > 0 && (
                   <>
                     <DropdownMenuSeparator className="bg-border" />
                     <DropdownMenuLabel className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
                       Lojas que sou cliente
                     </DropdownMenuLabel>
-                    {myStores.map((s: any) => (
+                    {clientStores.map((s: any) => (
                       <DropdownMenuItem
                         key={s.id}
                         onClick={async () => {
@@ -286,7 +290,12 @@ function AuthedLayout() {
               const active = path === n.to || (n.to !== "/admin" && path.startsWith(n.to));
               return (
                 <Link key={n.to} to={n.to}>
-                  <Button variant={active ? "secondary" : "ghost"} size="sm" className="gap-2">
+                  <Button
+                    variant={active ? "default" : "ghost"}
+                    size="sm"
+                    className="gap-2 font-bold transition-all"
+                    style={active ? { background: primaryColor, color: "#ffffff" } : undefined}
+                  >
                     <n.icon className="h-4 w-4" /> {n.label}
                   </Button>
                 </Link>
@@ -294,13 +303,53 @@ function AuthedLayout() {
             })}
           </nav>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 md:gap-3">
             {!isAdminView && activeStore && (
-              <div className="flex items-center gap-2 rounded-full px-3 py-1.5 text-white font-bold text-sm" style={{ background: activeStore.primary_color || "#f97316" }}>
+              <div className="flex items-center gap-2 rounded-full px-3 py-1.5 text-white font-bold text-sm" style={{ background: primaryColor }}>
                 <Trophy className="h-4 w-4" />
                 <span>{clientPoints ?? 0} pts</span>
               </div>
             )}
+
+            {/* Selector de Tema (Diurno / Noturno / Computador) */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" title="Tema (Claro / Escuro / Automático)">
+                  {theme === "light" ? (
+                    <Sun className="h-4 w-4 text-amber-500" />
+                  ) : theme === "dark" ? (
+                    <Moon className="h-4 w-4 text-blue-400" />
+                  ) : (
+                    <Monitor className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-card border-border text-foreground">
+                <DropdownMenuLabel className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                  Tema da Aplicação
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator className="bg-border" />
+                <DropdownMenuItem
+                  onClick={() => setTheme("light")}
+                  className={`cursor-pointer gap-2 ${theme === "light" ? "font-bold text-primary" : ""}`}
+                >
+                  <Sun className="h-4 w-4 text-amber-500" /> Tema Diurno (Claro)
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setTheme("dark")}
+                  className={`cursor-pointer gap-2 ${theme === "dark" ? "font-bold text-primary" : ""}`}
+                >
+                  <Moon className="h-4 w-4 text-blue-400" /> Tema Noturno (Escuro)
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setTheme("system")}
+                  className={`cursor-pointer gap-2 ${theme === "system" ? "font-bold text-primary" : ""}`}
+                >
+                  <Monitor className="h-4 w-4 text-muted-foreground" /> Automático (do Computador)
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             <Button onClick={() => setProfileOpen(true)} variant="ghost" size="icon" title="Meu Perfil">
               <UserIcon className="h-4 w-4" />
             </Button>
