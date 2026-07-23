@@ -123,7 +123,7 @@ function AuthPage() {
                     type="email"
                     required
                     autoComplete="email"
-                    className="bg-[#eef2f7] border-none text-black h-11 px-4 focus-visible:ring-1 focus-visible:ring-primary focus-visible:text-black focus-visible:bg-white placeholder:text-muted-foreground/60 transition-colors rounded-md"
+                    className="bg-background border border-border text-foreground h-11 px-4 focus-visible:ring-1 focus-visible:ring-primary placeholder:text-muted-foreground transition-colors rounded-md"
                   />
                 </div>
 
@@ -149,7 +149,7 @@ function AuthPage() {
                     type="password"
                     required
                     autoComplete="current-password"
-                    className="bg-[#eef2f7] border-none text-black h-11 px-4 focus-visible:ring-1 focus-visible:ring-primary focus-visible:text-black focus-visible:bg-white placeholder:text-muted-foreground/60 transition-colors rounded-md"
+                    className="bg-background border border-border text-foreground h-11 px-4 focus-visible:ring-1 focus-visible:ring-primary placeholder:text-muted-foreground transition-colors rounded-md"
                   />
                 </div>
 
@@ -201,7 +201,7 @@ function AuthPage() {
                     name="full_name"
                     type="text"
                     required
-                    className="bg-[#eef2f7] border-none text-black h-11 px-4 focus-visible:ring-1 focus-visible:ring-primary focus-visible:text-black focus-visible:bg-white placeholder:text-muted-foreground/60 transition-colors rounded-md"
+                    className="bg-background border border-border text-foreground h-11 px-4 focus-visible:ring-1 focus-visible:ring-primary placeholder:text-muted-foreground transition-colors rounded-md"
                   />
                 </div>
 
@@ -224,7 +224,7 @@ function AuthPage() {
                       value={whatsapp}
                       onChange={(e) => setWhatsapp(formatPhone(e.target.value))}
                       required
-                      className="bg-[#eef2f7] border-none text-black h-11 pl-11 pr-4 focus-visible:ring-1 focus-visible:ring-primary focus-visible:text-black focus-visible:bg-white placeholder:text-muted-foreground/60 transition-colors rounded-md"
+                      className="bg-background border border-border text-foreground h-11 pl-11 pr-4 focus-visible:ring-1 focus-visible:ring-primary placeholder:text-muted-foreground transition-colors rounded-md"
                     />
                   </div>
                 </div>
@@ -242,7 +242,7 @@ function AuthPage() {
                     type="email"
                     required
                     autoComplete="email"
-                    className="bg-[#eef2f7] border-none text-black h-11 px-4 focus-visible:ring-1 focus-visible:ring-primary focus-visible:text-black focus-visible:bg-white placeholder:text-muted-foreground/60 transition-colors rounded-md"
+                    className="bg-background border border-border text-foreground h-11 px-4 focus-visible:ring-1 focus-visible:ring-primary placeholder:text-muted-foreground transition-colors rounded-md"
                   />
                 </div>
 
@@ -260,7 +260,7 @@ function AuthPage() {
                     required
                     minLength={6}
                     autoComplete="new-password"
-                    className="bg-[#eef2f7] border-none text-black h-11 px-4 focus-visible:ring-1 focus-visible:ring-primary focus-visible:text-black focus-visible:bg-white placeholder:text-muted-foreground/60 transition-colors rounded-md"
+                    className="bg-background border border-border text-foreground h-11 px-4 focus-visible:ring-1 focus-visible:ring-primary placeholder:text-muted-foreground transition-colors rounded-md"
                   />
                 </div>
 

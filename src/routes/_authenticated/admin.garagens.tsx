@@ -340,13 +340,13 @@ function CustomerCombobox({
               }
             }, 250);
           }}
-          className="w-full bg-[#121212] border border-border text-foreground h-11 px-4 pr-10 rounded-xl text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary cursor-text"
+          className="w-full bg-background border border-border text-foreground h-11 px-4 pr-10 rounded-xl text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary cursor-text"
         />
         <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
       </div>
 
       {isOpen && (
-        <div className="absolute z-50 w-full mt-1 bg-[#1a1a1a] border border-border rounded-xl shadow-xl max-h-60 overflow-y-auto divide-y divide-border/40">
+        <div className="absolute z-50 w-full mt-1 bg-card border border-border rounded-xl shadow-xl max-h-60 overflow-y-auto divide-y divide-border/40">
           {filtered.length > 0 ? (
             filtered.map((c) => (
               <button
@@ -359,11 +359,11 @@ function CustomerCombobox({
                 className="w-full text-left px-4 py-3 text-sm hover:bg-muted/50 transition-colors flex items-center justify-between"
               >
                 <div className="min-w-0">
-                  <span className="font-bold text-white block truncate">
+                  <span className="font-bold text-foreground block truncate">
                     {c.full_name || c.email}
                   </span>
                   {c.whatsapp && (
-                    <span className="text-xs text-secondary block truncate">
+                    <span className="text-xs text-primary block truncate">
                       WhatsApp: {c.whatsapp}
                     </span>
                   )}

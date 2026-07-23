@@ -313,7 +313,7 @@ function AddCarros() {
                   value={linkEmail}
                   onChange={(e) => setLinkEmail(e.target.value)}
                   placeholder="cliente@email.com"
-                  className="bg-[#121212] border-border text-foreground h-11"
+                  className="bg-background border-border text-foreground h-11"
                 />
                 <Button
                   type="button"
@@ -404,7 +404,7 @@ function AddCarros() {
 
             <div className="flex gap-2">
               <label className="flex-1 cursor-pointer">
-                <div className="bg-[#121212] border border-dashed border-border hover:border-primary/50 text-white rounded-xl h-11 px-3 flex items-center justify-center gap-2 text-xs font-bold transition-colors">
+                <div className="bg-background border border-dashed border-border hover:border-primary/50 text-foreground rounded-xl h-11 px-3 flex items-center justify-center gap-2 text-xs font-bold transition-colors">
                   <Upload className="h-4 w-4 text-primary" />
                   {uploadingImage ? "Enviando foto..." : "Upload de arquivo de foto"}
                 </div>
@@ -421,8 +421,14 @@ function AddCarros() {
               </label>
             </div>
 
-            <div className="text-[10px] text-muted-foreground">Ou insira uma URL de imagem externa se preferir:</div>
-            <Input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://..." className="bg-[#121212] border-border text-white text-xs h-9" />
+            <p className="text-[11px] text-muted-foreground pt-1">Ou insira uma URL de imagem externa se preferir:</p>
+            <Input
+              type="text"
+              placeholder="https://..."
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              className="bg-background border-border text-foreground h-11"
+            />
           </div>
 
           <div className="space-y-2">
@@ -474,7 +480,7 @@ function AddCarros() {
               <select
                 value={selectedYear}
                 onChange={(e) => { setSelectedYear(e.target.value); setCurrentPage(1); }}
-                className="bg-[#181818] border border-border text-foreground rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer min-w-[100px]"
+                className="bg-background border border-border text-foreground rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer min-w-[100px]"
               >
                 <option value="Todos">Todos</option>
                 {filterOptions.years.map(y => (
@@ -488,7 +494,7 @@ function AddCarros() {
               <select
                 value={selectedCollection}
                 onChange={(e) => { setSelectedCollection(e.target.value); setCurrentPage(1); }}
-                className="bg-[#181818] border border-border text-foreground rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer max-w-[200px]"
+                className="bg-background border border-border text-foreground rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer max-w-[200px]"
               >
                 <option value="Todos">Todos</option>
                 {filterOptions.series.map(s => (
@@ -502,7 +508,7 @@ function AddCarros() {
               <select
                 value={selectedLote}
                 onChange={(e) => { setSelectedLote(e.target.value); setCurrentPage(1); }}
-                className="bg-[#181818] border border-border text-foreground rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer min-w-[100px]"
+                className="bg-background border border-border text-foreground rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer min-w-[100px]"
               >
                 <option value="Todos">Todos</option>
                 {filterOptions.lotes.map(l => (
@@ -512,12 +518,12 @@ function AddCarros() {
             </div>
 
             <div className="relative flex-1 min-w-[240px]">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#4285F4]" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" />
               <Input
                 value={listSearchQuery}
                 onChange={(e) => { setListSearchQuery(e.target.value); setCurrentPage(1); }}
                 placeholder="Buscar nome do carro ou coleção"
-                className="pl-10 bg-[#181818] border-border text-foreground focus-visible:ring-1 focus-visible:ring-primary rounded-lg h-9"
+                className="pl-10 bg-background border-border text-foreground focus-visible:ring-1 focus-visible:ring-primary rounded-lg h-9"
               />
             </div>
 
@@ -533,7 +539,7 @@ function AddCarros() {
 
           <div className="flex items-center justify-between border-t border-border/50 pt-4">
             <div className="text-xs font-bold text-muted-foreground">
-              Exibindo <span className="text-secondary font-black text-sm">{filteredCarsList.length === 0 ? 0 : (activePage - 1) * itemsPerPage + 1}-{Math.min(activePage * itemsPerPage, filteredCarsList.length)}</span> de <span className="text-secondary font-black text-sm">{filteredCarsList.length}</span> carros
+              Exibindo <span className="text-primary font-black text-sm">{filteredCarsList.length === 0 ? 0 : (activePage - 1) * itemsPerPage + 1}-{Math.min(activePage * itemsPerPage, filteredCarsList.length)}</span> de <span className="text-primary font-black text-sm">{filteredCarsList.length}</span> carros
             </div>
 
             <div className="flex items-center gap-2">
@@ -541,7 +547,7 @@ function AddCarros() {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="bg-[#181818] border border-border text-foreground rounded-lg px-3 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer h-7"
+                className="bg-background border border-border text-foreground rounded-lg px-3 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer h-7"
               >
                 <option value="year_desc">Ano (Mais recente)</option>
                 <option value="year_asc">Ano (Mais antigo)</option>
@@ -725,13 +731,13 @@ function CustomerCombobox({
               }
             }, 250);
           }}
-          className="w-full bg-[#121212] border border-border text-foreground h-11 px-4 pr-10 rounded-xl text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary cursor-text"
+          className="w-full bg-background border border-border text-foreground h-11 px-4 pr-10 rounded-xl text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary cursor-text"
         />
         <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
       </div>
 
       {isOpen && (
-        <div className="absolute z-50 w-full mt-1 bg-[#1a1a1a] border border-border rounded-xl shadow-xl max-h-60 overflow-y-auto divide-y divide-border/40">
+        <div className="absolute z-50 w-full mt-1 bg-card border border-border rounded-xl shadow-xl max-h-60 overflow-y-auto divide-y divide-border/40">
           {filtered.length > 0 ? (
             filtered.map((c) => (
               <button
@@ -744,11 +750,11 @@ function CustomerCombobox({
                 className="w-full text-left px-4 py-3 text-sm hover:bg-muted/50 transition-colors flex items-center justify-between"
               >
                 <div className="min-w-0">
-                  <span className="font-bold text-white block truncate">
+                  <span className="font-bold text-foreground block truncate">
                     {c.full_name || c.email}
                   </span>
                   {c.whatsapp && (
-                    <span className="text-xs text-secondary block truncate">
+                    <span className="text-xs text-primary block truncate">
                       WhatsApp: {c.whatsapp}
                     </span>
                   )}

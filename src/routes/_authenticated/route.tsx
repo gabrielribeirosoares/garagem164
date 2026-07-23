@@ -148,7 +148,7 @@ function AuthedLayout() {
   const clientStores = (myStores ?? []).filter((s: any) => s.id !== ownedStore?.id);
 
   return (
-    <div className="min-h-screen pb-24 md:pb-8 transition-colors duration-300" style={{ "--store-primary": primaryColor, "--primary": primaryColor, "--ring": primaryColor } as React.CSSProperties}>
+    <div className="min-h-screen pb-24 md:pb-8 transition-colors duration-300" style={{ "--store-primary": primaryColor, "--primary": primaryColor, "--secondary": primaryColor, "--ring": primaryColor } as React.CSSProperties}>
       {/* Top bar */}
       <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur">
         <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between gap-4">
@@ -413,7 +413,7 @@ function AuthedLayout() {
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="Seu nome"
                 required
-                className="bg-[#121212] border-border text-foreground"
+                className="bg-background border-border text-foreground"
               />
             </div>
             <div className="space-y-2">
@@ -428,7 +428,7 @@ function AuthedLayout() {
                   value={whatsapp}
                   onChange={(e) => setWhatsapp(formatPhone(e.target.value))}
                   placeholder="Ex: (11) 99999-9999 ou +1 555 1234"
-                  className="bg-[#121212] border-border text-foreground pl-11"
+                  className="bg-background border-border text-foreground pl-11"
                 />
               </div>
             </div>

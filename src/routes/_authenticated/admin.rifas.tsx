@@ -681,12 +681,12 @@ function AdminRifas() {
             <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Rifas do Sistema</h2>
             
             {/* Status Filter Tabs */}
-            <div className="flex bg-[#121212] p-1 rounded-xl border border-border gap-1">
+            <div className="flex bg-muted/40 p-1 rounded-xl border border-border gap-1">
               <button
                 type="button"
                 onClick={() => setFilterStatus("all")}
                 className={`px-2 py-0.5 text-[10px] font-bold rounded-lg transition-all ${
-                  filterStatus === "all" ? "bg-primary text-black" : "text-muted-foreground hover:text-white"
+                  filterStatus === "all" ? "bg-primary text-white" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 Todas

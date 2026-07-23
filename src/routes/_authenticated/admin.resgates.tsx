@@ -100,7 +100,7 @@ function AdminRedemptions() {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Buscar por código (ex: GM-A1B2C3D4) ou cliente..."
-          className="pl-10 bg-[#121212] border-border text-foreground focus-visible:ring-1 focus-visible:ring-primary rounded-lg"
+          className="pl-10 bg-background border-border text-foreground focus-visible:ring-1 focus-visible:ring-primary rounded-lg"
         />
       </div>
 
@@ -123,7 +123,7 @@ function AdminRedemptions() {
                   <div className="min-w-0 flex-1">
                     <div className="font-bold text-sm flex items-center gap-2 flex-wrap">
                       <span>{r.reward_title}</span>
-                      <span className="bg-[#181818] border border-border px-2 py-0.5 rounded font-mono text-[11px] text-white font-black">
+                      <span className="bg-muted border border-border px-2 py-0.5 rounded font-mono text-[11px] text-foreground font-black">
                         {"GM-" + r.id.split("-")[0].toUpperCase()}
                       </span>
                     </div>

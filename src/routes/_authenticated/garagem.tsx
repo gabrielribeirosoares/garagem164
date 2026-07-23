@@ -164,13 +164,13 @@ function Garagem() {
       </section>
 
       {/* Referral Card ("Indique e Ganhe") */}
-      <section className="rounded-2xl border border-border bg-[#121212] p-6 space-y-4">
+      <section className="rounded-2xl border border-border bg-card p-6 space-y-4">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-xl hw-gradient-orange flex items-center justify-center text-white shrink-0">
             <Users className="h-5 w-5" />
           </div>
           <div>
-            <h3 className="font-black text-white text-base">Indique um Amigo e Ganhe Pontos!</h3>
+            <h3 className="font-black text-foreground text-base">Indique um Amigo e Ganhe Pontos!</h3>
             <p className="text-xs text-muted-foreground">
               Compartilhe seu link exclusivo. Quando seus amigos entrarem na loja, vocês acumulam bônus na garagem.
             </p>

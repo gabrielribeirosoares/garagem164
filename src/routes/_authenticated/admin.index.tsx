@@ -148,7 +148,7 @@ function AdminDashboard() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <p className="text-xs uppercase tracking-widest text-secondary font-bold">Painel do Lojista</p>
+          <p className="text-xs uppercase tracking-widest text-primary font-bold">Painel do Lojista</p>
           <h1 className="text-3xl md:text-4xl font-black">Dashboard</h1>
         </div>
         {store && (
@@ -211,7 +211,7 @@ function AdminDashboard() {
       <section className="rounded-3xl border border-border bg-card overflow-hidden">
         <header className="p-5 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <Users className="h-5 w-5 text-secondary" />
+            <Users className="h-5 w-5 text-primary" />
             <h2 className="font-black">Clientes</h2>
           </div>
           <div className="relative w-full md:max-w-xs">
@@ -221,7 +221,7 @@ function AdminDashboard() {
               placeholder="Pesquisar por nome, email ou whatsapp..."
               value={customerSearch}
               onChange={(e) => setCustomerSearch(e.target.value)}
-              className="w-full bg-[#121212] border border-border text-foreground h-9 pl-9 pr-4 rounded-xl text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+              className="w-full bg-background border border-border text-foreground h-9 pl-9 pr-4 rounded-xl text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
             />
           </div>
         </header>
@@ -242,7 +242,7 @@ function AdminDashboard() {
                   <div className="font-bold text-sm truncate">{c.full_name || "Sem nome"}</div>
                   <div className="text-xs text-muted-foreground truncate flex flex-col gap-0.5">
                     <span>{c.email}</span>
-                    {c.whatsapp && <span className="text-secondary font-semibold">WhatsApp: {c.whatsapp}</span>}
+                    {c.whatsapp && <span className="text-primary font-semibold">WhatsApp: {c.whatsapp}</span>}
                   </div>
                 </div>
                 <div className="flex items-center gap-1 text-sm font-bold text-primary">
@@ -278,7 +278,7 @@ function AdminDashboard() {
           <form onSubmit={handleSaveSettings} className="space-y-5 pt-3">
             <div className="space-y-1.5">
               <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Nome da Loja</Label>
-              <Input value={storeName} onChange={(e) => setStoreName(e.target.value)} required className="bg-[#121212] border-border text-foreground" />
+              <Input value={storeName} onChange={(e) => setStoreName(e.target.value)} required className="bg-background border-border text-foreground" />
             </div>
 
             <div className="space-y-2">
@@ -294,7 +294,7 @@ function AdminDashboard() {
                   value={primaryColor}
                   onChange={(e) => setPrimaryColor(e.target.value)}
                   placeholder="#f97316"
-                  className="font-mono bg-[#121212] border-border text-foreground max-w-[140px]"
+                  className="font-mono bg-background border-border text-foreground max-w-[140px]"
                 />
                 <div
                   className="h-10 px-4 flex items-center justify-center rounded-lg text-white font-black text-xs shadow-md transition-colors"
@@ -319,7 +319,7 @@ function AdminDashboard() {
                   accept="image/*"
                   onChange={(e) => handleFileUpload(e, "logo")}
                   disabled={uploadingLogo}
-                  className="bg-[#121212] border-border text-foreground"
+                  className="bg-background border-border text-foreground"
                 />
               )}
             </div>
@@ -338,7 +338,7 @@ function AdminDashboard() {
                   accept="image/x-icon,image/png,image/jpeg"
                   onChange={(e) => handleFileUpload(e, "favicon")}
                   disabled={uploadingFavicon}
-                  className="bg-[#121212] border-border text-foreground"
+                  className="bg-background border-border text-foreground"
                 />
               )}
             </div>

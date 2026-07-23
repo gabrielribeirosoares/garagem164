@@ -122,7 +122,7 @@ function ClientLoja() {
             placeholder="Pesquisar miniatura..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="bg-[#121212] border-border text-white pl-9 h-10 text-xs rounded-xl"
+            className="bg-background border-border text-foreground pl-9 h-10 text-xs rounded-xl"
           />
         </div>
       </div>
