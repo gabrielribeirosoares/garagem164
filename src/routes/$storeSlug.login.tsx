@@ -10,6 +10,7 @@ import { lovable } from "@/integrations/lovable";
 import { useStoreBySlug, setActiveStoreSlug } from "@/hooks/useStore";
 import { Store } from "lucide-react";
 import { TermsModal } from "@/components/TermsModal";
+import { formatPhone } from "@/lib/utils";
 
 export const Route = createFileRoute("/$storeSlug/login")({
   component: StoreLogin,
@@ -25,6 +26,7 @@ function StoreLogin() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [termsOpen, setTermsOpen] = useState(false);
+  const [whatsapp, setWhatsapp] = useState("");
 
   // Sync active store slug on load
   useEffect(() => {
@@ -155,7 +157,13 @@ function StoreLogin() {
             </div>
             <div className="space-y-1.5">
               <Label>WhatsApp</Label>
-              <Input name="whatsapp" placeholder="Ex: (11) 99999-9999" required />
+              <Input
+                name="whatsapp"
+                placeholder="Ex: +55 (11) 99999-9999"
+                value={whatsapp}
+                onChange={(e) => setWhatsapp(formatPhone(e.target.value))}
+                required
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Email</Label>

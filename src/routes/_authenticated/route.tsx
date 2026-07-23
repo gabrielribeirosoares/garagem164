@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { formatPhone } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -54,7 +55,7 @@ function AuthedLayout() {
       setFullName(profile.full_name);
     }
     if (profile?.whatsapp) {
-      setWhatsapp(profile.whatsapp);
+      setWhatsapp(formatPhone(profile.whatsapp));
     }
   }, [profile]);
 
@@ -372,8 +373,8 @@ function AuthedLayout() {
                 id="whatsapp"
                 type="text"
                 value={whatsapp}
-                onChange={(e) => setWhatsapp(e.target.value)}
-                placeholder="Ex: (11) 99999-9999"
+                onChange={(e) => setWhatsapp(formatPhone(e.target.value))}
+                placeholder="Ex: +55 (11) 99999-9999"
                 className="bg-[#121212] border-border text-foreground"
               />
             </div>

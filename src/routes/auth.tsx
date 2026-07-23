@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useSession } from "@/hooks/useAuth";
 import { TermsModal } from "@/components/TermsModal";
+import { formatPhone } from "@/lib/utils";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -23,6 +24,7 @@ function AuthPage() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [termsOpen, setTermsOpen] = useState(false);
+  const [whatsapp, setWhatsapp] = useState("");
 
   const safeNext = next && next.startsWith("/") && !next.startsWith("//") ? next : null;
   const redirectTarget = safeNext ?? "/";
@@ -214,7 +216,9 @@ function AuthPage() {
                     id="su-whatsapp"
                     name="whatsapp"
                     type="text"
-                    placeholder="Ex: (11) 99999-9999"
+                    placeholder="Ex: +55 (11) 99999-9999"
+                    value={whatsapp}
+                    onChange={(e) => setWhatsapp(formatPhone(e.target.value))}
                     required
                     className="bg-[#eef2f7] border-none text-black h-11 px-4 focus-visible:ring-1 focus-visible:ring-primary focus-visible:text-black focus-visible:bg-white placeholder:text-muted-foreground/60 transition-colors rounded-md"
                   />
