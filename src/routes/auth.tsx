@@ -6,8 +6,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useSession } from "@/hooks/useAuth";
+import { useTheme } from "@/hooks/useTheme";
 import { TermsModal } from "@/components/TermsModal";
 import { formatPhone, getPhoneFlag } from "@/lib/utils";
+import { Sun, Moon, Monitor } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -19,6 +29,7 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const navigate = useNavigate();
   const user = useSession();
+  const { theme, setTheme } = useTheme();
   const { next } = Route.useSearch();
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
@@ -93,7 +104,48 @@ function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black px-4 font-sans select-none">
+    <div className="min-h-screen flex items-center justify-center bg-background text-foreground px-4 font-sans select-none relative transition-colors duration-300">
+      {/* Botão de seleção de tema no canto superior direito */}
+      <div className="absolute top-4 right-4 z-50">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" title="Tema (Claro / Escuro / Automático)">
+              {theme === "light" ? (
+                <Sun className="h-5 w-5 text-amber-500" />
+              ) : theme === "dark" ? (
+                <Moon className="h-5 w-5 text-blue-400" />
+              ) : (
+                <Monitor className="h-5 w-5 text-muted-foreground" />
+              )}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="bg-card border-border text-foreground">
+            <DropdownMenuLabel className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+              Tema da Aplicação
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator className="bg-border" />
+            <DropdownMenuItem
+              onClick={() => setTheme("light")}
+              className={`cursor-pointer gap-2 ${theme === "light" ? "font-bold text-primary" : ""}`}
+            >
+              <Sun className="h-4 w-4 text-amber-500" /> Tema Diurno (Claro)
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => setTheme("dark")}
+              className={`cursor-pointer gap-2 ${theme === "dark" ? "font-bold text-primary" : ""}`}
+            >
+              <Moon className="h-4 w-4 text-blue-400" /> Tema Noturno (Escuro)
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => setTheme("system")}
+              className={`cursor-pointer gap-2 ${theme === "system" ? "font-bold text-primary" : ""}`}
+            >
+              <Monitor className="h-4 w-4 text-muted-foreground" /> Automático (do Computador)
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
       <div className="w-full max-w-[420px]">
         <div className="relative rounded-2xl border border-border bg-card p-8 shadow-2xl overflow-hidden transition-all duration-300">
           <div className="absolute -top-16 -right-16 w-36 h-36 bg-primary/20 rounded-full blur-2xl pointer-events-none" />
@@ -101,7 +153,7 @@ function AuthPage() {
           {!isSignUp ? (
             <div className="space-y-6">
               <div className="text-center space-y-1">
-                <h1 className="font-black text-3xl tracking-wide text-white uppercase font-sans">
+                <h1 className="font-black text-3xl tracking-wide text-foreground uppercase font-sans">
                   MINIS<span className="text-primary">HUB</span>
                 </h1>
                 <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">
@@ -168,7 +220,7 @@ function AuthPage() {
                 <button
                   type="button"
                   onClick={() => setIsSignUp(true)}
-                  className="text-[11px] font-black text-muted-foreground uppercase tracking-widest hover:text-white transition-colors"
+                  className="text-[11px] font-black text-muted-foreground uppercase tracking-widest hover:text-foreground transition-colors"
                 >
                   NÃO TEM UMA CONTA?{" "}
                   <span className="text-secondary italic font-black">
@@ -180,7 +232,7 @@ function AuthPage() {
           ) : (
             <div className="space-y-6">
               <div className="text-center space-y-1">
-                <h1 className="font-black text-3xl tracking-wide text-white uppercase font-sans">
+                <h1 className="font-black text-3xl tracking-wide text-foreground uppercase font-sans">
                   REGISTRE-SE
                 </h1>
                 <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">

@@ -138,7 +138,7 @@ function RecompensasPage() {
                       </div>
                       <div className="p-4 space-y-2">
                         <div>
-                          <h3 className="font-bold text-white text-base">{r.title}</h3>
+                          <h3 className="font-bold text-foreground text-base">{r.title}</h3>
                           {r.description && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{r.description}</p>}
                         </div>
                       </div>
@@ -181,7 +181,7 @@ function RecompensasPage() {
                       <span>·</span>
                       <span>{r.cost} pts</span>
                       <span>·</span>
-                      <span className="bg-[#181818] border border-border px-1.5 py-0.5 rounded font-mono text-[10px] text-white font-bold">
+                      <span className="bg-muted border border-border px-1.5 py-0.5 rounded font-mono text-[10px] text-foreground font-bold">
                         Código: {"GM-" + r.id.split("-")[0].toUpperCase()}
                       </span>
                     </div>
@@ -202,8 +202,8 @@ function RecompensasPage() {
         <Dialog open={!!activeRedemptionCode} onOpenChange={(open) => { if (!open) setActiveRedemptionCode(null); }}>
           <DialogContent className="max-w-md bg-card border-border text-foreground">
             <DialogHeader className="space-y-3 text-center sm:text-left">
-              <DialogTitle className="text-xl font-black text-white flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-[#ea580c] animate-pulse" />
+              <DialogTitle className="text-xl font-black text-foreground flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-primary animate-pulse" />
                 Resgate Confirmado!
               </DialogTitle>
               <DialogDescription className="text-muted-foreground text-sm">
@@ -211,9 +211,9 @@ function RecompensasPage() {
               </DialogDescription>
             </DialogHeader>
 
-            <div className="py-6 flex flex-col items-center justify-center bg-[#070707] border border-border rounded-2xl my-4 space-y-2">
+            <div className="py-6 flex flex-col items-center justify-center bg-background border border-border rounded-2xl my-4 space-y-2">
               <span className="text-xs text-muted-foreground uppercase tracking-widest font-bold">CÓDIGO DE RESGATE</span>
-              <span className="text-3xl font-black text-white tracking-widest font-mono select-all">
+              <span className="text-3xl font-black text-foreground tracking-widest font-mono select-all">
                 {activeRedemptionCode.code}
               </span>
               <span className="text-[10px] text-muted-foreground/80 mt-1 uppercase tracking-wider text-center px-4">

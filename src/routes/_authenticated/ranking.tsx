@@ -70,7 +70,7 @@ function ClientRanking() {
           <Trophy className="h-7 w-7 text-yellow-500 animate-bounce" /> Ranking de Colecionadores
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Confira quem são os maiores colecionadores da <strong className="text-white">{activeStore.name}</strong>!
+          Confira quem são os maiores colecionadores da <strong className="text-foreground">{activeStore.name}</strong>!
         </p>
       </div>
 
@@ -83,7 +83,7 @@ function ClientRanking() {
               <Medal className="h-6 w-6" />
             </div>
             <div className="text-xs uppercase font-bold text-zinc-400">2º Lugar</div>
-            <div className="font-black text-sm md:text-base text-white truncate">{customers[1].full_name}</div>
+            <div className="font-black text-sm md:text-base text-foreground truncate">{customers[1].full_name}</div>
             <div className="flex items-center justify-center gap-2 text-xs">
               <span className="font-bold text-primary flex items-center gap-1"><Car className="h-3.5 w-3.5" /> {customers[1].car_count}</span>
               <span className="text-muted-foreground font-semibold">· {customers[1].points} pts</span>
@@ -96,7 +96,7 @@ function ClientRanking() {
               <Trophy className="h-8 w-8 animate-pulse" />
             </div>
             <Badge className="bg-yellow-500 text-black font-black uppercase text-[10px] tracking-wider px-3">1º Lugar</Badge>
-            <div className="font-black text-base md:text-xl text-white truncate">{customers[0].full_name}</div>
+            <div className="font-black text-base md:text-xl text-foreground truncate">{customers[0].full_name}</div>
             <div className="flex items-center justify-center gap-3 text-xs md:text-sm">
               <span className="font-black text-primary flex items-center gap-1"><Car className="h-4 w-4" /> {customers[0].car_count} miniaturas</span>
               <span className="text-secondary font-bold">· {customers[0].points} pts</span>
@@ -109,7 +109,7 @@ function ClientRanking() {
               <Award className="h-6 w-6" />
             </div>
             <div className="text-xs uppercase font-bold text-amber-600">3º Lugar</div>
-            <div className="font-black text-sm md:text-base text-white truncate">{customers[2].full_name}</div>
+            <div className="font-black text-sm md:text-base text-foreground truncate">{customers[2].full_name}</div>
             <div className="flex items-center justify-center gap-2 text-xs">
               <span className="font-bold text-primary flex items-center gap-1"><Car className="h-3.5 w-3.5" /> {customers[2].car_count}</span>
               <span className="text-muted-foreground font-semibold">· {customers[2].points} pts</span>
@@ -121,7 +121,7 @@ function ClientRanking() {
       {/* Leaderboard Table */}
       <div className="rounded-3xl border border-border bg-card overflow-hidden shadow-xl">
         <div className="p-5 border-b border-border bg-muted/10 flex items-center justify-between">
-          <h2 className="font-black text-white text-base">Classificação Geral</h2>
+          <h2 className="font-black text-foreground text-base">Classificação Geral</h2>
           <span className="text-xs text-muted-foreground">{customers?.length ?? 0} colecionadores cadastrados</span>
         </div>
 
@@ -154,13 +154,13 @@ function ClientRanking() {
                   }`}
                 >
                   <div className="flex items-center gap-4 min-w-0">
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center font-black text-xs shrink-0 bg-muted border border-border text-white">
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center font-black text-xs shrink-0 bg-muted border border-border text-foreground">
                       {position === 1 ? "🥇" : position === 2 ? "🥈" : position === 3 ? "🥉" : `#${position}`}
                     </div>
                     <div className="min-w-0">
-                      <div className="font-black text-sm text-white truncate flex items-center gap-2">
+                      <div className="font-black text-sm text-foreground truncate flex items-center gap-2">
                         <span>{c.full_name}</span>
-                        {isMe && <Badge className="bg-primary text-black font-black text-[9px] px-1.5 py-0">Você</Badge>}
+                        {isMe && <Badge className="bg-primary text-white font-black text-[9px] px-1.5 py-0">Você</Badge>}
                       </div>
                       <div className="text-xs text-muted-foreground flex items-center gap-2 mt-0.5">
                         <Badge variant="outline" className={`text-[9px] px-1.5 py-0 ${badgeStyle}`}>
@@ -172,7 +172,7 @@ function ClientRanking() {
 
                   <div className="flex items-center gap-6 text-right shrink-0">
                     <div>
-                      <div className="font-black text-sm text-white flex items-center justify-end gap-1">
+                      <div className="font-black text-sm text-foreground flex items-center justify-end gap-1">
                         <Car className="h-3.5 w-3.5 text-primary" /> {c.car_count}
                       </div>
                       <div className="text-[10px] text-muted-foreground uppercase font-bold">miniaturas</div>

@@ -138,7 +138,7 @@ function Garagem() {
       {/* Badges Bar */}
       <section className="rounded-2xl border border-border bg-card p-5 space-y-3">
         <div className="flex justify-between items-center">
-          <h2 className="font-black text-sm text-white uppercase tracking-wider flex items-center gap-2">
+          <h2 className="font-black text-sm text-foreground uppercase tracking-wider flex items-center gap-2">
             <Award className="h-4 w-4 text-primary" /> Conquistas de Colecionador
           </h2>
           <span className="text-xs text-muted-foreground">{badges.filter(b => b.unlocked).length} de {badges.length} desbloqueadas</span>
@@ -149,13 +149,13 @@ function Garagem() {
               key={b.title}
               className={`p-3 rounded-xl border flex items-center gap-3 transition-all ${
                 b.unlocked
-                  ? "border-primary/40 bg-primary/5 text-white"
+                  ? "border-primary/40 bg-primary/10 text-foreground"
                   : "border-border bg-muted/20 text-muted-foreground opacity-50"
               }`}
             >
               <span className="text-2xl">{b.icon}</span>
               <div>
-                <div className="font-bold text-xs">{b.title}</div>
+                <div className="font-bold text-xs text-foreground">{b.title}</div>
                 <div className="text-[10px] text-muted-foreground">{b.req} miniaturas</div>
               </div>
             </div>
@@ -182,7 +182,7 @@ function Garagem() {
             type="text"
             readOnly
             value={referralLink}
-            className="flex-1 bg-muted/40 border border-border rounded-xl text-xs px-3 h-10 text-white font-mono"
+            className="flex-1 bg-muted/40 border border-border rounded-xl text-xs px-3 h-10 text-foreground font-mono"
           />
           <div className="flex gap-2">
             <Button onClick={copyReferralLink} variant="secondary" className="h-10 text-xs px-3 border border-border font-bold">
@@ -197,7 +197,7 @@ function Garagem() {
 
       {/* Cars Grid Header */}
       <div className="flex justify-between items-center pt-2">
-        <h2 className="font-black text-lg text-white">Minhas Miniaturas</h2>
+        <h2 className="font-black text-lg text-foreground">Minhas Miniaturas</h2>
         <span className="text-xs text-muted-foreground">{carCount} itens</span>
       </div>
 

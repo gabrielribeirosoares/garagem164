@@ -8,9 +8,18 @@ import { toast } from "sonner";
 import { useSession, useRole } from "@/hooks/useAuth";
 import { lovable } from "@/integrations/lovable";
 import { useStoreBySlug, setActiveStoreSlug } from "@/hooks/useStore";
-import { Store } from "lucide-react";
+import { Store, Sun, Moon, Monitor } from "lucide-react";
+import { useTheme } from "@/hooks/useTheme";
 import { TermsModal } from "@/components/TermsModal";
 import { formatPhone, getPhoneFlag } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 export const Route = createFileRoute("/$storeSlug/login")({
   component: StoreLogin,
@@ -18,32 +27,24 @@ export const Route = createFileRoute("/$storeSlug/login")({
 
 function StoreLogin() {
   const { storeSlug } = useParams({ from: "/$storeSlug/login" });
-  const { data: store } = useStoreBySlug(storeSlug);
   const navigate = useNavigate();
   const user = useSession();
   const { data: role } = useRole();
+  const { theme, setTheme } = useTheme();
+  const { data: store } = useStoreBySlug(storeSlug);
+
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [termsOpen, setTermsOpen] = useState(false);
   const [whatsapp, setWhatsapp] = useState("");
 
-  // Sync active store slug on load
   useEffect(() => {
-    if (storeSlug) {
+    if (user && role) {
       setActiveStoreSlug(storeSlug);
+      navigate({ to: "/garagem" });
     }
-  }, [storeSlug]);
-
-  useEffect(() => {
-    if (user && store) {
-      if (store.owner_id === user.id) {
-        navigate({ to: "/admin", replace: true });
-      } else {
-        navigate({ to: "/garagem", replace: true });
-      }
-    }
-  }, [user, store, navigate]);
+  }, [user, role, storeSlug, navigate]);
 
   const primary = store?.primary_color || "#f97316";
 
@@ -57,17 +58,14 @@ function StoreLogin() {
     });
     setLoading(false);
     if (error) return toast.error(error.message);
-    // Auto-link user to this store if not already linked
-    if (store?.id) {
-      try { await supabase.rpc("link_user_to_store", { _store_id: store.id }); } catch {}
-    }
+    setActiveStoreSlug(storeSlug);
     toast.success("Bem-vindo!");
   }
 
   async function handleSignUp(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!acceptedTerms) {
-      toast.error("Você precisa aceitar os Termos de Uso e Política de Privacidade (LGPD) para criar sua conta.");
+      toast.error("Você precisa aceitar os Termos de Uso e Política de Privacidade para criar sua conta.");
       return;
     }
     const form = new FormData(e.currentTarget);
@@ -76,11 +74,9 @@ function StoreLogin() {
       email: String(form.get("email")),
       password: String(form.get("password")),
       options: {
-        emailRedirectTo: `${window.location.origin}/${storeSlug}`,
         data: { 
           full_name: String(form.get("full_name")),
           whatsapp: String(form.get("whatsapp")),
-          register_store_id: store?.id,
           accepted_terms: true,
           accepted_terms_at: new Date().toISOString(),
         },
@@ -88,15 +84,50 @@ function StoreLogin() {
     });
     setLoading(false);
     if (error) return toast.error(error.message);
-    // If user was auto-confirmed (no email verification), link immediately
-    if (signUpData?.user && store?.id) {
-      try { await supabase.rpc("link_user_to_store", { _store_id: store.id }); } catch {}
-    }
     toast.success("Conta criada! Verifique seu e-mail se necessário.");
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
+    <div className="min-h-screen flex items-center justify-center bg-background text-foreground px-4 relative transition-colors duration-300">
+      <div className="absolute top-4 right-4 z-50">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" title="Tema (Claro / Escuro / Automático)">
+              {theme === "light" ? (
+                <Sun className="h-5 w-5 text-amber-500" />
+              ) : theme === "dark" ? (
+                <Moon className="h-5 w-5 text-blue-400" />
+              ) : (
+                <Monitor className="h-5 w-5 text-muted-foreground" />
+              )}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="bg-card border-border text-foreground">
+            <DropdownMenuLabel className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+              Tema da Aplicação
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator className="bg-border" />
+            <DropdownMenuItem
+              onClick={() => setTheme("light")}
+              className={`cursor-pointer gap-2 ${theme === "light" ? "font-bold text-primary" : ""}`}
+            >
+              <Sun className="h-4 w-4 text-amber-500" /> Tema Diurno (Claro)
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => setTheme("dark")}
+              className={`cursor-pointer gap-2 ${theme === "dark" ? "font-bold text-primary" : ""}`}
+            >
+              <Moon className="h-4 w-4 text-blue-400" /> Tema Noturno (Escuro)
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => setTheme("system")}
+              className={`cursor-pointer gap-2 ${theme === "system" ? "font-bold text-primary" : ""}`}
+            >
+              <Monitor className="h-4 w-4 text-muted-foreground" /> Automático (do Computador)
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
       <div className="w-full max-w-[420px] rounded-2xl border border-border bg-card p-8 shadow-2xl space-y-6">
         <div className="text-center space-y-2">
           {store?.logo_url ? (

@@ -157,7 +157,7 @@ function ClientLoja() {
 
                 <CardContent className="p-4 flex-1 flex flex-col justify-between space-y-4">
                   <div>
-                    <h3 className="font-black text-white text-base leading-tight">{item.name}</h3>
+                    <h3 className="font-black text-foreground text-base leading-tight">{item.name}</h3>
                     <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                       {item.description || "Miniatura em perfeito estado de conservação."}
                     </p>
@@ -167,7 +167,7 @@ function ClientLoja() {
                     <div className="flex justify-between items-center">
                       <div>
                         <div className="text-[10px] uppercase font-bold text-muted-foreground">Preço</div>
-                        <div className="text-lg font-black text-white">R$ {Number(item.price).toFixed(2)}</div>
+                        <div className="text-lg font-black text-foreground">R$ {Number(item.price).toFixed(2)}</div>
                       </div>
                       <div className="text-right">
                         <div className="text-[10px] uppercase font-bold text-secondary flex items-center justify-end gap-1">
