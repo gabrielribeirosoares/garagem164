@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useOwnedStore } from "@/hooks/useStore";
+import { compressImage } from "@/lib/imageCompression";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -54,12 +55,13 @@ function AdminEstoque() {
     else setUploadingCreateImage(true);
 
     try {
-      const fileExt = file.name.split(".").pop();
+      const compressedFile = await compressImage(file, 1200, 0.8);
+      const fileExt = compressedFile.name.split(".").pop() || "webp";
       const fileName = `inventory/${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from("images")
-        .upload(fileName, file, { cacheControl: "3600", upsert: true });
+        .upload(fileName, compressedFile, { cacheControl: "3600", upsert: true });
 
       if (uploadError) throw uploadError;
 
@@ -70,7 +72,7 @@ function AdminEstoque() {
         setImageUrl(data.publicUrl);
       }
 
-      toast.success("Foto enviada com sucesso!");
+      toast.success("Foto otimizada e enviada com sucesso! ⚡");
     } catch (err: any) {
       toast.error(`Erro no upload da foto: ${err.message}`);
     } finally {

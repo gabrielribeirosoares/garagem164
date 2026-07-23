@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { Car, Trash2, PlusCircle, Search, RotateCcw, ChevronLeft, ChevronRight, ChevronDown, Upload, X } from "lucide-react";
 import { RAW } from "@/components/ui/data";
 import { useOwnedStore } from "@/hooks/useStore";
+import { compressImage } from "@/lib/imageCompression";
 
 export const Route = createFileRoute("/_authenticated/admin/carros")({
   component: AddCarros,
@@ -27,18 +28,19 @@ function AddCarros() {
   const handleFileUpload = async (file: File) => {
     setUploadingImage(true);
     try {
-      const fileExt = file.name.split(".").pop();
+      const compressedFile = await compressImage(file, 1200, 0.8);
+      const fileExt = compressedFile.name.split(".").pop() || "webp";
       const fileName = `cars/${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from("images")
-        .upload(fileName, file, { cacheControl: "3600", upsert: true });
+        .upload(fileName, compressedFile, { cacheControl: "3600", upsert: true });
 
       if (uploadError) throw uploadError;
 
       const { data } = supabase.storage.from("images").getPublicUrl(fileName);
       setImageUrl(data.publicUrl);
-      toast.success("Foto enviada com sucesso!");
+      toast.success("Foto otimizada e enviada com sucesso! ⚡");
     } catch (err: any) {
       toast.error(`Erro no upload da foto: ${err.message}`);
     } finally {

@@ -119,7 +119,7 @@ function ClientRifas() {
         .select("*, profiles(full_name, email)")
         .eq("raffle_id", selectedRaffleId!);
       if (error) throw error;
-      return data;
+      return data ?? [];
     },
   });
 

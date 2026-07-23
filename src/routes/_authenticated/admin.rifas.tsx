@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useOwnedStore } from "@/hooks/useStore";
+import { compressImage } from "@/lib/imageCompression";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -44,7 +45,8 @@ import {
   Camera,
   Dices,
   Zap,
-  Flame
+  Flame,
+  Gift
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/rifas")({
@@ -60,6 +62,14 @@ function AdminRifas() {
   const [createOpen, setCreateOpen] = useState(false);
   const [batchModalOpen, setBatchModalOpen] = useState(false);
   const [drawOpen, setDrawOpen] = useState(false);
+
+  // Send Specific Prize to Garage Modal State
+  const [sendGarageModalOpen, setSendGarageModalOpen] = useState(false);
+  const [sendGarageTargetWinner, setSendGarageTargetWinner] = useState<{ userId: string | null; name: string; ticketNumber: number; position?: number } | null>(null);
+  const [sendGarageCarName, setSendGarageCarName] = useState("");
+  const [sendGarageCarImage, setSendGarageCarImage] = useState("");
+  const [sendGaragePoints, setSendGaragePoints] = useState(10);
+  const [claimedPrizes, setClaimedPrizes] = useState<string[]>([]);
 
   // Multi-select state
   const [selectedNumbers, setSelectedNumbers] = useState<number[]>([]);
@@ -108,11 +118,12 @@ function AdminRifas() {
       if (fileArray.length === 0) return;
 
       const uploadPromises = fileArray.map(async (file) => {
-        const fileExt = file.name.split(".").pop() || "jpg";
+        const compressedFile = await compressImage(file, 1200, 0.8);
+        const fileExt = compressedFile.name.split(".").pop() || "webp";
         const fileName = `raffles/${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`;
         const { error: uploadError } = await supabase.storage
           .from("images")
-          .upload(fileName, file, { cacheControl: "3600", upsert: true });
+          .upload(fileName, compressedFile, { cacheControl: "3600", upsert: true });
 
         if (uploadError) throw uploadError;
 
@@ -122,7 +133,7 @@ function AdminRifas() {
 
       const uploadedUrls = await Promise.all(uploadPromises);
       setter((prev) => [...prev, ...uploadedUrls]);
-      toast.success(`${uploadedUrls.length} foto(s) enviada(s) simultaneamente com sucesso!`);
+      toast.success(`${uploadedUrls.length} foto(s) otimizada(s) e enviada(s) com sucesso! ⚡`);
     } catch (err: any) {
       toast.error(`Erro no upload da foto: ${err.message}`);
     } finally {
@@ -213,9 +224,66 @@ function AdminRifas() {
         .select("*, profiles(full_name, email)")
         .eq("raffle_id", selectedRaffleId!);
       if (error) throw error;
-      return data;
+      return data ?? [];
     },
   });
+
+  // Parse winners list in exact order (1º Lugar, 2º Lugar, 3º Lugar...)
+  const parsedWinnersList = useMemo(() => {
+    if (!selectedRaffle || !selectedRaffle.winner_name) return [];
+
+    const parts = selectedRaffle.winner_name.split(/,\s*(?=\d+º:)/);
+    
+    return parts.map((part, index) => {
+      const match = part.match(/(\d+)º:\s*(.+?)\s*\(Nº\s*(\d+)\)/);
+      const pos = match ? parseInt(match[1], 10) : index + 1;
+      const name = match ? match[2].trim() : part.trim();
+      const num = match ? parseInt(match[3], 10) : (selectedRaffle.winner_number || 1);
+
+      const ticket = tickets?.find((t) => t.number === num);
+      const userId = ticket?.user_id || (index === 0 ? selectedRaffle.winner_user_id : null);
+
+      return {
+        position: pos,
+        name,
+        number: num,
+        userId,
+      };
+    });
+  }, [selectedRaffle, tickets]);
+
+  // Fetch cars assigned to customers in this store to know which prize images were already claimed
+  const { data: storeCars } = useQuery({
+    queryKey: ["admin-store-cars", storeId],
+    enabled: !!storeId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("cars")
+        .select("id, name, image_url, user_id")
+        .eq("store_id", storeId!);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  // Track prize images that have already been chosen/claimed by a winner
+  const claimedPrizeImages = useMemo(() => {
+    const storeCarImages = new Set((storeCars || []).map((c) => c.image_url).filter(Boolean));
+    const result = new Set<string>();
+    
+    if (selectedRaffle?.image_urls) {
+      selectedRaffle.image_urls.forEach((url) => {
+        if (storeCarImages.has(url) || claimedPrizes.includes(url)) {
+          result.add(url);
+        }
+      });
+    } else if (selectedRaffle?.image_url) {
+      if (storeCarImages.has(selectedRaffle.image_url) || claimedPrizes.includes(selectedRaffle.image_url)) {
+        result.add(selectedRaffle.image_url);
+      }
+    }
+    return result;
+  }, [selectedRaffle, storeCars, claimedPrizes]);
 
   // Realtime subscription
   useEffect(() => {
@@ -235,14 +303,16 @@ function AdminRifas() {
     };
   }, [selectedRaffleId, storeId, qc]);
 
-  // Set default selected raffle & clear selections when switching raffle
+  // Set default selected raffle & clear selections only when switching raffle
   useEffect(() => {
     if (raffles && raffles.length > 0 && !selectedRaffleId) {
       setSelectedRaffleId(raffles[0].id);
     }
-    setSelectedNumbers([]);
-    setDrawnWinners([]);
   }, [raffles, selectedRaffleId]);
+
+  useEffect(() => {
+    setSelectedNumbers([]);
+  }, [selectedRaffleId]);
 
   // Mutations
   const createRaffle = useMutation({
@@ -448,6 +518,69 @@ function AdminRifas() {
     onError: (e: any) => toast.error(e.message || "Erro ao excluir rifa."),
   });
 
+  const sendPrizeToGarage = useMutation({
+    mutationFn: async ({
+      userId,
+      carName,
+      imageUrl,
+      points,
+    }: {
+      userId: string;
+      carName: string;
+      imageUrl: string | null;
+      points: number;
+    }) => {
+      if (!storeId) throw new Error("Loja não encontrada.");
+      if (!userId) throw new Error("Selecione ou vincule o cliente cadastrado para enviar à garagem.");
+
+      // 1. Insert miniature into customer's garage with payment_status = 'paid'
+      const { error } = await supabase.from("cars").insert({
+        store_id: storeId,
+        user_id: userId,
+        name: carName,
+        image_url: imageUrl || null,
+        points: points || 0,
+        payment_status: "paid",
+      });
+      if (error) throw error;
+
+      // 1b. Update any existing car with matching name to payment_status = 'paid'
+      await supabase
+        .from("cars")
+        .update({ payment_status: "paid" })
+        .eq("store_id", storeId)
+        .eq("user_id", userId)
+        .eq("name", carName);
+
+      // 2. Automatically mark the winning ticket as PAID and link to customer!
+      if (selectedRaffleId && sendGarageTargetWinner?.ticketNumber) {
+        await supabase
+          .from("raffle_tickets")
+          .update({
+            status: "paid",
+            user_id: userId,
+          })
+          .eq("raffle_id", selectedRaffleId)
+          .eq("number", sendGarageTargetWinner.ticketNumber);
+      }
+
+      return imageUrl;
+    },
+    onSuccess: (imgUrl) => {
+      toast.success("Prêmio enviado para a Garagem e status da rifa marcado como PAGO! 🏆");
+      if (imgUrl) {
+        setClaimedPrizes((prev) => [...prev, imgUrl]);
+      }
+      setSendGarageModalOpen(false);
+      qc.invalidateQueries({ queryKey: ["admin-store-cars", storeId] });
+      qc.invalidateQueries({ queryKey: ["raffle-tickets", selectedRaffleId] });
+      qc.invalidateQueries({ queryKey: ["admin-recent-cars"] });
+      qc.invalidateQueries({ queryKey: ["customer-cars"] });
+      qc.invalidateQueries({ queryKey: ["user-cars"] });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const saveWinners = useMutation({
     mutationFn: async ({
       winners,
@@ -471,9 +604,71 @@ function AdminRifas() {
         })
         .eq("id", selectedRaffleId!);
       if (error) throw error;
+
+      // Automatically mark ALL winning tickets as PAID and award points!
+      for (const winner of winners) {
+        if (selectedRaffleId && winner.number) {
+          await supabase
+            .from("raffle_tickets")
+            .update({
+              status: "paid",
+              ...(winner.user_id ? { user_id: winner.user_id } : {}),
+            })
+            .eq("raffle_id", selectedRaffleId)
+            .eq("number", winner.number);
+        }
+      }
+
+      // 🏆 Check if raffle has ONLY 1 winner AND ONLY 1 prize image (Single Prize Raffle)
+      const imagesCount = selectedRaffle?.image_urls && selectedRaffle.image_urls.length > 0
+        ? selectedRaffle.image_urls.length
+        : (selectedRaffle?.image_url ? 1 : 0);
+      const maxWinnersCount = selectedRaffle?.max_winners || 1;
+
+      const isSinglePrizeRaffle = maxWinnersCount === 1 && imagesCount <= 1;
+
+      if (isSinglePrizeRaffle) {
+        // Automatic Garage Transfer for Single Prize
+        for (const winner of winners) {
+          let winnerUserId = winner.user_id;
+
+          if (!winnerUserId && tickets) {
+            const t = tickets.find((tk) => tk.number === winner.number);
+            if (t && t.user_id) {
+              winnerUserId = t.user_id;
+            }
+          }
+
+          if (winnerUserId && storeId && selectedRaffle) {
+            const carTitle = selectedRaffle.title
+              ? `🏆 ${selectedRaffle.title} (Ganhador da Rifa - Nº ${String(winner.number).padStart(2, "0")})`
+              : `🏆 Ganhador da Rifa - Nº ${String(winner.number).padStart(2, "0")}`;
+
+            await supabase.from("cars").insert({
+              store_id: storeId,
+              user_id: winnerUserId,
+              name: carTitle,
+              image_url: selectedRaffle.image_url || null,
+              points: selectedRaffle.points_per_number || 0,
+              payment_status: "paid",
+            });
+          }
+        }
+        return { isSinglePrize: true };
+      } else {
+        return { isSinglePrize: false };
+      }
     },
-    onSuccess: () => {
+    onSuccess: (res) => {
+      if (res?.isSinglePrize) {
+        toast.success("Resultado salvo! Miniatura enviada automaticamente para a Garagem do Cliente 🏆");
+      } else {
+        toast.success("Resultado salvo! Como esta rifa possui múltiplos prêmios/ganhadores, selecione o item desejado para enviar à garagem! 🏆");
+      }
       qc.invalidateQueries({ queryKey: ["store-raffles", storeId] });
+      qc.invalidateQueries({ queryKey: ["admin-recent-cars"] });
+      qc.invalidateQueries({ queryKey: ["customer-cars"] });
+      qc.invalidateQueries({ queryKey: ["user-cars"] });
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -1101,17 +1296,76 @@ function AdminRifas() {
 
                   {/* Draw summary if drawn */}
                   {selectedRaffle.status === "drawn" && (
-                    <div className="bg-green-500/10 border border-green-500/20 rounded-2xl p-5 flex items-start justify-between gap-4">
-                      <div className="flex items-start gap-3">
-                        <div className="h-10 w-10 bg-yellow-500 text-black flex items-center justify-center rounded-xl font-bold shrink-0 mt-0.5">
-                          <Trophy className="h-5 w-5" />
+                    <div className="bg-gradient-to-r from-green-500/10 via-card to-green-500/10 border border-green-500/30 rounded-2xl p-5 space-y-4 shadow-xl">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 font-black text-sm text-foreground">
+                          <Trophy className="h-5 w-5 text-yellow-500" /> Resultado do Sorteio por Ordem de Colocação
                         </div>
-                        <div>
-                          <div className="text-sm font-bold text-foreground">Sorteio Concluído</div>
-                          <div className="text-xs text-muted-foreground mt-1">
-                            Ganhadores: <span className="font-black text-green-400">{selectedRaffle.winner_name}</span>
-                          </div>
-                        </div>
+                        <Badge className="bg-green-500 text-black font-black text-xs">
+                          {parsedWinnersList.length} Ganhador(es)
+                        </Badge>
+                      </div>
+
+                      <div className="grid gap-2.5">
+                        {parsedWinnersList.map((w) => {
+                          const isWinnerClaimed = (storeCars || []).some(
+                            (c) => c.user_id === w.userId && (selectedRaffle.image_urls?.includes(c.image_url) || c.image_url === selectedRaffle.image_url)
+                          );
+
+                          return (
+                            <div key={w.position} className="bg-card border border-border p-3.5 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md hover:border-primary/40 transition-all">
+                              <div className="flex items-center gap-3">
+                                <div className="h-9 w-9 rounded-xl bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 flex items-center justify-center font-black text-xs shrink-0 shadow-inner">
+                                  {w.position}º
+                                </div>
+                                <div>
+                                  <div className="font-bold text-foreground text-sm flex items-center gap-2">
+                                    {w.name}
+                                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 text-[10px] font-bold">
+                                      Nº {String(w.number).padStart(2, "0")}
+                                    </Badge>
+                                    {isWinnerClaimed && (
+                                      <Badge className="bg-green-500/20 text-green-400 border border-green-500/40 text-[10px] font-bold">
+                                        ✓ Prêmio Enviado
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <div className="text-[11px] text-muted-foreground mt-0.5">
+                                    {w.position}º Colocado na Rifa
+                                  </div>
+                                </div>
+                              </div>
+
+                              <Button
+                                size="sm"
+                                onClick={() => {
+                                  setSendGarageTargetWinner({
+                                    userId: w.userId,
+                                    name: w.name,
+                                    ticketNumber: w.number,
+                                    position: w.position,
+                                  });
+                                  setSendGarageCarName(`${selectedRaffle.title} (${w.position}º Lugar)`);
+                                  
+                                  // Pre-select first available unclaimed image
+                                  const allImages = selectedRaffle.image_urls && selectedRaffle.image_urls.length > 0
+                                    ? selectedRaffle.image_urls
+                                    : (selectedRaffle.image_url ? [selectedRaffle.image_url] : []);
+                                  
+                                  const unclaimed = allImages.filter((img) => !claimedPrizeImages.has(img));
+                                  const defaultImg = unclaimed.length > 0 ? unclaimed[0] : (allImages[0] || "");
+                                  
+                                  setSendGarageCarImage(defaultImg);
+                                  setSendGaragePoints(selectedRaffle.points_per_number || 10);
+                                  setSendGarageModalOpen(true);
+                                }}
+                                className={isWinnerClaimed ? "bg-muted text-muted-foreground hover:text-white text-xs h-8 px-3 shrink-0" : "hw-gradient-orange text-white font-bold text-xs h-8 px-3 shrink-0 shadow-sm"}
+                              >
+                                <Gift className="h-3.5 w-3.5 mr-1.5" /> {isWinnerClaimed ? `Alterar Prêmio do ${w.position}º Lugar` : `Escolher Prêmio do ${w.position}º Lugar`}
+                              </Button>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
@@ -1900,19 +2154,30 @@ function AdminRifas() {
                   Embaralhando números...
                 </div>
               ) : (
-                drawnWinners.length > 0 && (
+                (drawnWinners.length > 0 || selectedRaffle?.winner_name) && (
                   <div className="space-y-3 animate-in fade-in zoom-in-95 duration-500 w-full">
-                    <div className="text-[10px] font-bold text-green-500 uppercase tracking-widest flex items-center justify-center gap-1.5">
-                      <Trophy className="h-4 w-4 text-yellow-500" /> Vencedor(es) Encontrado(s)!
+                    <div className="text-xs font-black text-green-400 uppercase tracking-widest flex items-center justify-center gap-1.5 bg-green-500/10 border border-green-500/20 py-1.5 px-3 rounded-full">
+                      <Trophy className="h-4 w-4 text-yellow-500 animate-bounce" /> Vencedor(es) da Rifa 🏆
                     </div>
                     <div className="space-y-2 max-h-48 overflow-y-auto px-2">
-                      {drawnWinners.map((winner, idx) => (
-                        <div key={idx} className="bg-muted/40 border border-border rounded-xl p-3 flex items-center justify-between text-left">
+                      {(drawnWinners.length > 0
+                        ? drawnWinners
+                        : [
+                            {
+                              number: selectedRaffle?.winner_number || 0,
+                              name: selectedRaffle?.winner_name || "Ganhador Registrado",
+                            },
+                          ]
+                      ).map((winner, idx) => (
+                        <div
+                          key={idx}
+                          className="bg-gradient-to-r from-green-500/10 via-card to-green-500/10 border border-green-500/40 rounded-2xl p-4 flex items-center justify-between text-left shadow-lg"
+                        >
                           <div>
-                            <div className="text-xs font-bold text-muted-foreground">{idx + 1}º Ganhador</div>
-                            <div className="text-base font-black text-foreground leading-tight">{winner.name}</div>
+                            <div className="text-xs font-bold text-muted-foreground">Ganhador Registrado 🥳</div>
+                            <div className="text-lg font-black text-white leading-tight">{winner.name}</div>
                           </div>
-                          <Badge className="bg-green-500 text-black font-black text-sm px-3 py-1">
+                          <Badge className="bg-green-500 text-black font-black text-base px-3 py-1.5 shadow-md">
                             Nº {String(winner.number).padStart(2, "0")}
                           </Badge>
                         </div>
@@ -1936,6 +2201,155 @@ function AdminRifas() {
               </>
             )}
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog: Send Specific Prize to Garage */}
+      <Dialog open={sendGarageModalOpen} onOpenChange={setSendGarageModalOpen}>
+        <DialogContent className="sm:max-w-[500px] bg-card border border-border text-foreground">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black flex items-center gap-2 text-white">
+              <Gift className="h-5 w-5 text-primary" /> Enviar Prêmio para Garagem do Ganhador
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              Escolha qual item da rifa será enviado para a Garagem Virtual de <strong className="text-white font-bold">{sendGarageTargetWinner?.name}</strong>.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!sendGarageTargetWinner?.userId) {
+                toast.error("Este ganhador não possui um cadastro de usuário na plataforma. Vincule-o a um cliente para enviar à garagem.");
+                return;
+              }
+              sendPrizeToGarage.mutate({
+                userId: sendGarageTargetWinner.userId,
+                carName: sendGarageCarName,
+                imageUrl: sendGarageCarImage,
+                points: sendGaragePoints,
+              });
+            }}
+            className="space-y-4 pt-3"
+          >
+            {/* Customer User check / combobox */}
+            {!sendGarageTargetWinner?.userId ? (
+              <div className="bg-yellow-500/10 border border-yellow-500/30 p-3 rounded-xl space-y-2">
+                <div className="text-xs font-bold text-yellow-400">⚠️ Ganhador não vinculado a uma conta</div>
+                <p className="text-[11px] text-muted-foreground">
+                  Selecione o cliente cadastrado para vincular a esta conta e enviar o prêmio à garagem dele:
+                </p>
+                <CustomerCombobox
+                  customers={customers ?? []}
+                  value={sendGarageTargetWinner?.userId || ""}
+                  onChange={(id) => {
+                    setSendGarageTargetWinner((prev) => prev ? { ...prev, userId: id } : null);
+                  }}
+                  placeholder="Pesquisar cliente cadastrado..."
+                />
+              </div>
+            ) : (
+              <div className="bg-muted/40 border border-border p-3 rounded-xl flex items-center justify-between text-xs">
+                <div>
+                  <span className="text-muted-foreground">Destinatário:</span>{" "}
+                  <strong className="text-primary font-bold">{sendGarageTargetWinner.name}</strong>
+                </div>
+                <Badge variant="outline" className="bg-green-500/10 text-green-400 border-green-500/30 text-[10px] font-bold">
+                  Cliente Vinculado
+                </Badge>
+              </div>
+            )}
+
+            {/* Select from Raffle Images */}
+            {selectedRaffle?.image_urls && selectedRaffle.image_urls.length > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                    Selecione a Imagem do Prêmio Escolhido
+                  </Label>
+                  <span className="text-[10px] text-muted-foreground font-semibold">
+                    {Math.max(0, selectedRaffle.image_urls.length - claimedPrizeImages.size)} de {selectedRaffle.image_urls.length} disponíveis
+                  </span>
+                </div>
+                <div className="grid grid-cols-4 gap-2">
+                  {selectedRaffle.image_urls.map((url, idx) => {
+                    const isClaimed = claimedPrizeImages.has(url);
+                    const isSelected = sendGarageCarImage === url;
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        disabled={isClaimed}
+                        onClick={() => !isClaimed && setSendGarageCarImage(url)}
+                        className={`relative rounded-xl overflow-hidden border-2 aspect-square bg-black transition-all ${
+                          isClaimed
+                            ? "opacity-30 border-red-500/40 grayscale cursor-not-allowed"
+                            : isSelected
+                            ? "border-primary ring-2 ring-primary/40 scale-105 cursor-pointer"
+                            : "border-border opacity-70 hover:opacity-100 cursor-pointer"
+                        }`}
+                      >
+                        <img src={url} alt={`Opção ${idx + 1}`} className="w-full h-full object-cover" />
+                        {isClaimed ? (
+                          <Badge className="absolute inset-x-1 bottom-1 text-[7px] bg-red-600/90 text-white font-black px-1 py-0.5 justify-center text-center">
+                            🔒 Já Escolhido
+                          </Badge>
+                        ) : isSelected ? (
+                          <Badge className="absolute bottom-1 right-1 text-[8px] bg-primary text-black font-black px-1 py-0 h-4">
+                            ✓ Selecionada
+                          </Badge>
+                        ) : null}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Nome da Miniatura / Prêmio</Label>
+              <Input
+                value={sendGarageCarName}
+                onChange={(e) => setSendGarageCarName(e.target.value)}
+                placeholder="Ex: Nissan GT-R Nismo STH"
+                required
+                className="bg-background border-border text-foreground"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">URL da Imagem (Caso deseje alterar)</Label>
+              <Input
+                value={sendGarageCarImage}
+                onChange={(e) => setSendGarageCarImage(e.target.value)}
+                placeholder="https://..."
+                className="bg-background border-border text-foreground text-xs"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Pontos Bônus no Cadastro</Label>
+              <Input
+                type="number"
+                value={sendGaragePoints}
+                onChange={(e) => setSendGaragePoints(Number(e.target.value))}
+                className="bg-background border-border text-foreground"
+              />
+            </div>
+
+            <div className="flex justify-end gap-3 pt-3 border-t border-border/60">
+              <Button type="button" variant="ghost" onClick={() => setSendGarageModalOpen(false)}>
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                disabled={sendPrizeToGarage.isPending}
+                className="hw-gradient-orange text-white font-bold"
+              >
+                {sendPrizeToGarage.isPending ? "Enviando..." : "Confirmar e Enviar para Garagem 🏎️"}
+              </Button>
+            </div>
+          </form>
         </DialogContent>
       </Dialog>
     </div>

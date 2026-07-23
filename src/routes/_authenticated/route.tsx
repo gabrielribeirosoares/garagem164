@@ -704,10 +704,10 @@ function AuthedLayout() {
         {/* Mobile Hamburger Trigger for extra items */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex flex-col items-center focus:outline-none">
-              <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl text-primary hover:bg-primary/10">
+            <button type="button" className="flex flex-col items-center focus:outline-none cursor-pointer group">
+              <div className="h-9 w-9 rounded-xl text-primary flex items-center justify-center group-hover:bg-primary/10 transition-all">
                 <Menu className="h-5 w-5" />
-              </Button>
+              </div>
               <span className="text-[10px] font-bold mt-1 text-primary">Mais</span>
             </button>
           </DropdownMenuTrigger>

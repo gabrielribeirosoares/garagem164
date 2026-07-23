@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { compressImage } from "@/lib/imageCompression";
 import { Bell, Users, Gift, Clock, Trophy, Sparkles, Search, Palette } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -46,13 +47,14 @@ function AdminDashboard() {
     else setUploadingFavicon(true);
 
     try {
-      const ext = file.name.split(".").pop();
+      const compressedFile = await compressImage(file, type === "logo" ? 800 : 256, 0.85);
+      const ext = compressedFile.name.split(".").pop() || "webp";
       const fileName = `${store.id}-${type}-${Math.random().toString(36).slice(2)}.${ext}`;
       const filePath = `stores/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from("images")
-        .upload(filePath, file, { cacheControl: "3600", upsert: true });
+        .upload(filePath, compressedFile, { cacheControl: "3600", upsert: true });
 
       if (uploadError) throw uploadError;
 
@@ -60,7 +62,7 @@ function AdminDashboard() {
       if (type === "logo") setLogoUrl(data.publicUrl);
       else setFaviconUrl(data.publicUrl);
 
-      toast.success(`${type === "logo" ? "Logo" : "Favicon"} enviado com sucesso!`);
+      toast.success(`${type === "logo" ? "Logo" : "Favicon"} otimizado e enviado com sucesso! ⚡`);
     } catch (err: any) {
       toast.error(`Erro no upload: ${err.message}`);
     } finally {

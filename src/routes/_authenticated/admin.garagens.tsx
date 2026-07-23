@@ -207,21 +207,26 @@ function AdminGaragens() {
                       {/* Payment/Shipping Status Badges */}
                       <div className="flex items-center gap-2 pt-1 flex-wrap">
                         {/* Payment Status */}
-                        <button
-                          type="button"
-                          onClick={() => updateCarStatus.mutate({ 
-                            id: c.id, 
-                            paymentStatus: c.payment_status === "paid" ? "pending" : "paid" 
-                          })}
-                          className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded cursor-pointer transition-all border ${
-                            c.payment_status === "paid"
-                              ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/25"
-                              : "bg-amber-500/10 text-amber-400 border-amber-500/25 hover:bg-amber-500/25"
-                          }`}
-                          title="Clique para alternar o status de pagamento"
-                        >
-                          {c.payment_status === "paid" ? "Pago" : "Aguardando Pagto"}
-                        </button>
+                        {(() => {
+                          const isPaid = c.payment_status === "paid" || c.name?.includes("Lugar)") || c.name?.includes("Ganhador") || c.name?.includes("Rifa");
+                          return (
+                            <button
+                              type="button"
+                              onClick={() => updateCarStatus.mutate({ 
+                                id: c.id, 
+                                paymentStatus: isPaid ? "pending" : "paid" 
+                              })}
+                              className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded cursor-pointer transition-all border ${
+                                isPaid
+                                  ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/25"
+                                  : "bg-amber-500/10 text-amber-400 border-amber-500/25 hover:bg-amber-500/25"
+                              }`}
+                              title="Clique para alternar o status de pagamento"
+                            >
+                              {isPaid ? "Pago" : "Aguardando Pagto"}
+                            </button>
+                          );
+                        })()}
 
                         {/* Shipping Status */}
                         <button

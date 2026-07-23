@@ -232,13 +232,18 @@ function Garagem() {
                   
                   <div className="flex flex-wrap gap-1">
                     {/* Payment Status Badge */}
-                    <span className={`text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded border ${
-                      c.payment_status === "paid" 
-                        ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" 
-                        : "bg-amber-500/10 text-amber-400 border-amber-500/20"
-                    }`}>
-                      {c.payment_status === "paid" ? "Pago" : "Aguardando Pagto"}
-                    </span>
+                    {(() => {
+                      const isPaid = c.payment_status === "paid" || c.name?.includes("Lugar)") || c.name?.includes("Ganhador") || c.name?.includes("Rifa");
+                      return (
+                        <span className={`text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded border ${
+                          isPaid
+                            ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" 
+                            : "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                        }`}>
+                          {isPaid ? "Pago" : "Aguardando Pagto"}
+                        </span>
+                      );
+                    })()}
 
                     {/* Shipping Status Badge */}
                     <span className={`text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded border ${
