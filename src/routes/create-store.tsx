@@ -4,11 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/useAuth";
 import { useOwnedStore } from "@/hooks/useStore";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { Store, Sparkles } from "lucide-react";
+import { Store, Sparkles, ArrowLeft } from "lucide-react";
+import { Footer } from "@/components/Footer";
 
 export const Route = createFileRoute("/create-store")({
   component: CreateStore,
@@ -116,83 +118,101 @@ function CreateStore() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-10">
-      <form onSubmit={submit} className="w-full max-w-lg rounded-3xl border border-border bg-card p-8 space-y-5">
-        <div className="flex items-center gap-2">
-          <Store className="h-6 w-6 text-primary" />
-          <h1 className="text-2xl font-black">Crie sua loja</h1>
-        </div>
-        <p className="text-sm text-muted-foreground -mt-2">Personalize a experiência da sua loja de miniaturas.</p>
+    <div className="min-h-screen flex flex-col justify-between bg-background text-foreground font-sans">
+      <div className="flex-1 flex items-center justify-center px-4 py-10">
+        <form onSubmit={submit} className="w-full max-w-lg rounded-3xl border border-border bg-card p-8 space-y-5 shadow-2xl">
+          {/* Header navigation bar */}
+          <div className="flex items-center justify-between pb-2 border-b border-border/50">
+            <button
+              type="button"
+              onClick={() => navigate({ to: "/garagem" })}
+              className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+            >
+              <ArrowLeft className="h-4 w-4" /> Voltar para o Início
+            </button>
+            <Badge variant="outline" className="text-[10px] uppercase font-bold tracking-wider text-primary border-primary/30 bg-primary/5">
+              Nova Loja
+            </Badge>
+          </div>
 
-        <div className="space-y-2">
-          <Label>Nome da loja</Label>
-          <Input value={name} onChange={(e) => handleNameChange(e.target.value)} required placeholder="Ex: Gabriel Minis" />
-        </div>
-        <div className="space-y-2">
-          <Label>Slug (URL)</Label>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">/</span>
-            <Input value={slug} onChange={(e) => handleSlugChange(e.target.value)} required placeholder="gabriel-minis" />
+          <div className="flex items-center gap-2 pt-1">
+            <Store className="h-6 w-6 text-primary" />
+            <h1 className="text-2xl font-black">Crie sua loja</h1>
           </div>
-          <p className="text-xs text-muted-foreground">Sua loja ficará em <code>/{slug || "minha-loja"}</code></p>
-        </div>
-        <div className="space-y-2">
-          <Label>Logo da Loja</Label>
-          {logoUrl ? (
-            <div className="flex items-center gap-3 p-3 rounded-xl border border-border bg-background/50">
-              <img src={logoUrl} alt="Logo Preview" className="h-10 w-10 rounded object-cover" />
-              <div className="min-w-0 flex-1">
-                <p className="text-xs text-muted-foreground truncate">Logo enviado com sucesso</p>
-              </div>
-              <Button type="button" variant="ghost" size="sm" onClick={() => setLogoUrl("")} className="text-xs text-destructive hover:bg-destructive/10">Remover</Button>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-2">
-              <Input
-                type="file"
-                accept="image/*"
-                onChange={(e) => handleUpload(e, "logo")}
-                disabled={uploadingLogo}
-                className="bg-[#121212] border-border text-foreground h-11 file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-white hover:file:bg-primary/95 cursor-pointer"
-              />
-              {uploadingLogo && <p className="text-xs text-primary animate-pulse">Enviando logo...</p>}
-            </div>
-          )}
-        </div>
-        <div className="space-y-2">
-          <Label>Favicon da Loja (ícone da aba do navegador)</Label>
-          {faviconUrl ? (
-            <div className="flex items-center gap-3 p-3 rounded-xl border border-border bg-background/50">
-              <img src={faviconUrl} alt="Favicon Preview" className="h-8 w-8 rounded object-cover animate-in fade-in" />
-              <div className="min-w-0 flex-1">
-                <p className="text-xs text-muted-foreground truncate">Favicon enviado com sucesso</p>
-              </div>
-              <Button type="button" variant="ghost" size="sm" onClick={() => setFaviconUrl("")} className="text-xs text-destructive hover:bg-destructive/10">Remover</Button>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-2">
-              <Input
-                type="file"
-                accept="image/x-icon,image/png,image/jpeg"
-                onChange={(e) => handleUpload(e, "favicon")}
-                disabled={uploadingFavicon}
-                className="bg-[#121212] border-border text-foreground h-11 file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-white hover:file:bg-primary/95 cursor-pointer"
-              />
-              {uploadingFavicon && <p className="text-xs text-primary animate-pulse">Enviando favicon...</p>}
-            </div>
-          )}
-        </div>
-        <div className="space-y-2">
-          <Label>Cor primária</Label>
-          <div className="flex items-center gap-3">
-            <input type="color" value={color} onChange={(e) => setColor(e.target.value)} className="h-10 w-14 rounded border border-border bg-transparent" />
-            <Input value={color} onChange={(e) => setColor(e.target.value)} className="max-w-[140px] font-mono" />
+          <p className="text-sm text-muted-foreground -mt-2">Personalize a experiência da sua loja de miniaturas.</p>
+
+          <div className="space-y-2">
+            <Label>Nome da loja</Label>
+            <Input value={name} onChange={(e) => handleNameChange(e.target.value)} required placeholder="Ex: Gabriel Minis" />
           </div>
-        </div>
-        <Button type="submit" disabled={saving} className="w-full font-bold" style={{ background: color, color: "#fff" }}>
-          <Sparkles className="h-4 w-4 mr-2" /> {saving ? "Criando..." : "Criar loja"}
-        </Button>
-      </form>
+          <div className="space-y-2">
+            <Label>Slug (URL)</Label>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">/</span>
+              <Input value={slug} onChange={(e) => handleSlugChange(e.target.value)} required placeholder="gabriel-minis" />
+            </div>
+            <p className="text-xs text-muted-foreground">Sua loja ficará em <code>/{slug || "minha-loja"}</code></p>
+          </div>
+          <div className="space-y-2">
+            <Label>Logo da Loja</Label>
+            {logoUrl ? (
+              <div className="flex items-center gap-3 p-3 rounded-xl border border-border bg-background/50">
+                <img src={logoUrl} alt="Logo Preview" className="h-10 w-10 rounded object-cover" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs text-muted-foreground truncate">Logo enviado com sucesso</p>
+                </div>
+                <Button type="button" variant="ghost" size="sm" onClick={() => setLogoUrl("")} className="text-xs text-destructive hover:bg-destructive/10">Remover</Button>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleUpload(e, "logo")}
+                  disabled={uploadingLogo}
+                  className="bg-[#121212] border-border text-foreground h-11 file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-white hover:file:bg-primary/95 cursor-pointer"
+                />
+                {uploadingLogo && <p className="text-xs text-primary animate-pulse">Enviando logo...</p>}
+              </div>
+            )}
+          </div>
+          <div className="space-y-2">
+            <Label>Favicon da Loja (ícone da aba do navegador)</Label>
+            {faviconUrl ? (
+              <div className="flex items-center gap-3 p-3 rounded-xl border border-border bg-background/50">
+                <img src={faviconUrl} alt="Favicon Preview" className="h-8 w-8 rounded object-cover animate-in fade-in" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs text-muted-foreground truncate">Favicon enviado com sucesso</p>
+                </div>
+                <Button type="button" variant="ghost" size="sm" onClick={() => setFaviconUrl("")} className="text-xs text-destructive hover:bg-destructive/10">Remover</Button>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                <Input
+                  type="file"
+                  accept="image/x-icon,image/png,image/jpeg"
+                  onChange={(e) => handleUpload(e, "favicon")}
+                  disabled={uploadingFavicon}
+                  className="bg-[#121212] border-border text-foreground h-11 file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-white hover:file:bg-primary/95 cursor-pointer"
+                />
+                {uploadingFavicon && <p className="text-xs text-primary animate-pulse">Enviando favicon...</p>}
+              </div>
+            )}
+          </div>
+          <div className="space-y-2">
+            <Label>Cor primária</Label>
+            <div className="flex items-center gap-3">
+              <input type="color" value={color} onChange={(e) => setColor(e.target.value)} className="h-10 w-14 rounded border border-border bg-transparent cursor-pointer" />
+              <Input value={color} onChange={(e) => setColor(e.target.value)} className="max-w-[140px] font-mono" />
+            </div>
+          </div>
+          <Button type="submit" disabled={saving} className="w-full font-bold h-11 text-sm shadow-md" style={{ background: color, color: "#fff" }}>
+            <Sparkles className="h-4 w-4 mr-2" /> {saving ? "Criando..." : "Criar loja"}
+          </Button>
+        </form>
+      </div>
+
+      <Footer />
     </div>
   );
 }
