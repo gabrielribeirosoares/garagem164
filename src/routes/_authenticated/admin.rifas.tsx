@@ -430,6 +430,13 @@ function AdminRifas() {
 
   const deleteRaffle = useMutation({
     mutationFn: async (id: string) => {
+      // 1. Delete associated tickets first
+      const { error: ticketsErr } = await supabase.from("raffle_tickets").delete().eq("raffle_id", id);
+      if (ticketsErr) {
+        console.warn("Aviso ao limpar bilhetes:", ticketsErr);
+      }
+
+      // 2. Delete the raffle
       const { error } = await supabase.from("raffles").delete().eq("id", id);
       if (error) throw error;
     },
@@ -438,7 +445,7 @@ function AdminRifas() {
       qc.invalidateQueries({ queryKey: ["store-raffles", storeId] });
       setSelectedRaffleId(null);
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => toast.error(e.message || "Erro ao excluir rifa."),
   });
 
   const saveWinners = useMutation({
