@@ -461,7 +461,7 @@ function ClientRifas() {
 
                   {/* Quick Pick Buttons (Surpresinha / 1-Clique) */}
                   {selectedRaffle.status === "active" && (
-                    <div className="bg-gradient-to-r from-[#181818] via-[#121212] to-[#181818] border border-border p-4 rounded-2xl space-y-3">
+                    <div data-tour="client-rifa-surpresinha" className="bg-gradient-to-r from-[#181818] via-[#121212] to-[#181818] border border-border p-4 rounded-2xl space-y-3">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
                           <Zap className="h-4 w-4 text-primary fill-primary/20" /> Compra Rápida em 1-Clique (Surpresinha)

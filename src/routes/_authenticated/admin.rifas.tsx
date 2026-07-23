@@ -716,7 +716,7 @@ function AdminRifas() {
             Selecione múltiplos números de uma vez para atribuir clientes, confirmar pagamentos e conceder pontos automáticos.
           </p>
         </div>
-        <Button onClick={() => setCreateOpen(true)} className="hw-gradient-orange text-white font-bold h-11 px-4">
+        <Button data-tour="admin-rifa-create" onClick={() => setCreateOpen(true)} className="hw-gradient-orange text-white font-bold h-11 px-4">
           <Plus className="h-4 w-4 mr-2" /> Nova Rifa
         </Button>
       </div>
@@ -951,7 +951,7 @@ function AdminRifas() {
                   const fillPercentage = Math.round(((paidCount + reservedCount) / selectedRaffle.total_numbers) * 100);
 
                   return (
-                    <div className="border-b border-border bg-muted/20 p-4">
+                    <div data-tour="admin-rifa-stats" className="border-b border-border bg-muted/20 p-4">
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
                         <div className="bg-card border border-border/80 p-3 rounded-2xl">
                           <div className="text-[10px] uppercase font-bold text-green-500 tracking-wider flex items-center justify-center gap-1">
@@ -1027,7 +1027,7 @@ function AdminRifas() {
                     const unitPrice = Number(selectedRaffle.price_per_number);
 
                     return (
-                      <div className="bg-card border border-yellow-500/40 rounded-2xl p-4 space-y-3">
+                      <div data-tour="admin-rifa-pending" className="bg-card border border-yellow-500/40 rounded-2xl p-4 space-y-3">
                         <div className="flex justify-between items-center">
                           <div className="flex items-center gap-2 font-black text-xs uppercase tracking-wider text-yellow-500">
                             <Clock className="h-4 w-4 text-yellow-500 animate-pulse" /> Reservas Aguardando Confirmação PIX ({groupsMap.size} cliente(s))
@@ -1117,7 +1117,7 @@ function AdminRifas() {
 
                   {/* Compra Rápida em 1-Clique (Surpresinha) para Admin */}
                   {selectedRaffle.status === "active" && (
-                    <div className="bg-card border border-border p-4 rounded-2xl space-y-3 shadow-md">
+                    <div data-tour="admin-rifa-surpresinha" className="bg-card border border-border p-4 rounded-2xl space-y-3 shadow-md">
                       <div className="flex justify-between items-center">
                         <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-foreground">
                           <Zap className="h-4 w-4 text-primary animate-pulse" /> COMPRA RÁPIDA EM 1-CLIQUE (SURPRESINHA)
@@ -1162,7 +1162,7 @@ function AdminRifas() {
                   )}
 
                   {/* Numbers Grid */}
-                  <div className="space-y-3">
+                  <div data-tour="admin-rifa-grid" className="space-y-3">
                     <div className="flex justify-between items-center">
                       <h3 className="font-bold text-sm text-white">Painel de Números</h3>
                       <div className="text-xs text-muted-foreground">

@@ -174,13 +174,13 @@ function AdminDashboard() {
         )}
       </div>
 
-      <div className="grid gap-3 md:grid-cols-3">
+      <div data-tour="admin-metrics" className="grid gap-3 md:grid-cols-3">
         <Stat icon={Users} label="Clientes" value={customers?.length ?? 0} />
         <Stat icon={Bell} label="Resgates pendentes" value={pending.length} highlight />
         <Stat icon={Trophy} label="Pontos em circulação" value={totalPoints} />
       </div>
 
-      <section className="rounded-3xl border border-border bg-card overflow-hidden">
+      <section data-tour="admin-alerts" className="rounded-3xl border border-border bg-card overflow-hidden">
         <header className="p-5 border-b border-border flex items-center gap-2">
           <Bell className="h-5 w-5 text-primary" />
           <h2 className="font-black">Central de Alertas</h2>

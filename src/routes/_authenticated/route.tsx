@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { OnboardingTour } from "@/components/OnboardingTour";
+import { SpotlightTour, SpotlightStep } from "@/components/SpotlightTour";
 import { HelpCircle } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -60,17 +61,100 @@ function AuthedLayout() {
   const isAdmin = role === "admin";
   const isAdminView = path.startsWith("/admin");
 
-  // Auto-open tour on first access
+  // Page-specific spotlight steps definition
+  const getSpotlightConfig = (): { key: string; steps: SpotlightStep[] } | null => {
+    if (isAdminView) {
+      if (path === "/admin/rifas") {
+        return {
+          key: "admin-rifas",
+          steps: [
+            {
+              targetSelector: '[data-tour="admin-rifa-create"]',
+              title: "Criar Nova Rifa ➕",
+              description: "Clique aqui para cadastrar um novo sorteio definindo prêmios, galeria de fotos, valor por número e chave PIX.",
+            },
+            {
+              targetSelector: '[data-tour="admin-rifa-stats"]',
+              title: "Métricas Financeiras 💰",
+              description: "Acompanhe em tempo real o valor já recebido (pagos), valor pendente em reservas e a porcentagem de preenchimento da rifa.",
+            },
+            {
+              targetSelector: '[data-tour="admin-rifa-surpresinha"]',
+              title: "Compra Rápida em 1-Clique ⚡",
+              description: "Para vendas no balcão ou via WhatsApp, clique em +1, 3, 5 ou 10 números para sortear números livres aleatórios em 1 segundo.",
+            },
+            {
+              targetSelector: '[data-tour="admin-rifa-pending"]',
+              title: "Reservas PIX Pendentes 🕒",
+              description: "Aprove o pagamento PIX enviado pelo cliente ou cancele a reserva com apenas 1 clique.",
+            },
+            {
+              targetSelector: '[data-tour="admin-rifa-grid"]',
+              title: "Painel de Números & Edição 🔢",
+              description: "Clique em qualquer número no grid para atribuir compradores, alterar status para pago ou usar a Seleção Inteligente Múltipla.",
+            },
+          ],
+        };
+      }
+      if (path === "/admin") {
+        return {
+          key: "admin-dashboard",
+          steps: [
+            {
+              targetSelector: '[data-tour="admin-metrics"]',
+              title: "Visão Geral do Negócio 📊",
+              description: "Monitore o número de clientes cadastrados, solicitações de resgates pendentes e total de pontos em circulação.",
+            },
+            {
+              targetSelector: '[data-tour="admin-alerts"]',
+              title: "Central de Alertas 🔔",
+              description: "Receba notificações instantâneas de solicitações de resgates de prêmios feitas pelos clientes da sua garagem.",
+            },
+          ],
+        };
+      }
+    } else {
+      if (path === "/garagem") {
+        return {
+          key: "client-garagem",
+          steps: [
+            {
+              targetSelector: '[data-tour="client-garagem-hero"]',
+              title: "Sua Garagem Virtual 🚘",
+              description: "Aqui você acompanha o seu saldo de pontos acumulados, a contagem de miniaturas na sua coleção e o seu nível VIP.",
+            },
+          ],
+        };
+      }
+      if (path === "/rifas") {
+        return {
+          key: "client-rifas",
+          steps: [
+            {
+              targetSelector: '[data-tour="client-rifa-surpresinha"]',
+              title: "Compra Rápida Surpresinha 🎲",
+              description: "Quer garantir seus números da sorte rápido? Escolha 1, 3, 5 ou 10 números aleatórios em apenas 1 clique!",
+            },
+          ],
+        };
+      }
+    }
+    return null;
+  };
+
+  const spotlightConfig = getSpotlightConfig();
+
+  // Auto-open tour on first access per page
   useEffect(() => {
-    const key = isAdminView ? "hw_tour_admin_completed" : "hw_tour_client_completed";
+    const key = spotlightConfig ? `hw_tour_${spotlightConfig.key}` : (isAdminView ? "hw_tour_admin_completed" : "hw_tour_client_completed");
     const completed = localStorage.getItem(key);
     if (!completed) {
       const timer = setTimeout(() => {
         setTourOpen(true);
-      }, 800);
+      }, 600);
       return () => clearTimeout(timer);
     }
-  }, [isAdminView]);
+  }, [path, isAdminView]);
 
   useEffect(() => {
     if (profile?.full_name) {
@@ -466,12 +550,21 @@ function AuthedLayout() {
         </DialogContent>
       </Dialog>
 
-      {/* Onboarding Tour Component for First-time Access and Help */}
-      <OnboardingTour
-        isAdminView={isAdminView}
-        isOpen={tourOpen}
-        onClose={() => setTourOpen(false)}
-      />
+      {/* Onboarding / Spotlight Tour Component for First-time Access and Help */}
+      {spotlightConfig ? (
+        <SpotlightTour
+          steps={spotlightConfig.steps}
+          isOpen={tourOpen}
+          onClose={() => setTourOpen(false)}
+          tourKey={spotlightConfig.key}
+        />
+      ) : (
+        <OnboardingTour
+          isAdminView={isAdminView}
+          isOpen={tourOpen}
+          onClose={() => setTourOpen(false)}
+        />
+      )}
     </div>
   );
 }

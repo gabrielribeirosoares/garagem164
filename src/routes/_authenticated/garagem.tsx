@@ -93,7 +93,7 @@ function Garagem() {
   return (
     <div className="space-y-6">
       {/* Hero Header */}
-      <section className="rounded-3xl border border-border overflow-hidden relative shadow-2xl">
+      <section data-tour="client-garagem-hero" className="rounded-3xl border border-border overflow-hidden relative shadow-2xl">
         <div className="absolute inset-0 hw-gradient-orange opacity-90" />
         <div className="relative p-6 md:p-8 text-primary-foreground space-y-6">
           <div className="flex flex-wrap justify-between items-start gap-4">
