@@ -886,6 +886,7 @@ function AdminRifas() {
                     </Button>
 
                     <Button
+                      data-tour="admin-rifa-whatsapp"
                       onClick={copyWhatsAppFormat}
                       variant="secondary"
                       size="sm"

@@ -79,6 +79,11 @@ function AuthedLayout() {
               description: "Acompanhe em tempo real o valor já recebido (pagos), valor pendente em reservas e a porcentagem de preenchimento da rifa.",
             },
             {
+              targetSelector: '[data-tour="admin-rifa-whatsapp"]',
+              title: "Copiar Lista Formatada para WhatsApp 📱",
+              description: "Clique neste botão para copiar a lista da rifa já organizada com números disponíveis, reservados (com nome do participante), chave PIX e valores para enviar nos grupos e conversas do WhatsApp!",
+            },
+            {
               targetSelector: '[data-tour="admin-rifa-surpresinha"]',
               title: "Compra Rápida em 1-Clique ⚡",
               description: "Para vendas no balcão ou via WhatsApp, clique em +1, 3, 5 ou 10 números para sortear números livres aleatórios em 1 segundo.",
