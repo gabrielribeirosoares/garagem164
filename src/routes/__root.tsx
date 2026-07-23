@@ -105,8 +105,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "MinisHub — Fidelidade para Lojas de Miniaturas" },
       { name: "twitter:description", content: "Crie e gerencie sua própria garagem digital de miniaturas e programa de fidelidade." },
-      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/cb391500-9a0c-4ae3-922e-9251d8f971da" },
-      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/cb391500-9a0c-4ae3-922e-9251d8f971da" },
+      { property: "og:image", content: "https://garagem164.vercel.app/og-cover.png" },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { name: "twitter:image", content: "https://garagem164.vercel.app/og-cover.png" },
     ],
     links: [
       {
