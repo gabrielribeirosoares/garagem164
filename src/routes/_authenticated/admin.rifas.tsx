@@ -40,7 +40,8 @@ import {
   Percent,
   Truck,
   Tag,
-  Filter
+  Filter,
+  Camera
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/rifas")({
@@ -49,8 +50,7 @@ export const Route = createFileRoute("/_authenticated/admin/rifas")({
 
 function AdminRifas() {
   const qc = useQueryClient();
-  const { data: store } = useOwnedStore();
-  const storeId = store?.id;
+  const { storeId } = useOwnedStore();
 
   const [selectedRaffleId, setSelectedRaffleId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
@@ -94,16 +94,17 @@ function AdminRifas() {
   const [editNewImageUrl, setEditNewImageUrl] = useState("");
   const [uploadingEditImage, setUploadingEditImage] = useState(false);
 
-  // Image Upload Handler
+  // Image Upload Handler (Parallel multi-file upload)
   const handleFileUpload = async (files: FileList | File[], isEdit = false) => {
     const setter = isEdit ? setEditImageUrls : setImageUrls;
     const loader = isEdit ? setUploadingEditImage : setUploadingImage;
     loader(true);
     try {
-      const uploadedUrls: string[] = [];
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        const fileExt = file.name.split(".").pop();
+      const fileArray = Array.from(files);
+      if (fileArray.length === 0) return;
+
+      const uploadPromises = fileArray.map(async (file) => {
+        const fileExt = file.name.split(".").pop() || "jpg";
         const fileName = `raffles/${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`;
         const { error: uploadError } = await supabase.storage
           .from("images")
@@ -112,10 +113,12 @@ function AdminRifas() {
         if (uploadError) throw uploadError;
 
         const { data } = supabase.storage.from("images").getPublicUrl(fileName);
-        uploadedUrls.push(data.publicUrl);
-      }
+        return data.publicUrl;
+      });
+
+      const uploadedUrls = await Promise.all(uploadPromises);
       setter((prev) => [...prev, ...uploadedUrls]);
-      toast.success(`${uploadedUrls.length} foto(s) do prêmio enviada(s) com sucesso!`);
+      toast.success(`${uploadedUrls.length} foto(s) enviada(s) simultaneamente com sucesso!`);
     } catch (err: any) {
       toast.error(`Erro no upload da foto: ${err.message}`);
     } finally {
@@ -1241,22 +1244,41 @@ function AdminRifas() {
               </div>
 
               <div className="space-y-2">
-                <label className="flex cursor-pointer bg-[#121212] border border-dashed border-border hover:border-primary/60 rounded-xl p-3 items-center justify-center gap-2 text-xs font-bold text-muted-foreground hover:text-white transition-all">
-                  <Upload className="h-4 w-4 text-primary" />
-                  <span>{uploadingImage ? "Enviando arquivo(s)..." : "Fazer Upload de Imagem(ns)"}</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    disabled={uploadingImage}
-                    onChange={(e) => {
-                      if (e.target.files && e.target.files.length > 0) {
-                        handleFileUpload(e.target.files, false);
-                      }
-                    }}
-                    className="hidden"
-                  />
-                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <label className="flex cursor-pointer bg-[#121212] border border-dashed border-border hover:border-primary/60 rounded-xl p-3 items-center justify-center gap-2 text-xs font-bold text-muted-foreground hover:text-white transition-all">
+                    <Upload className="h-4 w-4 text-primary shrink-0" />
+                    <span>{uploadingImage ? "Enviando..." : "Várias Fotos (Galeria)"}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      disabled={uploadingImage}
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files.length > 0) {
+                          handleFileUpload(e.target.files, false);
+                        }
+                      }}
+                      className="hidden"
+                    />
+                  </label>
+
+                  <label className="flex cursor-pointer bg-[#121212] border border-dashed border-border hover:border-yellow-500/60 rounded-xl p-3 items-center justify-center gap-2 text-xs font-bold text-yellow-400 hover:text-white transition-all">
+                    <Camera className="h-4 w-4 text-yellow-400 shrink-0" />
+                    <span>Tirar Foto pelo Celular</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      disabled={uploadingImage}
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files.length > 0) {
+                          handleFileUpload(e.target.files, false);
+                        }
+                      }}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
 
                 <div className="flex gap-2">
                   <Input
@@ -1483,22 +1505,41 @@ function AdminRifas() {
               </div>
 
               <div className="space-y-2">
-                <label className="flex cursor-pointer bg-[#121212] border border-dashed border-border hover:border-primary/60 rounded-xl p-3 items-center justify-center gap-2 text-xs font-bold text-muted-foreground hover:text-white transition-all">
-                  <Upload className="h-4 w-4 text-primary" />
-                  <span>{uploadingEditImage ? "Enviando arquivo(s)..." : "Fazer Upload de Imagem(ns)"}</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    disabled={uploadingEditImage}
-                    onChange={(e) => {
-                      if (e.target.files && e.target.files.length > 0) {
-                        handleFileUpload(e.target.files, true);
-                      }
-                    }}
-                    className="hidden"
-                  />
-                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <label className="flex cursor-pointer bg-[#121212] border border-dashed border-border hover:border-primary/60 rounded-xl p-3 items-center justify-center gap-2 text-xs font-bold text-muted-foreground hover:text-white transition-all">
+                    <Upload className="h-4 w-4 text-primary shrink-0" />
+                    <span>{uploadingEditImage ? "Enviando..." : "Várias Fotos (Galeria)"}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      disabled={uploadingEditImage}
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files.length > 0) {
+                          handleFileUpload(e.target.files, true);
+                        }
+                      }}
+                      className="hidden"
+                    />
+                  </label>
+
+                  <label className="flex cursor-pointer bg-[#121212] border border-dashed border-border hover:border-yellow-500/60 rounded-xl p-3 items-center justify-center gap-2 text-xs font-bold text-yellow-400 hover:text-white transition-all">
+                    <Camera className="h-4 w-4 text-yellow-400 shrink-0" />
+                    <span>Tirar Foto pelo Celular</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      disabled={uploadingEditImage}
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files.length > 0) {
+                          handleFileUpload(e.target.files, true);
+                        }
+                      }}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
 
                 <div className="flex gap-2">
                   <Input
