@@ -569,16 +569,16 @@ function AuthedLayout() {
             </DropdownMenu>
           )}
 
-          {/* Hamburger Menu Dropdown for Desktop & Mobile Header */}
+          {/* Hamburger Menu Dropdown for Desktop Only Header */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="outline"
                 size="sm"
-                className="gap-2 font-bold border-border bg-card hover:bg-muted/80 text-foreground h-9 px-3 rounded-xl shadow-sm"
+                className="hidden md:flex gap-2 font-bold border-border bg-card hover:bg-muted/80 text-foreground h-9 px-3 rounded-xl shadow-sm"
               >
                 <Menu className="h-4 w-4 text-primary" />
-                <span className="font-black text-xs uppercase tracking-wider hidden sm:inline">Menu</span>
+                <span className="font-black text-xs uppercase tracking-wider">Menu</span>
                 <ChevronDown className="h-3.5 w-3.5 opacity-60" />
               </Button>
             </DropdownMenuTrigger>
