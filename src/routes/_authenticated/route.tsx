@@ -96,6 +96,111 @@ function AuthedLayout() {
           ],
         };
       }
+      if (path === "/admin/estoque") {
+        return {
+          key: "admin-estoque",
+          steps: [
+            {
+              targetSelector: '[data-tour="admin-estoque-add"]',
+              title: "Novo Produto ➕",
+              description: "Cadastre novas miniaturas no seu estoque definindo preço, pontos, escala e quantidade disponível.",
+            },
+            {
+              targetSelector: '[data-tour="admin-estoque-grid"]',
+              title: "Catálogo de Produtos em Estoque 📦",
+              description: "Visualize seus produtos em estoque e faça vendas diretas para a garagem dos seus clientes com apenas 1 clique.",
+            },
+          ],
+        };
+      }
+      if (path === "/admin/carros") {
+        return {
+          key: "admin-carros",
+          steps: [
+            {
+              targetSelector: '[data-tour="admin-car-name"]',
+              title: "Nome do Carro 🚘",
+              description: "Pesquise ou digite o modelo da miniatura (ex: Hot Wheels Dodge Charger).",
+            },
+            {
+              targetSelector: '[data-tour="admin-car-photo"]',
+              title: "Foto do Produto 📷",
+              description: "Tire uma foto direto pela câmera do seu celular, faça upload ou insira a URL da imagem.",
+            },
+            {
+              targetSelector: '[data-tour="admin-car-points"]',
+              title: "Pontos na Garagem 🏆",
+              description: "Defina quantos pontos o cliente receberá no saldo ao adquirir este modelo.",
+            },
+            {
+              targetSelector: '[data-tour="admin-car-submit"]',
+              title: "Adicionar à Garagem 🚀",
+              description: "Salva e disponibiliza o carro imediatamente na garagem do cliente ou no estoque.",
+            },
+          ],
+        };
+      }
+      if (path === "/admin/garagens") {
+        return {
+          key: "admin-garagens",
+          steps: [
+            {
+              targetSelector: '[data-tour="admin-garagens-select"]',
+              title: "Selecionar Garagem do Cliente 👤",
+              description: "Pesquise por nome, e-mail ou WhatsApp para abrir e visualizar a garagem de qualquer cliente.",
+            },
+            {
+              targetSelector: '[data-tour="admin-garagens-link"]',
+              title: "Vincular Cliente por E-mail 🔗",
+              description: "Associe novos compradores da sua loja para creditar pontos e miniaturas na conta deles.",
+            },
+            {
+              targetSelector: '[data-tour="admin-garagens-items"]',
+              title: "Itens na Garagem do Cliente 🏎️",
+              description: "Veja todas as miniaturas e o histórico de pontos acumulados na garagem do cliente selecionado.",
+            },
+          ],
+        };
+      }
+      if (path === "/admin/recompensas") {
+        return {
+          key: "admin-recompensas",
+          steps: [
+            {
+              targetSelector: '[data-tour="admin-recompensas-form"]',
+              title: "Cadastrar Nova Recompensa 🎁",
+              description: "Cadastre brindes, cupons ou miniaturas grátis definindo a quantidade de pontos necessária para a troca.",
+            },
+            {
+              targetSelector: '[data-tour="admin-recompensas-catalog"]',
+              title: "Catálogo de Recompensas Ativas 🏆",
+              description: "Gerencie todas as recompensas disponíveis para os clientes resgatarem na loja.",
+            },
+          ],
+        };
+      }
+      if (path === "/admin/resgates") {
+        return {
+          key: "admin-resgates",
+          steps: [
+            {
+              targetSelector: '[data-tour="admin-resgates-search"]',
+              title: "Buscar Pedido de Resgate 🔍",
+              description: "Pesquise pelo código da solicitação (ex: GM-A1B2C3D4) ou pelo nome do cliente.",
+            },
+            {
+              targetSelector: '[data-tour="admin-resgates-list"]',
+              title: "Lista de Resgates Solicitados 📦",
+              description: "Acompanhe os pedidos de resgate pendentes, concluídos ou cancelados.",
+            },
+            {
+              targetSelector: '[data-tour="admin-resgates-actions"]',
+              title: "Aprovar e Marcar Entregue ✅",
+              description: "Clique em 'Marcar entregue' para concluir o resgate do prêmio após entregar o produto ao cliente.",
+            },
+          ],
+        };
+      }
       if (path === "/admin") {
         return {
           key: "admin-dashboard",

@@ -94,7 +94,7 @@ function AdminRedemptions() {
         <Gift className="h-7 w-7 text-primary" /> Aprovação de Resgates
       </h1>
 
-      <div className="relative max-w-md">
+      <div data-tour="admin-resgates-search" className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           value={searchQuery}
@@ -104,7 +104,7 @@ function AdminRedemptions() {
         />
       </div>
 
-      <Tabs defaultValue="pending">
+      <Tabs data-tour="admin-resgates-list" defaultValue="pending">
         <TabsList>
           <TabsTrigger value="pending">Pendentes ({byStatus("pending").length})</TabsTrigger>
           <TabsTrigger value="completed">Concluídos</TabsTrigger>
@@ -137,7 +137,7 @@ function AdminRedemptions() {
                     {r.status === "cancelled" && <><XCircle className="h-3 w-3" />Cancelado</>}
                   </Badge>
                   {r.status === "pending" && (
-                    <div className="flex gap-2 w-full sm:w-auto">
+                    <div data-tour="admin-resgates-actions" className="flex gap-2 w-full sm:w-auto">
                       <Button size="sm" onClick={() => setStatus.mutate({ id: r.id, status: "completed" })} className="hw-gradient-orange text-primary-foreground font-bold">
                         Marcar entregue
                       </Button>

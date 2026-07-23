@@ -334,7 +334,7 @@ function AddCarros() {
             )}
           </div>
 
-          <div className="space-y-2 relative">
+          <div data-tour="admin-car-name" className="space-y-2 relative">
             <Label htmlFor="car-name">Nome do carro</Label>
             <Input
               id="car-name"
@@ -385,7 +385,7 @@ function AddCarros() {
             )}
           </div>
 
-          <div className="space-y-2">
+          <div data-tour="admin-car-photo" className="space-y-2">
             <Label className="text-xs font-bold uppercase tracking-wider">Foto do Carro</Label>
 
             {imageUrl && (
@@ -431,12 +431,12 @@ function AddCarros() {
             />
           </div>
 
-          <div className="space-y-2">
+          <div data-tour="admin-car-points" className="space-y-2">
             <Label>Pontuação</Label>
             <Input type="number" min={0} value={points} onChange={(e) => setPoints(Number(e.target.value))} required />
           </div>
 
-          <Button type="submit" disabled={addCar.isPending} className="w-full hw-gradient-orange text-primary-foreground font-bold">
+          <Button data-tour="admin-car-submit" type="submit" disabled={addCar.isPending} className="w-full hw-gradient-orange text-primary-foreground font-bold">
             {addCar.isPending ? "Salvando..." : "Adicionar à garagem"}
           </Button>
         </form>

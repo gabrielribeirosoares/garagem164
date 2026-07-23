@@ -78,6 +78,7 @@ function AdminRewards() {
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
       <form
+        data-tour="admin-recompensas-form"
         onSubmit={(e) => { e.preventDefault(); save.mutate(); }}
         className="rounded-3xl border border-border bg-card p-6 space-y-4 h-fit"
       >
@@ -125,7 +126,7 @@ function AdminRewards() {
         </Button>
       </form>
 
-      <div className="rounded-3xl border border-border bg-card overflow-hidden">
+      <div data-tour="admin-recompensas-catalog" className="rounded-3xl border border-border bg-card overflow-hidden">
         <header className="p-5 border-b border-border">
           <h2 className="font-black">Catálogo</h2>
         </header>

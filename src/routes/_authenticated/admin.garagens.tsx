@@ -130,9 +130,9 @@ function AdminGaragens() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 max-w-4xl">
-        <div className="rounded-3xl border border-border p-6 bg-card space-y-4">
+        <div data-tour="admin-garagens-select" className="rounded-3xl border border-border p-6 bg-card space-y-4">
           <label className="text-sm font-bold text-muted-foreground uppercase tracking-wider block">
-            Selecionar Cliente
+            Selecionar Garagem por Cliente
           </label>
           <CustomerCombobox
             customers={customers ?? []}
@@ -142,7 +142,7 @@ function AdminGaragens() {
           />
         </div>
 
-        <form onSubmit={handleLinkCustomer} className="rounded-3xl border border-border p-6 bg-card space-y-4">
+        <form data-tour="admin-garagens-link" onSubmit={handleLinkCustomer} className="rounded-3xl border border-border p-6 bg-card space-y-4">
           <div>
             <label className="text-sm font-bold text-muted-foreground uppercase tracking-wider block">
               Vincular Cliente por E-mail
@@ -166,7 +166,7 @@ function AdminGaragens() {
       </div>
 
       {userId ? (
-        <div className="rounded-3xl border border-border bg-card overflow-hidden max-w-4xl shadow-xl">
+        <div data-tour="admin-garagens-items" className="rounded-3xl border border-border bg-card overflow-hidden max-w-4xl shadow-xl">
           <div className="p-6 border-b border-border flex items-center justify-between gap-4 bg-muted/20">
             <div>
               <h2 className="font-black text-xl text-foreground flex items-center gap-2">

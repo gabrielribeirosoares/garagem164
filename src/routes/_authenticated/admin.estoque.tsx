@@ -233,13 +233,13 @@ function AdminEstoque() {
             Cadastre itens para a vitrine da loja e faça vendas diretas para a garagem dos clientes com 1 clique.
           </p>
         </div>
-        <Button onClick={() => setCreateOpen(true)} className="hw-gradient-orange text-white font-bold h-11 px-4">
+        <Button data-tour="admin-estoque-add" onClick={() => setCreateOpen(true)} className="hw-gradient-orange text-white font-bold h-11 px-4">
           <Plus className="h-4 w-4 mr-2" /> Novo Produto
         </Button>
       </div>
 
       {/* Products Grid */}
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div data-tour="admin-estoque-grid" className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {!inventory?.length ? (
           <div className="col-span-full rounded-3xl border border-dashed border-border p-12 text-center text-sm text-muted-foreground bg-card space-y-2">
             <Boxes className="h-8 w-8 text-muted-foreground/30 mx-auto animate-pulse" />
