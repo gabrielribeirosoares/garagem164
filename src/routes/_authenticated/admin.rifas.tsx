@@ -41,7 +41,10 @@ import {
   Truck,
   Tag,
   Filter,
-  Camera
+  Camera,
+  Dices,
+  Zap,
+  Flame
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/rifas")({
@@ -573,6 +576,28 @@ function AdminRifas() {
     toast.success("Lista de rifa copiada para o WhatsApp!");
   };
 
+  const handleAdminQuickPick = (count: number) => {
+    if (!selectedRaffle) return;
+    const takenNumbers = new Set((tickets || []).map((t) => t.number));
+    const available: number[] = [];
+    for (let i = 1; i <= selectedRaffle.total_numbers; i++) {
+      if (!takenNumbers.has(i)) {
+        available.push(i);
+      }
+    }
+
+    if (available.length === 0) {
+      toast.error("Não há mais números livres disponíveis nesta rifa.");
+      return;
+    }
+
+    const shuffled = [...available].sort(() => Math.random() - 0.5);
+    const picked = shuffled.slice(0, Math.min(count, available.length)).sort((a, b) => a - b);
+    
+    setSelectedNumbers(picked);
+    toast.success(`${picked.length} número(s) selecionados no Surpresinha! Clique em 'Atribuir / Confirmar' para vincular.`);
+  };
+
   const handleStartDraw = () => {
     if (selectedRaffle?.status === "drawn") {
       toast.info("Esta rifa já foi sorteada e encerrada.");
@@ -1074,11 +1099,57 @@ function AdminRifas() {
                           <Trophy className="h-5 w-5" />
                         </div>
                         <div>
-                          <div className="text-sm font-bold text-white">Sorteio Concluído</div>
+                          <div className="text-sm font-bold text-foreground">Sorteio Concluído</div>
                           <div className="text-xs text-muted-foreground mt-1">
                             Ganhadores: <span className="font-black text-green-400">{selectedRaffle.winner_name}</span>
                           </div>
                         </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Compra Rápida em 1-Clique (Surpresinha) para Admin */}
+                  {selectedRaffle.status === "active" && (
+                    <div className="bg-card border border-border p-4 rounded-2xl space-y-3 shadow-md">
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-foreground">
+                          <Zap className="h-4 w-4 text-primary animate-pulse" /> COMPRA RÁPIDA EM 1-CLIQUE (SURPRESINHA)
+                        </div>
+                        <span className="text-[10px] text-muted-foreground font-semibold">Seleção automática aleatória de números livres</span>
+                      </div>
+
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => handleAdminQuickPick(1)}
+                          className="h-10 text-xs font-bold border-border hover:border-primary hover:bg-primary/10 text-foreground"
+                        >
+                          <Dices className="h-3.5 w-3.5 mr-1.5 text-primary" /> +1 Nº da Sorte
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => handleAdminQuickPick(3)}
+                          className="h-10 text-xs font-bold border-border hover:border-primary hover:bg-primary/10 text-foreground"
+                        >
+                          <Zap className="h-3.5 w-3.5 mr-1.5 text-yellow-500" /> 3 Números
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => handleAdminQuickPick(5)}
+                          className="h-10 text-xs font-bold border-border hover:border-primary hover:bg-primary/10 text-foreground"
+                        >
+                          <Flame className="h-3.5 w-3.5 mr-1.5 text-orange-500" /> Combo 5 Nºs
+                        </Button>
+                        <Button
+                          type="button"
+                          onClick={() => handleAdminQuickPick(10)}
+                          className="h-10 text-xs font-bold hw-gradient-orange text-white"
+                        >
+                          <Sparkles className="h-3.5 w-3.5 mr-1.5" /> Mega 10 Nºs
+                        </Button>
                       </div>
                     </div>
                   )}
