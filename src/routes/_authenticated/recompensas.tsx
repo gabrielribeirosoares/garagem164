@@ -94,7 +94,7 @@ function RecompensasPage() {
           <h1 className="text-2xl md:text-3xl font-black">Central de Recompensas</h1>
           <p className="text-sm text-muted-foreground mt-1">Troque seus pontos por benefícios exclusivos.</p>
         </div>
-        <div className="rounded-full hw-gradient-orange px-4 py-2 text-primary-foreground font-black text-lg hw-glow-orange flex items-center gap-2">
+        <div data-tour="client-recompensas-points" className="rounded-full hw-gradient-orange px-4 py-2 text-primary-foreground font-black text-lg hw-glow-orange flex items-center gap-2">
           <Sparkles className="h-5 w-5" /> {points} pts
         </div>
       </div>
@@ -109,7 +109,7 @@ function RecompensasPage() {
           {!rewards?.length ? (
             <p className="text-sm text-muted-foreground text-center py-8">Nenhum benefício disponível no catálogo.</p>
           ) : (
-            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
+            <div data-tour="client-recompensas-catalog" className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
               {rewards.map((r) => {
                 const canRedeem = points >= r.cost;
                 const meta = CATEGORY_META[r.category as Category] || CATEGORY_META.coupon;

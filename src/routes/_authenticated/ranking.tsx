@@ -76,7 +76,7 @@ function ClientRanking() {
 
       {/* Top 3 Winners Podium */}
       {customers && customers.length >= 3 && (
-        <div className="grid grid-cols-3 gap-3 md:gap-6 items-end pt-6 pb-2">
+        <div data-tour="client-ranking-podium" className="grid grid-cols-3 gap-3 md:gap-6 items-end pt-6 pb-2">
           {/* 2nd Place */}
           <div className="bg-card border border-border rounded-3xl p-4 md:p-6 text-center space-y-2 order-1 shadow-lg">
             <div className="h-12 w-12 rounded-full bg-zinc-400/10 text-zinc-300 flex items-center justify-center mx-auto border border-zinc-400/30">
@@ -119,7 +119,7 @@ function ClientRanking() {
       )}
 
       {/* Leaderboard Table */}
-      <div className="rounded-3xl border border-border bg-card overflow-hidden shadow-xl">
+      <div data-tour="client-ranking-table" className="rounded-3xl border border-border bg-card overflow-hidden shadow-xl">
         <div className="p-5 border-b border-border bg-muted/10 flex items-center justify-between">
           <h2 className="font-black text-foreground text-base">Classificação Geral</h2>
           <span className="text-xs text-muted-foreground">{customers?.length ?? 0} colecionadores cadastrados</span>

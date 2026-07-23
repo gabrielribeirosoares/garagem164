@@ -94,7 +94,7 @@ function ClientLoja() {
       {/* Filters & Search */}
       <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
         {/* Category Pill Filters */}
-        <div className="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 scrollbar-none">
+        <div data-tour="client-loja-filters" className="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 scrollbar-none">
           {categories.map((cat) => {
             const active = selectedCategory === cat;
             return (
@@ -128,7 +128,7 @@ function ClientLoja() {
       </div>
 
       {/* Inventory Grid */}
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div data-tour="client-loja-grid" className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {!filteredItems.length ? (
           <div className="col-span-full rounded-3xl border border-dashed border-border p-12 text-center text-sm text-muted-foreground bg-card space-y-2">
             <Car className="h-8 w-8 text-muted-foreground/30 mx-auto animate-pulse" />

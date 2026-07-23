@@ -248,6 +248,57 @@ function AuthedLayout() {
           ],
         };
       }
+      if (path === "/loja") {
+        return {
+          key: "client-loja",
+          steps: [
+            {
+              targetSelector: '[data-tour="client-loja-filters"]',
+              title: "Filtros por Categoria 🏷️",
+              description: "Filtre as miniaturas disponíveis por categoria: Mainline, Premium, Treasure Hunt (TH/STH) ou Custom.",
+            },
+            {
+              targetSelector: '[data-tour="client-loja-grid"]',
+              title: "Vitrine de Vendas Direct 🛒",
+              description: "Escolha suas miniaturas favoritas e compre direto via WhatsApp. Ao adquirir, a miniatura entra automaticamente na sua garagem virtual!",
+            },
+          ],
+        };
+      }
+      if (path === "/recompensas") {
+        return {
+          key: "client-recompensas",
+          steps: [
+            {
+              targetSelector: '[data-tour="client-recompensas-points"]',
+              title: "Seu Saldo de Pontos 🌟",
+              description: "Acompanhe seus pontos acumulados a cada compra e participação em rifas.",
+            },
+            {
+              targetSelector: '[data-tour="client-recompensas-catalog"]',
+              title: "Catálogo de Prêmios & Cupons 🎁",
+              description: "Troque seus pontos por cupons de desconto, frete grátis e miniaturas exclusivas grátis com resgate instantâneo!",
+            },
+          ],
+        };
+      }
+      if (path === "/ranking") {
+        return {
+          key: "client-ranking",
+          steps: [
+            {
+              targetSelector: '[data-tour="client-ranking-podium"]',
+              title: "Pódio dos Top Colecionadores 🏆",
+              description: "Confira quem são os 3 maiores colecionadores da loja e disputem o topo do pódio!",
+            },
+            {
+              targetSelector: '[data-tour="client-ranking-table"]',
+              title: "Classificação Geral & Selos VIP 🥇",
+              description: "Acompanhe sua posição no ranking geral, número de miniaturas e ganhe selos exclusivos como 'Entusiasta', 'Ouro' e 'Lenda'!",
+            },
+          ],
+        };
+      }
     }
     return null;
   };
