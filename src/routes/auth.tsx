@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useSession } from "@/hooks/useAuth";
 import { TermsModal } from "@/components/TermsModal";
-import { formatPhone } from "@/lib/utils";
+import { formatPhone, getPhoneFlag } from "@/lib/utils";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -212,16 +212,21 @@ function AuthPage() {
                   >
                     WHATSAPP
                   </Label>
-                  <Input
-                    id="su-whatsapp"
-                    name="whatsapp"
-                    type="text"
-                    placeholder="Ex: +55 (11) 99999-9999"
-                    value={whatsapp}
-                    onChange={(e) => setWhatsapp(formatPhone(e.target.value))}
-                    required
-                    className="bg-[#eef2f7] border-none text-black h-11 px-4 focus-visible:ring-1 focus-visible:ring-primary focus-visible:text-black focus-visible:bg-white placeholder:text-muted-foreground/60 transition-colors rounded-md"
-                  />
+                  <div className="relative">
+                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-lg pointer-events-none select-none z-10">
+                      {getPhoneFlag(whatsapp)}
+                    </span>
+                    <Input
+                      id="su-whatsapp"
+                      name="whatsapp"
+                      type="text"
+                      placeholder="Ex: (11) 99999-9999 ou +1 555 1234"
+                      value={whatsapp}
+                      onChange={(e) => setWhatsapp(formatPhone(e.target.value))}
+                      required
+                      className="bg-[#eef2f7] border-none text-black h-11 pl-11 pr-4 focus-visible:ring-1 focus-visible:ring-primary focus-visible:text-black focus-visible:bg-white placeholder:text-muted-foreground/60 transition-colors rounded-md"
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-1.5">

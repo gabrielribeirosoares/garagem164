@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { formatPhone } from "@/lib/utils";
+import { formatPhone, getPhoneFlag } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -369,14 +369,19 @@ function AuthedLayout() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="whatsapp" className="text-sm font-bold text-muted-foreground uppercase tracking-wider">WhatsApp</Label>
-              <Input
-                id="whatsapp"
-                type="text"
-                value={whatsapp}
-                onChange={(e) => setWhatsapp(formatPhone(e.target.value))}
-                placeholder="Ex: +55 (11) 99999-9999"
-                className="bg-[#121212] border-border text-foreground"
-              />
+              <div className="relative">
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-lg pointer-events-none select-none z-10">
+                  {getPhoneFlag(whatsapp)}
+                </span>
+                <Input
+                  id="whatsapp"
+                  type="text"
+                  value={whatsapp}
+                  onChange={(e) => setWhatsapp(formatPhone(e.target.value))}
+                  placeholder="Ex: (11) 99999-9999 ou +1 555 1234"
+                  className="bg-[#121212] border-border text-foreground pl-11"
+                />
+              </div>
             </div>
             <div className="flex justify-end gap-3 pt-2">
               <Button type="button" variant="ghost" onClick={() => setProfileOpen(false)}>
