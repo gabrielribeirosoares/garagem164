@@ -5,7 +5,7 @@ import { useSession, useRole, useProfile } from "@/hooks/useAuth";
 import { useOwnedStore, useActiveClientStore, useCustomerPoints, useMyStores, setActiveStoreSlug } from "@/hooks/useStore";
 import { useTheme } from "@/hooks/useTheme";
 import { Button } from "@/components/ui/button";
-import { Flame, Car, Gift, LayoutDashboard, Package, PlusCircle, LogOut, Trophy, Store, User as UserIcon, ChevronDown, Ticket, ShoppingBag, Boxes, Sun, Moon, Monitor } from "lucide-react";
+import { Flame, Car, Gift, LayoutDashboard, Package, PlusCircle, LogOut, Trophy, Store, User as UserIcon, ChevronDown, Ticket, ShoppingBag, Boxes, Sun, Moon, Monitor, ShieldCheck } from "lucide-react";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -404,6 +404,7 @@ function AuthedLayout() {
     { to: "/admin/recompensas", label: "Recompensas", icon: Package },
     { to: "/admin/resgates", label: "Resgates", icon: Gift },
     { to: "/admin/rifas", label: "Rifas", icon: Ticket },
+    { to: "/admin/assinaturas", label: "Gestão SaaS", icon: ShieldCheck },
   ] as const;
 
   const nav = isAdminView ? adminNav : clientNav;

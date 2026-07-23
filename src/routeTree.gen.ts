@@ -34,6 +34,7 @@ import { Route as AuthenticatedAdminRecompensasRouteImport } from './routes/_aut
 import { Route as AuthenticatedAdminGaragensRouteImport } from './routes/_authenticated/admin.garagens'
 import { Route as AuthenticatedAdminEstoqueRouteImport } from './routes/_authenticated/admin.estoque'
 import { Route as AuthenticatedAdminCarrosRouteImport } from './routes/_authenticated/admin.carros'
+import { Route as AuthenticatedAdminAssinaturasRouteImport } from './routes/_authenticated/admin.assinaturas'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 
@@ -169,6 +170,12 @@ const AuthenticatedAdminCarrosRoute =
     path: '/carros',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminAssinaturasRoute =
+  AuthenticatedAdminAssinaturasRouteImport.update({
+    id: '/assinaturas',
+    path: '/assinaturas',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const Char91DotmcpChar93InvokeToolToolRoute =
   Char91DotmcpChar93InvokeToolToolRouteImport.update({
     id: '/.mcp/invoke-tool/$tool',
@@ -201,6 +208,7 @@ export interface FileRoutesByFullPath {
   '/$storeSlug/': typeof StoreSlugIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/admin/assinaturas': typeof AuthenticatedAdminAssinaturasRoute
   '/admin/carros': typeof AuthenticatedAdminCarrosRoute
   '/admin/estoque': typeof AuthenticatedAdminEstoqueRoute
   '/admin/garagens': typeof AuthenticatedAdminGaragensRoute
@@ -227,6 +235,7 @@ export interface FileRoutesByTo {
   '/$storeSlug': typeof StoreSlugIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/admin/assinaturas': typeof AuthenticatedAdminAssinaturasRoute
   '/admin/carros': typeof AuthenticatedAdminCarrosRoute
   '/admin/estoque': typeof AuthenticatedAdminEstoqueRoute
   '/admin/garagens': typeof AuthenticatedAdminGaragensRoute
@@ -257,6 +266,7 @@ export interface FileRoutesById {
   '/$storeSlug/': typeof StoreSlugIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/_authenticated/admin/assinaturas': typeof AuthenticatedAdminAssinaturasRoute
   '/_authenticated/admin/carros': typeof AuthenticatedAdminCarrosRoute
   '/_authenticated/admin/estoque': typeof AuthenticatedAdminEstoqueRoute
   '/_authenticated/admin/garagens': typeof AuthenticatedAdminGaragensRoute
@@ -287,6 +297,7 @@ export interface FileRouteTypes {
     | '/$storeSlug/'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/admin/assinaturas'
     | '/admin/carros'
     | '/admin/estoque'
     | '/admin/garagens'
@@ -313,6 +324,7 @@ export interface FileRouteTypes {
     | '/$storeSlug'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/admin/assinaturas'
     | '/admin/carros'
     | '/admin/estoque'
     | '/admin/garagens'
@@ -342,6 +354,7 @@ export interface FileRouteTypes {
     | '/$storeSlug/'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/_authenticated/admin/assinaturas'
     | '/_authenticated/admin/carros'
     | '/_authenticated/admin/estoque'
     | '/_authenticated/admin/garagens'
@@ -543,6 +556,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminCarrosRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/assinaturas': {
+      id: '/_authenticated/admin/assinaturas'
+      path: '/assinaturas'
+      fullPath: '/admin/assinaturas'
+      preLoaderRoute: typeof AuthenticatedAdminAssinaturasRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/.mcp/invoke-tool/$tool': {
       id: '/.mcp/invoke-tool/$tool'
       path: '/.mcp/invoke-tool/$tool'
@@ -561,6 +581,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminAssinaturasRoute: typeof AuthenticatedAdminAssinaturasRoute
   AuthenticatedAdminCarrosRoute: typeof AuthenticatedAdminCarrosRoute
   AuthenticatedAdminEstoqueRoute: typeof AuthenticatedAdminEstoqueRoute
   AuthenticatedAdminGaragensRoute: typeof AuthenticatedAdminGaragensRoute
@@ -571,6 +592,7 @@ interface AuthenticatedAdminRouteChildren {
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminAssinaturasRoute: AuthenticatedAdminAssinaturasRoute,
   AuthenticatedAdminCarrosRoute: AuthenticatedAdminCarrosRoute,
   AuthenticatedAdminEstoqueRoute: AuthenticatedAdminEstoqueRoute,
   AuthenticatedAdminGaragensRoute: AuthenticatedAdminGaragensRoute,

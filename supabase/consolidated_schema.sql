@@ -1202,3 +1202,16 @@ REVOKE ALL ON FUNCTION public.on_raffle_ticket_change() FROM PUBLIC, anon, authe
 DROP POLICY IF EXISTS "cp_user_insert_own" ON public.customer_points;
 DROP POLICY IF EXISTS "cp_user_update_own" ON public.customer_points;
 DROP POLICY IF EXISTS "cp_user_delete_own" ON public.customer_points;
+
+-- ==============================================
+-- MIGRATION: 20260723180000_add_saas_subscriptions.sql
+-- ==============================================
+ALTER TABLE public.stores 
+ADD COLUMN IF NOT EXISTS subscription_status text NOT NULL DEFAULT 'trial',
+ADD COLUMN IF NOT EXISTS subscription_expires_at timestamptz NOT NULL DEFAULT (now() + interval '7 days');
+
+DROP POLICY IF EXISTS "owners_update_stores" ON public.stores;
+CREATE POLICY "owners_update_stores" ON public.stores FOR UPDATE TO authenticated 
+USING (owner_id = auth.uid() OR public.has_role(auth.uid(), 'admin')) 
+WITH CHECK (owner_id = auth.uid() OR public.has_role(auth.uid(), 'admin'));
+
