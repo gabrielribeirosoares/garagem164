@@ -21,6 +21,9 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 
+import { OnboardingTour } from "@/components/OnboardingTour";
+import { HelpCircle } from "lucide-react";
+
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
   beforeLoad: async () => {
@@ -51,6 +54,23 @@ function AuthedLayout() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [fullName, setFullName] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
+  const [tourOpen, setTourOpen] = useState(false);
+
+  const path = location.pathname;
+  const isAdmin = role === "admin";
+  const isAdminView = path.startsWith("/admin");
+
+  // Auto-open tour on first access
+  useEffect(() => {
+    const key = isAdminView ? "hw_tour_admin_completed" : "hw_tour_client_completed";
+    const completed = localStorage.getItem(key);
+    if (!completed) {
+      const timer = setTimeout(() => {
+        setTourOpen(true);
+      }, 800);
+      return () => clearTimeout(timer);
+    }
+  }, [isAdminView]);
 
   useEffect(() => {
     if (profile?.full_name) {
@@ -84,9 +104,6 @@ function AuthedLayout() {
     navigate({ to: "/auth", replace: true });
   }
 
-  const path = location.pathname;
-  const isAdmin = role === "admin";
-  const isAdminView = path.startsWith("/admin");
   const brand = isAdminView ? ownedStore : activeStore;
   const primaryColor = brand?.primary_color || "#f97316";
 
@@ -349,6 +366,15 @@ function AuthedLayout() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setTourOpen(true)}
+              title="Guia Interativo • Como Funciona"
+              className="text-primary hover:bg-primary/10"
+            >
+              <HelpCircle className="h-4 w-4" />
+            </Button>
 
             <Button onClick={() => setProfileOpen(true)} variant="ghost" size="icon" title="Meu Perfil">
               <UserIcon className="h-4 w-4" />
@@ -360,32 +386,38 @@ function AuthedLayout() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-4 py-6 animate-in fade-in duration-500">
-        {user && role ? <Outlet /> : <div className="text-muted-foreground text-sm">Carregando...</div>}
+      {/* Main content view */}
+      <main className="mx-auto max-w-6xl px-4 py-6">
+        <Outlet />
       </main>
 
-      {/* Mobile bottom nav */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-border bg-background/95 backdrop-blur">
-        <div className="grid grid-flow-col auto-cols-fr">
-          {nav.map((n) => {
-            const active = path === n.to || (n.to !== "/admin" && path.startsWith(n.to));
-            return (
-              <Link key={n.to} to={n.to} className={`flex flex-col items-center gap-1 py-3 text-xs ${active ? "text-primary" : "text-muted-foreground"}`}>
-                <n.icon className="h-5 w-5" />
-                <span className="truncate max-w-full px-1">{n.label}</span>
-              </Link>
-            );
-          })}
-        </div>
+      {/* Mobile nav bottom bar */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-background/95 backdrop-blur px-2 py-2 flex justify-around items-center">
+        {nav.map((n) => {
+          const active = path === n.to || (n.to !== "/admin" && path.startsWith(n.to));
+          return (
+            <Link key={n.to} to={n.to} className="flex flex-col items-center">
+              <Button
+                variant={active ? "default" : "ghost"}
+                size="icon"
+                className="h-9 w-9 rounded-xl transition-all"
+                style={active ? { background: primaryColor, color: "#ffffff" } : undefined}
+              >
+                <n.icon className="h-4 w-4" />
+              </Button>
+              <span className={`text-[10px] font-bold mt-1 ${active ? "text-primary font-black" : "text-muted-foreground"}`}>
+                {n.label}
+              </span>
+            </Link>
+          );
+        })}
       </nav>
 
-      {/* Dialog do Perfil */}
+      {/* Profile Dialog */}
       <Dialog open={profileOpen} onOpenChange={setProfileOpen}>
         <DialogContent className="sm:max-w-[425px] bg-card border-border text-foreground">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-black flex items-center gap-2">
-              <UserIcon className="h-6 w-6 text-primary" /> Meu Perfil
-            </DialogTitle>
+            <DialogTitle className="text-xl font-black text-foreground">Editar Meu Perfil</DialogTitle>
           </DialogHeader>
           <form
             onSubmit={(e) => {
@@ -394,16 +426,6 @@ function AuthedLayout() {
             }}
             className="space-y-4 pt-4"
           >
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={profile?.email || ""}
-                disabled
-                className="bg-muted/30 border-border text-muted-foreground cursor-not-allowed"
-              />
-            </div>
             <div className="space-y-2">
               <Label htmlFor="fullName" className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Nome Completo</Label>
               <Input
@@ -443,6 +465,13 @@ function AuthedLayout() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Onboarding Tour Component for First-time Access and Help */}
+      <OnboardingTour
+        isAdminView={isAdminView}
+        isOpen={tourOpen}
+        onClose={() => setTourOpen(false)}
+      />
     </div>
   );
 }
