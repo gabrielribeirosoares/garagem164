@@ -2,7 +2,7 @@ import { createFileRoute, Outlet, redirect, Link, useNavigate, useLocation } fro
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession, useRole, useProfile } from "@/hooks/useAuth";
-import { useOwnedStore, useActiveClientStore, useCustomerPoints, useMyStores, setActiveStoreSlug } from "@/hooks/useStore";
+import { useOwnedStore, useActiveClientStore, useCustomerPoints, useMyStores, useMasterStoreWhatsApp, setActiveStoreSlug } from "@/hooks/useStore";
 import { useTheme } from "@/hooks/useTheme";
 import { Button } from "@/components/ui/button";
 import { Flame, Car, Gift, LayoutDashboard, Package, PlusCircle, LogOut, Trophy, Store, User as UserIcon, ChevronDown, Ticket, ShoppingBag, Boxes, Sun, Moon, Monitor, ShieldCheck, HelpCircle, Menu, X } from "lucide-react";
@@ -24,7 +24,7 @@ import {
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { SpotlightTour, SpotlightStep } from "@/components/SpotlightTour";
 import { Footer } from "@/components/Footer";
-import { isStoreSuspended } from "@/lib/storeStatus";
+import { isStoreSuspended, SUPPORT_WHATSAPP_NUMBER } from "@/lib/storeStatus";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -48,6 +48,7 @@ function AuthedLayout() {
   const { data: activeStore } = useActiveClientStore();
   const { data: clientPoints } = useCustomerPoints(activeStore?.id);
   const { data: myStores } = useMyStores();
+  const { data: masterWhatsApp } = useMasterStoreWhatsApp();
   const navigate = useNavigate();
   const location = useLocation();
   const qc = useQueryClient();
@@ -698,7 +699,10 @@ function AuthedLayout() {
               </div>
               <div className="flex flex-col gap-3 pt-2">
                 <Button
-                  onClick={() => window.open(`https://wa.me/5516999999999?text=${encodeURIComponent(`Olá, gostaria de renovar/reativar o acesso da minha loja ${ownedStore?.name}`)}`, "_blank")}
+                  onClick={() => {
+                    const phone = masterWhatsApp || SUPPORT_WHATSAPP_NUMBER;
+                    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(`Olá, gostaria de renovar/reativar o acesso da minha loja ${ownedStore?.name}`)}`, "_blank");
+                  }}
                   className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-11"
                 >
                   Falar com Suporte no WhatsApp

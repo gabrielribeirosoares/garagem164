@@ -127,3 +127,48 @@ export function useMyStores() {
     },
   });
 }
+
+const MASTER_ADMIN_UID = "135db2ed-ee63-4d09-b52d-7bf826605446";
+
+/** Fetches the WhatsApp number of the master admin profile (UID 135db2ed-ee63-4d09-b52d-7bf826605446 or first store created). */
+export function useMasterStoreWhatsApp() {
+  return useQuery({
+    queryKey: ["master-store-whatsapp"],
+    queryFn: async () => {
+      // 1. Try master UID profile directly
+      const { data: masterProfile } = await supabase
+        .from("profiles")
+        .select("whatsapp")
+        .eq("id", MASTER_ADMIN_UID)
+        .maybeSingle();
+
+      let rawWa = masterProfile?.whatsapp;
+
+      // 2. Fallback to first store owner profile
+      if (!rawWa) {
+        const { data: firstStore } = await supabase
+          .from("stores")
+          .select("owner_id")
+          .order("created_at", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+
+        if (firstStore?.owner_id) {
+          const { data: p } = await supabase
+            .from("profiles")
+            .select("whatsapp")
+            .eq("id", firstStore.owner_id)
+            .maybeSingle();
+          rawWa = p?.whatsapp;
+        }
+      }
+
+      if (!rawWa) return null;
+
+      const digits = rawWa.replace(/\D/g, "");
+      if (!digits) return null;
+      if (digits.startsWith("55")) return digits;
+      return `55${digits}`;
+    },
+  });
+}

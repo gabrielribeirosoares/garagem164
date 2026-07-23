@@ -1,3 +1,5 @@
+export const SUPPORT_WHATSAPP_NUMBER = "5516999999999";
+
 /**
  * Checks if a store is suspended or expired.
  * A store is considered suspended if:
