@@ -1294,7 +1294,7 @@ function AdminRifas() {
                       <div className="grid gap-2.5">
                         {parsedWinnersList.map((w) => {
                           const isWinnerClaimed = (storeCars || []).some(
-                            (c) => c.user_id === w.userId && (selectedRaffle.image_urls?.includes(c.image_url) || c.image_url === selectedRaffle.image_url)
+                            (c) => c.user_id === w.userId && ((c.image_url && selectedRaffle.image_urls?.includes(c.image_url)) || c.image_url === selectedRaffle.image_url)
                           );
 
                           return (

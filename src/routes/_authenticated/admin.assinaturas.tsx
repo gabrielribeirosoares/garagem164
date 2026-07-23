@@ -125,7 +125,13 @@ export function AdminAssinaturas() {
       toast.success("Assinatura atualizada com sucesso!");
       qc.invalidateQueries({ queryKey: ["admin-all-stores"] });
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => {
+      if (e?.message?.includes("subscription_status") || e?.message?.includes("schema cache")) {
+        toast.error("A coluna 'subscription_status' não existe no Supabase. Execute o arquivo de migração '20260723180000_add_saas_subscriptions.sql' no Editor SQL do Supabase.", { duration: 8000 });
+      } else {
+        toast.error(e?.message || "Erro ao atualizar assinatura");
+      }
+    },
   });
 
   const handleRenew30Days = (store: any) => {

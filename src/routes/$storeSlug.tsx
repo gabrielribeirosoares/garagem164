@@ -2,6 +2,8 @@ import { createFileRoute, Outlet, useParams } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useStoreBySlug } from "@/hooks/useStore";
 import { setActiveStoreSlug } from "@/hooks/useStore";
+import { isStoreSuspended } from "@/lib/storeStatus";
+import { AlertOctagon, Lock } from "lucide-react";
 
 export const Route = createFileRoute("/$storeSlug")({
   component: StoreLayout,
@@ -48,6 +50,25 @@ function StoreLayout() {
       <div className="min-h-screen flex flex-col items-center justify-center gap-2 text-center px-4">
         <h1 className="text-2xl font-black">Loja não encontrada</h1>
         <p className="text-muted-foreground text-sm">A loja "{storeSlug}" não existe ou foi removida.</p>
+      </div>
+    );
+  }
+
+  if (isStoreSuspended(store)) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center bg-background">
+        <div className="max-w-md w-full p-8 rounded-2xl border border-destructive/30 bg-destructive/5 backdrop-blur space-y-4 shadow-xl">
+          <div className="w-16 h-16 rounded-full bg-destructive/10 text-destructive flex items-center justify-center mx-auto">
+            <Lock className="h-8 w-8" />
+          </div>
+          <h1 className="text-2xl font-black tracking-tight text-white">Loja Suspensa</h1>
+          <p className="text-muted-foreground text-sm">
+            A loja <strong className="text-white">{store.name}</strong> está temporariamente indisponível devido ao vencimento do plano ou suspensão de acesso.
+          </p>
+          <div className="pt-2 text-xs text-muted-foreground border-t border-border">
+            Se você é o proprietário desta loja, entre em contato com o suporte para reativar seu acesso.
+          </div>
+        </div>
       </div>
     );
   }

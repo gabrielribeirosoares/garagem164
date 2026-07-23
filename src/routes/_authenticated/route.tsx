@@ -24,6 +24,7 @@ import {
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { SpotlightTour, SpotlightStep } from "@/components/SpotlightTour";
 import { Footer } from "@/components/Footer";
+import { isStoreSuspended } from "@/lib/storeStatus";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -674,7 +675,85 @@ function AuthedLayout() {
 
       {/* Main content view */}
       <main className="mx-auto max-w-6xl px-4 py-6">
-        <Outlet />
+        {isAdminView && isStoreSuspended(ownedStore) && !(isMasterAdmin && path.startsWith("/admin/assinaturas")) ? (
+          <div className="mx-auto max-w-lg py-12 px-4 text-center">
+            <div className="p-8 rounded-3xl border border-destructive/40 bg-card/90 backdrop-blur space-y-6 shadow-2xl">
+              <div className="w-16 h-16 rounded-2xl bg-destructive/10 text-destructive flex items-center justify-center mx-auto border border-destructive/20">
+                <Store className="h-8 w-8 text-destructive" />
+              </div>
+              <div className="space-y-2">
+                <span className="inline-block px-3 py-1 rounded-full bg-destructive/10 text-destructive text-xs font-black uppercase tracking-wider">
+                  Loja Suspensa / Bloqueada
+                </span>
+                <h1 className="text-2xl font-black text-white">Acesso ao Painel Suspenso</h1>
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                  O acesso ao painel da sua loja <strong className="text-white">"{ownedStore?.name}"</strong> foi bloqueado devido ao vencimento do plano de assinatura ou suspensão do acesso.
+                </p>
+              </div>
+              <div className="p-4 rounded-xl bg-background/50 border border-border text-left text-xs space-y-2">
+                <div className="font-bold text-foreground">Como reativar sua loja?</div>
+                <p className="text-muted-foreground">
+                  Entre em contato com o administrador da plataforma para renovar sua assinatura e liberar o acesso imediatamente.
+                </p>
+              </div>
+              <div className="flex flex-col gap-3 pt-2">
+                <Button
+                  onClick={() => window.open(`https://wa.me/5516999999999?text=${encodeURIComponent(`Olá, gostaria de renovar/reativar o acesso da minha loja ${ownedStore?.name}`)}`, "_blank")}
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-11"
+                >
+                  Falar com Suporte no WhatsApp
+                </Button>
+                <Button variant="outline" onClick={signOut} className="w-full">
+                  Sair da Conta
+                </Button>
+              </div>
+            </div>
+          </div>
+        ) : !isAdminView && isStoreSuspended(activeStore) ? (
+          <div className="mx-auto max-w-lg py-12 px-4 text-center">
+            <div className="p-8 rounded-3xl border border-destructive/40 bg-card/90 backdrop-blur space-y-6 shadow-2xl">
+              <div className="w-16 h-16 rounded-2xl bg-destructive/10 text-destructive flex items-center justify-center mx-auto border border-destructive/20">
+                <Store className="h-8 w-8 text-destructive" />
+              </div>
+              <div className="space-y-2">
+                <h1 className="text-2xl font-black text-white">Loja Indisponível</h1>
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                  A loja <strong className="text-white">"{activeStore?.name}"</strong> está temporariamente suspensa e não está aceitando novos acessos no momento.
+                </p>
+              </div>
+              <div className="flex flex-col gap-3 pt-2">
+                {clientStores.length > 0 && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button className="w-full hw-gradient-orange text-white font-bold">
+                        Trocar de Loja
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-64 bg-card border-border">
+                      {clientStores.map((s: any) => (
+                        <DropdownMenuItem
+                          key={s.id}
+                          onClick={() => {
+                            setActiveStoreSlug(s.slug);
+                            window.location.reload();
+                          }}
+                          className="cursor-pointer font-medium"
+                        >
+                          {s.name}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+                <Button variant="outline" onClick={signOut} className="w-full">
+                  Sair da Conta
+                </Button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <Outlet />
+        )}
       </main>
 
       {/* Reusable Footer Component */}

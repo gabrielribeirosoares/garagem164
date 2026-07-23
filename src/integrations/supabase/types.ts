@@ -445,6 +445,8 @@ export type Database = {
           owner_id: string
           primary_color: string
           slug: string
+          subscription_expires_at: string | null
+          subscription_status: string | null
           updated_at: string
         }
         Insert: {
@@ -456,6 +458,8 @@ export type Database = {
           owner_id: string
           primary_color?: string
           slug: string
+          subscription_expires_at?: string | null
+          subscription_status?: string | null
           updated_at?: string
         }
         Update: {
@@ -467,6 +471,8 @@ export type Database = {
           owner_id?: string
           primary_color?: string
           slug?: string
+          subscription_expires_at?: string | null
+          subscription_status?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -548,6 +554,7 @@ export type Database = {
         Returns: undefined
       }
       link_user_to_store: { Args: { _store_id: string }; Returns: undefined }
+      unlink_customer: { Args: { _user_id: string; _store_id: string }; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "client"
