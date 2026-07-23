@@ -1,4 +1,4 @@
-export const SUPPORT_WHATSAPP_NUMBER = "5516999999999";
+export const SUPPORT_WHATSAPP_NUMBER = "5548991344833";
 
 /**
  * Checks if a store is suspended or expired.
