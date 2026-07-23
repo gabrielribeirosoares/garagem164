@@ -23,6 +23,7 @@ import {
 
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { SpotlightTour, SpotlightStep } from "@/components/SpotlightTour";
+import { Footer } from "@/components/Footer";
 import { HelpCircle } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -635,6 +636,9 @@ function AuthedLayout() {
       <main className="mx-auto max-w-6xl px-4 py-6">
         <Outlet />
       </main>
+
+      {/* Reusable Footer Component */}
+      <Footer />
 
       {/* Mobile nav bottom bar */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-background/95 backdrop-blur px-2 py-2 flex justify-around items-center">

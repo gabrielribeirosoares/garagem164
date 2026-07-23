@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { useSession } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
 import { TermsModal } from "@/components/TermsModal";
+import { Footer } from "@/components/Footer";
 import { formatPhone, getPhoneFlag } from "@/lib/utils";
 import { Sun, Moon, Monitor } from "lucide-react";
 import {
@@ -379,6 +380,8 @@ function AuthPage() {
         onOpenChange={setTermsOpen}
         onAccept={() => setAcceptedTerms(true)}
       />
+
+      <Footer />
     </div>
   );
 }
