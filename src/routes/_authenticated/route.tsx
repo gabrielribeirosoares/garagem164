@@ -5,7 +5,7 @@ import { useSession, useRole, useProfile } from "@/hooks/useAuth";
 import { useOwnedStore, useActiveClientStore, useCustomerPoints, useMyStores, setActiveStoreSlug } from "@/hooks/useStore";
 import { useTheme } from "@/hooks/useTheme";
 import { Button } from "@/components/ui/button";
-import { Flame, Car, Gift, LayoutDashboard, Package, PlusCircle, LogOut, Trophy, Store, User as UserIcon, ChevronDown, Ticket, ShoppingBag, Boxes, Sun, Moon, Monitor, ShieldCheck } from "lucide-react";
+import { Flame, Car, Gift, LayoutDashboard, Package, PlusCircle, LogOut, Trophy, Store, User as UserIcon, ChevronDown, Ticket, ShoppingBag, Boxes, Sun, Moon, Monitor, ShieldCheck, HelpCircle, Menu, X } from "lucide-react";
 import { useQueryClient, useMutation, useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -24,7 +24,6 @@ import {
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { SpotlightTour, SpotlightStep } from "@/components/SpotlightTour";
 import { Footer } from "@/components/Footer";
-import { HelpCircle } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -570,24 +569,42 @@ function AuthedLayout() {
             </DropdownMenu>
           )}
 
-          {/* Desktop nav */}
-          <nav className="hidden md:flex items-center gap-1">
-            {nav.map((n) => {
-              const active = path === n.to || (n.to !== "/admin" && path.startsWith(n.to));
-              return (
-                <Link key={n.to} to={n.to}>
-                  <Button
-                    variant={active ? "default" : "ghost"}
-                    size="sm"
-                    className="gap-2 font-bold transition-all"
-                    style={active ? { background: primaryColor, color: "#ffffff" } : undefined}
+          {/* Hamburger Menu Dropdown for Desktop & Mobile Header */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2 font-bold border-border bg-card hover:bg-muted/80 text-foreground h-9 px-3 rounded-xl shadow-sm"
+              >
+                <Menu className="h-4 w-4 text-primary" />
+                <span className="font-black text-xs uppercase tracking-wider hidden sm:inline">Menu</span>
+                <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-64 p-2 bg-card border-border text-foreground shadow-2xl rounded-2xl z-50">
+              <DropdownMenuLabel className="text-xs font-bold text-muted-foreground uppercase tracking-widest px-3 py-1.5">
+                {isAdminView ? "Painel do Lojista" : "Navegação do Colecionador"}
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-border my-1" />
+              {nav.map((n) => {
+                const active = path === n.to || (n.to !== "/admin" && path.startsWith(n.to));
+                return (
+                  <DropdownMenuItem
+                    key={n.to}
+                    onClick={() => navigate({ to: n.to })}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer font-bold transition-all text-sm ${
+                      active ? "bg-primary text-white font-black" : "hover:bg-muted/50 text-foreground"
+                    }`}
                   >
-                    <n.icon className="h-4 w-4" /> {n.label}
-                  </Button>
-                </Link>
-              );
-            })}
-          </nav>
+                    <n.icon className={`h-4 w-4 shrink-0 ${active ? "text-white" : "text-primary"}`} />
+                    <span className="flex-1 truncate">{n.label}</span>
+                    {active && <span className="h-2 w-2 rounded-full bg-white animate-pulse" />}
+                  </DropdownMenuItem>
+                );
+              })}
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           <div className="flex items-center gap-2 md:gap-3">
             {!isAdminView && activeStore && (
@@ -665,7 +682,7 @@ function AuthedLayout() {
 
       {/* Mobile nav bottom bar */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-background/95 backdrop-blur px-2 py-2 flex justify-around items-center">
-        {nav.map((n) => {
+        {nav.slice(0, 4).map((n) => {
           const active = path === n.to || (n.to !== "/admin" && path.startsWith(n.to));
           return (
             <Link key={n.to} to={n.to} className="flex flex-col items-center">
@@ -683,6 +700,39 @@ function AuthedLayout() {
             </Link>
           );
         })}
+
+        {/* Mobile Hamburger Trigger for extra items */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="flex flex-col items-center focus:outline-none">
+              <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl text-primary hover:bg-primary/10">
+                <Menu className="h-5 w-5" />
+              </Button>
+              <span className="text-[10px] font-bold mt-1 text-primary">Mais</span>
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56 p-2 bg-card border-border text-foreground shadow-2xl rounded-2xl mb-12">
+            <DropdownMenuLabel className="text-xs font-bold text-muted-foreground uppercase tracking-widest px-3 py-1">
+              Todas as Opções
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator className="bg-border" />
+            {nav.map((n) => {
+              const active = path === n.to || (n.to !== "/admin" && path.startsWith(n.to));
+              return (
+                <DropdownMenuItem
+                  key={n.to}
+                  onClick={() => navigate({ to: n.to })}
+                  className={`flex items-center gap-3 px-3 py-2 rounded-xl cursor-pointer font-bold text-xs ${
+                    active ? "bg-primary text-white" : "hover:bg-muted/50 text-foreground"
+                  }`}
+                >
+                  <n.icon className={`h-4 w-4 ${active ? "text-white" : "text-primary"}`} />
+                  <span>{n.label}</span>
+                </DropdownMenuItem>
+              );
+            })}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </nav>
 
       {/* Profile Dialog */}
