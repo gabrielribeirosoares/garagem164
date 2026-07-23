@@ -7,10 +7,11 @@ export function cn(...inputs: ClassValue[]) {
 
 export function formatPhone(value: string): string {
   if (!value) return "";
+  
   let digits = value.replace(/\D/g, "");
 
-  // If user typed 55 at the beginning and total length > 10, remove 55 prefix for internal formatting
-  if (digits.startsWith("55") && digits.length > 10) {
+  // If digits start with 55 (either from formatted +55 prefix or user pasting 55), strip the country code prefix
+  if (digits.startsWith("55") && (value.includes("+55") || digits.length > 2)) {
     digits = digits.slice(2);
   }
 
