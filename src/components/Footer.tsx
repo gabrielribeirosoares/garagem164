@@ -3,7 +3,7 @@ import { Mail, ShieldCheck, Sparkles } from "lucide-react";
 
 export function Footer() {
   return (
-    <footer className="w-full border-t border-border/60 bg-card/60 backdrop-blur-md mt-16 pb-24 md:pb-8 pt-10 text-muted-foreground text-xs">
+    <footer className="w-full border-t border-border/60 bg-card/60 backdrop-blur-md mt-auto pb-24 md:pb-8 pt-8 text-muted-foreground text-xs">
       <div className="mx-auto max-w-6xl px-4 flex flex-col md:flex-row items-center justify-between gap-6">
         
         {/* Left branding */}

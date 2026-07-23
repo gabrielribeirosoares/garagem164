@@ -105,7 +105,7 @@ function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background text-foreground px-4 font-sans select-none relative transition-colors duration-300">
+    <div className="min-h-screen flex flex-col justify-between bg-background text-foreground font-sans select-none relative transition-colors duration-300">
       {/* Botão de seleção de tema no canto superior direito */}
       <div className="absolute top-4 right-4 z-50">
         <DropdownMenu>
@@ -147,8 +147,9 @@ function AuthPage() {
         </DropdownMenu>
       </div>
 
-      <div className="w-full max-w-[420px]">
-        <div className="relative rounded-2xl border border-border bg-card p-8 shadow-2xl overflow-hidden transition-all duration-300">
+      <div className="flex-1 flex items-center justify-center p-4 py-12">
+        <div className="w-full max-w-[420px]">
+          <div className="relative rounded-2xl border border-border bg-card p-8 shadow-2xl overflow-hidden transition-all duration-300">
           <div className="absolute -top-16 -right-16 w-36 h-36 bg-primary/20 rounded-full blur-2xl pointer-events-none" />
 
           {!isSignUp ? (
@@ -374,6 +375,7 @@ function AuthPage() {
           )}
         </div>
       </div>
+    </div>
 
       <TermsModal
         open={termsOpen}
