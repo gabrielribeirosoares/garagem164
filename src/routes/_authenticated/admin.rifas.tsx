@@ -462,11 +462,32 @@ function AdminRifas() {
   });
 
   // Toggle selection of a number
+  // Toggle selection of a number (Smart group selection when clicking reserved numbers)
   const toggleNumberSelection = (num: number) => {
     if (selectedRaffle?.status === "drawn") {
       toast.error("Esta rifa já foi sorteada. Não é possível alterar números.");
       return;
     }
+
+    const ticket = ticketMap.get(num);
+    // If clicking a reserved ticket, toggle ALL numbers reserved by that customer!
+    if (ticket && ticket.status === "reserved" && ticket.participant_name) {
+      const samePersonNumbers = (tickets || [])
+        .filter((t) => t.status === "reserved" && t.participant_name === ticket.participant_name)
+        .map((t) => t.number);
+
+      setSelectedNumbers((prev) => {
+        const alreadySelected = samePersonNumbers.every((n) => prev.includes(n));
+        if (alreadySelected) {
+          return prev.filter((n) => !samePersonNumbers.includes(n));
+        } else {
+          const set = new Set([...prev, ...samePersonNumbers]);
+          return Array.from(set).sort((a, b) => a - b);
+        }
+      });
+      return;
+    }
+
     setSelectedNumbers((prev) =>
       prev.includes(num) ? prev.filter((n) => n !== num) : [...prev, num].sort((a, b) => a - b)
     );
@@ -915,7 +936,7 @@ function AdminRifas() {
                     <div className="flex items-center gap-3">
                       <Info className="h-5 w-5 text-primary shrink-0" />
                       <div className="text-xs text-muted-foreground">
-                        <strong className="text-white">Seleção Múltipla Ativa:</strong> Clique nos números desejados para selecionar mais de um ao mesmo tempo e editar em lote.
+                        <strong className="text-white">Seleção Inteligente Múltipla:</strong> Clique em um número reservado para selecionar automaticamente todos os números daquele cliente e confirmar o PIX em 1 clique!
                       </div>
                     </div>
                     {selectedNumbers.length > 0 && (
@@ -929,6 +950,93 @@ function AdminRifas() {
                       </Button>
                     )}
                   </div>
+
+                  {/* Quick Confirm Section for Pending Reserved Tickets (1-Click Payment Confirmation per Customer) */}
+                  {(() => {
+                    const reservedTickets = tickets?.filter((t) => t.status === "reserved") || [];
+                    if (reservedTickets.length === 0 || selectedRaffle.status !== "active") return null;
+
+                    // Group reserved tickets by participant_name
+                    const groupsMap = new Map<string, typeof reservedTickets>();
+                    reservedTickets.forEach((t) => {
+                      const key = t.participant_name || "Comprador";
+                      if (!groupsMap.has(key)) groupsMap.set(key, []);
+                      groupsMap.get(key)!.push(t);
+                    });
+
+                    const unitPrice = Number(selectedRaffle.price_per_number);
+
+                    return (
+                      <div className="bg-[#141414] border border-yellow-500/40 rounded-2xl p-4 space-y-3">
+                        <div className="flex justify-between items-center">
+                          <div className="flex items-center gap-2 font-black text-xs uppercase tracking-wider text-yellow-400">
+                            <Clock className="h-4 w-4 text-yellow-500 animate-pulse" /> Reservas Aguardando Confirmação PIX ({groupsMap.size} cliente(s))
+                          </div>
+                          <span className="text-[10px] text-muted-foreground font-semibold">1-Clique para aprovar o pagamento</span>
+                        </div>
+
+                        <div className="space-y-2">
+                          {Array.from(groupsMap.entries()).map(([clientName, groupTickets]) => {
+                            const numbers = groupTickets.map((t) => t.number).sort((a, b) => a - b);
+                            const totalPrice = numbers.length * unitPrice;
+                            const firstUserId = groupTickets[0]?.user_id || null;
+
+                            return (
+                              <div key={clientName} className="bg-[#1a1a1a] border border-border/80 p-3 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-3">
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-black text-white text-sm">{clientName}</span>
+                                    <Badge variant="outline" className="bg-yellow-500/10 text-yellow-500 border-yellow-500/30 text-[10px] font-bold">
+                                      {numbers.length} número(s)
+                                    </Badge>
+                                  </div>
+                                  <div className="text-xs text-muted-foreground mt-1 flex flex-wrap items-center gap-2">
+                                    <span className="font-mono text-primary font-bold">Nºs: {numbers.map((n) => String(n).padStart(2, "0")).join(", ")}</span>
+                                    <span>•</span>
+                                    <span className="font-bold text-green-400">Total PIX: R$ {totalPrice.toFixed(2)}</span>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                                  <Button
+                                    size="sm"
+                                    onClick={() => {
+                                      batchUpdateTickets.mutate({
+                                        numbers,
+                                        status: "paid",
+                                        participantName: clientName,
+                                        userId: firstUserId,
+                                      });
+                                    }}
+                                    disabled={batchUpdateTickets.isPending}
+                                    className="bg-green-600 hover:bg-green-500 text-white font-bold text-xs h-8 px-3"
+                                  >
+                                    <CheckCircle className="h-3.5 w-3.5 mr-1" /> Confirmar Pagamento (R$ {totalPrice.toFixed(2)})
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      batchUpdateTickets.mutate({
+                                        numbers,
+                                        status: "free",
+                                        participantName: "",
+                                        userId: null,
+                                      });
+                                    }}
+                                    disabled={batchUpdateTickets.isPending}
+                                    className="border-destructive/40 text-destructive hover:bg-destructive/10 text-xs h-8 px-2"
+                                  >
+                                    <X className="h-3.5 w-3.5 mr-1" /> Cancelar
+                                  </Button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   {/* Draw summary if drawn */}
                   {selectedRaffle.status === "drawn" && (
@@ -1030,10 +1138,28 @@ function AdminRifas() {
 
           <div className="flex items-center gap-2 flex-wrap justify-end w-full sm:w-auto">
             <Button
+              onClick={() => {
+                const firstTicket = tickets?.find((t) => t.number === selectedNumbers[0]);
+                const name = firstTicket?.participant_name || "Comprador";
+                const uid = firstTicket?.user_id || null;
+
+                batchUpdateTickets.mutate({
+                  numbers: selectedNumbers,
+                  status: "paid",
+                  participantName: name,
+                  userId: uid,
+                });
+              }}
+              disabled={batchUpdateTickets.isPending}
+              className="bg-green-600 hover:bg-green-500 text-white font-bold h-9 text-xs px-3"
+            >
+              <CheckCircle className="h-3.5 w-3.5 mr-1.5" /> Confirmar Pago ({selectedNumbers.length})
+            </Button>
+            <Button
               onClick={handleOpenBatchEdit}
               className="hw-gradient-orange text-white font-bold h-9 text-xs px-3"
             >
-              <Edit3 className="h-3.5 w-3.5 mr-1.5" /> Editar / Vincular Cliente
+              <Edit3 className="h-3.5 w-3.5 mr-1.5" /> Vincular Outro Cliente
             </Button>
             <Button
               onClick={() => {
