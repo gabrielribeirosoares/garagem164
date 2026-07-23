@@ -7,8 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Car, Trash2, Sparkles, AlertCircle, Search, ChevronDown } from "lucide-react";
+import { Car, Trash2, Sparkles, AlertCircle, Search, ChevronDown, UserX } from "lucide-react";
 import { useOwnedStore } from "@/hooks/useStore";
+import { useStoreCustomers } from "@/hooks/useStoreCustomers";
+import { getUnlinkedCustomerIds, addUnlinkedCustomerId } from "@/lib/customerStore";
 
 export const Route = createFileRoute("/_authenticated/admin/garagens")({
   component: AdminGaragens,
@@ -21,6 +23,7 @@ function AdminGaragens() {
   const [userId, setUserId] = useState<string>("");
   const [linkEmail, setLinkEmail] = useState("");
   const [linking, setLinking] = useState(false);
+  const [removedCustomerIds, setRemovedCustomerIds] = useState<string[]>([]);
 
   async function handleLinkCustomer(e: React.FormEvent) {
     e.preventDefault();
@@ -40,18 +43,10 @@ function AdminGaragens() {
     }
   }
 
-  const { data: customers } = useQuery({
-    queryKey: ["admin-customers", storeId],
-    enabled: !!storeId,
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_store_customers", {
-        _store_id: storeId!,
-      });
-      if (error) throw error;
-      return (data ?? [])
-        .map((r: any) => ({ id: r.user_id, full_name: r.full_name, email: r.email, points: r.points, whatsapp: r.whatsapp }))
-        .sort((a, b) => (a.full_name || a.email || "").localeCompare(b.full_name || b.email || ""));
-    },
+  const { data: customers } = useStoreCustomers(storeId);
+
+  const filteredCustomers = (customers ?? []).filter((c) => {
+    return !removedCustomerIds.includes(c.id);
   });
 
   const { data: customerCars } = useQuery({
@@ -95,6 +90,58 @@ function AdminGaragens() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const removeCustomer = useMutation({
+    mutationFn: async (targetUserId: string) => {
+      if (!storeId) throw new Error("Loja não encontrada.");
+
+      // Store in localStorage for instant persistent filtering across sessions/pages
+      addUnlinkedCustomerId(storeId, targetUserId);
+
+      // Try RPC first
+      const { error: rpcErr } = await supabase.rpc("unlink_customer", {
+        _user_id: targetUserId,
+        _store_id: storeId,
+      });
+
+      if (rpcErr) {
+        // Fallback to manual table updates
+        await supabase
+          .from("cars")
+          .delete()
+          .eq("user_id", targetUserId)
+          .eq("store_id", storeId);
+
+        const { data: storeRaffles } = await supabase
+          .from("raffles")
+          .select("id")
+          .eq("store_id", storeId);
+
+        if (storeRaffles && storeRaffles.length > 0) {
+          const raffleIds = storeRaffles.map((r) => r.id);
+          await supabase
+            .from("raffle_tickets")
+            .update({ user_id: null, status: "reserved" })
+            .in("raffle_id", raffleIds)
+            .eq("user_id", targetUserId);
+        }
+
+        await supabase
+          .from("customer_points")
+          .delete()
+          .eq("user_id", targetUserId)
+          .eq("store_id", storeId);
+      }
+    },
+    onSuccess: (_, targetUserId) => {
+      toast.success("Cliente desvinculado e removido da sua loja com sucesso!");
+      setRemovedCustomerIds((prev) => [...prev, targetUserId]);
+      setUserId("");
+      qc.invalidateQueries({ queryKey: ["admin-customers", storeId] });
+      qc.invalidateQueries({ queryKey: ["admin-store-cars", storeId] });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const updateCarStatus = useMutation({
     mutationFn: async ({ id, paymentStatus, shippingStatus }: { id: string; paymentStatus?: string; shippingStatus?: string }) => {
       const updates: any = {};
@@ -135,7 +182,7 @@ function AdminGaragens() {
             Selecionar Garagem por Cliente
           </label>
           <CustomerCombobox
-            customers={customers ?? []}
+            customers={filteredCustomers}
             value={userId}
             onChange={setUserId}
             placeholder="Pesquise por nome, e-mail ou whatsapp..."
@@ -167,16 +214,34 @@ function AdminGaragens() {
 
       {userId ? (
         <div data-tour="admin-garagens-items" className="rounded-3xl border border-border bg-card overflow-hidden max-w-4xl shadow-xl">
-          <div className="p-6 border-b border-border flex items-center justify-between gap-4 bg-muted/20">
+          <div className="p-6 border-b border-border flex items-center justify-between gap-4 bg-muted/20 flex-wrap sm:flex-nowrap">
             <div>
               <h2 className="font-black text-xl text-foreground flex items-center gap-2">
                 <Car className="h-5 w-5 text-primary" />
-                Garagem de {selectedProfile?.full_name || "Cliente"}
+                Garagem de {selectedProfile?.full_name || selectedProfile?.email || "Cliente"}
               </h2>
               <p className="text-xs text-muted-foreground mt-0.5">
                 Total de {customerCars?.length ?? 0} miniaturas · {selectedProfile?.points ?? 0} pts acumulados no cadastro
               </p>
             </div>
+
+            <Button
+              variant="destructive"
+              size="sm"
+              disabled={removeCustomer.isPending}
+              onClick={() => {
+                if (
+                  confirm(
+                    `Deseja realmente desvincular o cliente "${selectedProfile?.full_name || selectedProfile?.email}" da sua loja?\nIsso removerá a garagem e a pontuação dele na sua loja.`
+                  )
+                ) {
+                  removeCustomer.mutate(userId);
+                }
+              }}
+              className="font-bold text-xs h-9 px-3 gap-1.5 shrink-0 shadow-sm"
+            >
+              <UserX className="h-4 w-4" /> Desvincular Cliente
+            </Button>
           </div>
 
           <div className="divide-y divide-border">

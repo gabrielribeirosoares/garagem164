@@ -11,6 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useOwnedStore } from "@/hooks/useStore";
+import { useStoreCustomers } from "@/hooks/useStoreCustomers";
+import { getUnlinkedCustomerIds } from "@/lib/customerStore";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
   component: AdminDashboard,
@@ -93,23 +95,7 @@ function AdminDashboard() {
     setSettingsOpen(false);
   }
 
-  const { data: customers } = useQuery({
-    queryKey: ["admin-customers", storeId],
-    enabled: !!storeId,
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_store_customers", {
-        _store_id: storeId!,
-      });
-      if (error) throw error;
-      return (data ?? []).map((r: any) => ({
-        id: r.user_id,
-        full_name: r.full_name,
-        email: r.email,
-        points: r.points,
-        whatsapp: r.whatsapp,
-      }));
-    },
-  });
+  const { data: customers } = useStoreCustomers(storeId);
 
   const { data: redemptions } = useQuery({
     queryKey: ["admin-redemptions", storeId],

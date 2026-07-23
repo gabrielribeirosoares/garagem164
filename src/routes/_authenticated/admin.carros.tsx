@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { Car, Trash2, PlusCircle, Search, RotateCcw, ChevronLeft, ChevronRight, ChevronDown, Upload, X } from "lucide-react";
 import { RAW } from "@/components/ui/data";
 import { useOwnedStore } from "@/hooks/useStore";
+import { useStoreCustomers } from "@/hooks/useStoreCustomers";
 import { compressImage } from "@/lib/imageCompression";
 
 export const Route = createFileRoute("/_authenticated/admin/carros")({
@@ -83,19 +84,7 @@ function AddCarros() {
   const [sortBy, setSortBy] = useState("year_desc");
   const [currentPage, setCurrentPage] = useState(1);
 
-  const { data: customers } = useQuery({
-    queryKey: ["admin-customers", storeId],
-    enabled: !!storeId,
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_store_customers", {
-        _store_id: storeId!,
-      });
-      if (error) throw error;
-      return (data ?? [])
-        .map((r: any) => ({ id: r.user_id, full_name: r.full_name, email: r.email, points: r.points, whatsapp: r.whatsapp }))
-        .sort((a, b) => (a.full_name || a.email || "").localeCompare(b.full_name || b.email || ""));
-    },
-  });
+  const { data: customers } = useStoreCustomers(storeId);
 
   const { data: recentCars } = useQuery({
     queryKey: ["admin-recent-cars", storeId],

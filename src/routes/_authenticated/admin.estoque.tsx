@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useOwnedStore } from "@/hooks/useStore";
+import { useStoreCustomers } from "@/hooks/useStoreCustomers";
 import { compressImage } from "@/lib/imageCompression";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -94,23 +95,7 @@ function AdminEstoque() {
   };
 
   // Fetch customers
-  const { data: customers } = useQuery({
-    queryKey: ["admin-customers", storeId],
-    enabled: !!storeId,
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_store_customers", {
-        _store_id: storeId!,
-      });
-      if (error) throw error;
-      return (data ?? []).map((r: any) => ({
-        id: r.user_id,
-        full_name: r.full_name,
-        email: r.email,
-        points: r.points,
-        whatsapp: r.whatsapp,
-      }));
-    },
-  });
+  const { data: customers } = useStoreCustomers(storeId);
 
   // Fetch inventory
   const { data: inventory } = useQuery({
