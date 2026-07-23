@@ -156,7 +156,7 @@ function AdminGaragens() {
               onChange={(e) => setLinkEmail(e.target.value)}
               placeholder="cliente@email.com"
               required
-              className="bg-[#121212] border-border text-foreground h-11"
+              className="bg-background border-border text-foreground h-11"
             />
             <Button type="submit" disabled={linking} className="hw-gradient-orange text-white font-bold h-11 px-4 shrink-0">
               {linking ? "Vinculando..." : "Vincular"}
@@ -169,7 +169,7 @@ function AdminGaragens() {
         <div className="rounded-3xl border border-border bg-card overflow-hidden max-w-4xl shadow-xl">
           <div className="p-6 border-b border-border flex items-center justify-between gap-4 bg-muted/20">
             <div>
-              <h2 className="font-black text-xl text-white flex items-center gap-2">
+              <h2 className="font-black text-xl text-foreground flex items-center gap-2">
                 <Car className="h-5 w-5 text-primary" />
                 Garagem de {selectedProfile?.full_name || "Cliente"}
               </h2>

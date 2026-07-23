@@ -238,6 +238,7 @@ function AdminRifas() {
       setSelectedRaffleId(raffles[0].id);
     }
     setSelectedNumbers([]);
+    setDrawnWinners([]);
   }, [raffles, selectedRaffleId]);
 
   // Mutations
@@ -573,6 +574,11 @@ function AdminRifas() {
   };
 
   const handleStartDraw = () => {
+    if (selectedRaffle?.status === "drawn") {
+      toast.info("Esta rifa já foi sorteada e encerrada.");
+      return;
+    }
+
     const paidTickets = tickets?.filter((t) => t.status === "paid") || [];
     if (!paidTickets.length) {
       toast.error("Não há números PAGOS para realizar o sorteio. Marque os comprovantes como Pago.");
@@ -581,7 +587,14 @@ function AdminRifas() {
 
     const maxWinners = (selectedRaffle as any)?.max_winners || 1;
 
-    if (drawnWinners.length >= maxWinners) {
+    let currentWinners = drawnWinners;
+    // Se a rifa está ativa mas tinha ganhadores em memória de uma sessão anterior, limpa a lista
+    if (selectedRaffle?.status === "active" && currentWinners.length >= maxWinners) {
+      currentWinners = [];
+      setDrawnWinners([]);
+    }
+
+    if (currentWinners.length >= maxWinners) {
       toast.info("Todos os prêmios desta rifa já foram sorteados.");
       return;
     }
@@ -688,7 +701,7 @@ function AdminRifas() {
                 type="button"
                 onClick={() => setFilterStatus("all")}
                 className={`px-2 py-0.5 text-[10px] font-bold rounded-lg transition-all ${
-                  filterStatus === "all" ? "bg-primary text-white" : "text-muted-foreground hover:text-foreground"
+                  filterStatus === "all" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 Todas
@@ -697,7 +710,7 @@ function AdminRifas() {
                 type="button"
                 onClick={() => setFilterStatus("active")}
                 className={`px-2 py-0.5 text-[10px] font-bold rounded-lg transition-all ${
-                  filterStatus === "active" ? "bg-primary text-black" : "text-muted-foreground hover:text-white"
+                  filterStatus === "active" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 Ativas
@@ -706,7 +719,7 @@ function AdminRifas() {
                 type="button"
                 onClick={() => setFilterStatus("drawn")}
                 className={`px-2 py-0.5 text-[10px] font-bold rounded-lg transition-all ${
-                  filterStatus === "drawn" ? "bg-primary text-black" : "text-muted-foreground hover:text-white"
+                  filterStatus === "drawn" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 Sorteadas
@@ -750,9 +763,9 @@ function AdminRifas() {
                         )}
                         <div className="flex-1 min-w-0">
                           <div className="flex justify-between items-start gap-2">
-                            <h3 className="font-black text-white text-base truncate flex-1">{r.title}</h3>
+                            <h3 className="font-black text-foreground text-base truncate flex-1">{r.title}</h3>
                             {isDrawn ? (
-                              <Badge variant="secondary" className="shrink-0 bg-zinc-800 text-zinc-400">Sorteada</Badge>
+                              <Badge variant="secondary" className="shrink-0 bg-muted text-muted-foreground">Sorteada</Badge>
                             ) : (
                               <Badge className="shrink-0 bg-green-500/10 text-green-400 border-green-500/20">Ativa</Badge>
                             )}
@@ -771,7 +784,7 @@ function AdminRifas() {
                           <Button
                             variant="outline"
                             size="sm"
-                            className="h-8 px-2 text-xs border-border hover:bg-muted text-white font-semibold"
+                            className="h-8 px-2 text-xs border-border hover:bg-muted text-foreground font-semibold"
                             onClick={() => handleOpenEditRaffle(r)}
                           >
                             <Edit3 className="h-3.5 w-3.5 mr-1" /> Editar
@@ -805,7 +818,7 @@ function AdminRifas() {
                 {/* Header detail */}
                 <div className="p-6 border-b border-border bg-muted/10 flex flex-wrap justify-between items-start gap-4">
                   <div>
-                    <h2 className="font-black text-xl text-white">{selectedRaffle.title}</h2>
+                    <h2 className="font-black text-xl text-foreground">{selectedRaffle.title}</h2>
                     <p className="text-xs text-muted-foreground mt-1 max-w-lg">
                       {selectedRaffle.description || "Sem descrição."}
                     </p>
@@ -835,7 +848,7 @@ function AdminRifas() {
                       onClick={() => handleOpenEditRaffle(selectedRaffle)}
                       variant="outline"
                       size="sm"
-                      className="h-9 px-3 border border-border hover:bg-muted font-bold text-xs text-white"
+                      className="h-9 px-3 border border-border hover:bg-muted font-bold text-xs text-foreground"
                     >
                       <Edit3 className="h-3.5 w-3.5 mr-1.5" /> Editar Rifa
                     </Button>
@@ -868,7 +881,7 @@ function AdminRifas() {
                   if (images.length === 0) return null;
                   return (
                     <div className="px-6 pt-6">
-                      <div className="relative rounded-2xl overflow-hidden bg-[#0e0e0e] border border-border/80 p-3">
+                      <div className="relative rounded-2xl overflow-hidden bg-muted/40 border border-border/80 p-3">
                         <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2 flex items-center gap-1.5">
                           <ImageIcon className="h-3.5 w-3.5 text-primary" /> Prêmios da Rifa ({images.length})
                         </div>
@@ -879,7 +892,7 @@ function AdminRifas() {
                               href={img}
                               target="_blank"
                               rel="noreferrer"
-                              className="relative rounded-xl overflow-hidden shrink-0 border border-border/60 hover:border-primary transition-all group/item bg-black"
+                              className="relative rounded-xl overflow-hidden shrink-0 border border-border/60 hover:border-primary transition-all group/item bg-muted"
                             >
                               <img
                                 src={img}
@@ -906,17 +919,17 @@ function AdminRifas() {
                   const fillPercentage = Math.round(((paidCount + reservedCount) / selectedRaffle.total_numbers) * 100);
 
                   return (
-                    <div className="border-b border-border bg-[#121212] p-4">
+                    <div className="border-b border-border bg-muted/20 p-4">
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
-                        <div className="bg-[#181818] border border-border/60 p-3 rounded-2xl">
-                          <div className="text-[10px] uppercase font-bold text-green-400 tracking-wider flex items-center justify-center gap-1">
+                        <div className="bg-card border border-border/80 p-3 rounded-2xl">
+                          <div className="text-[10px] uppercase font-bold text-green-500 tracking-wider flex items-center justify-center gap-1">
                             <DollarSign className="h-3 w-3" /> Recebido (Pagos)
                           </div>
-                          <div className="text-lg font-black text-green-400 mt-1">R$ {paidTotal.toFixed(2)}</div>
+                          <div className="text-lg font-black text-green-500 mt-1">R$ {paidTotal.toFixed(2)}</div>
                           <div className="text-[10px] text-muted-foreground mt-0.5">{paidCount} número(s)</div>
                         </div>
 
-                        <div className="bg-[#181818] border border-border/60 p-3 rounded-2xl">
+                        <div className="bg-card border border-border/80 p-3 rounded-2xl">
                           <div className="text-[10px] uppercase font-bold text-yellow-500 tracking-wider flex items-center justify-center gap-1">
                             <Clock className="h-3 w-3" /> Pendente (Reservas)
                           </div>
@@ -924,19 +937,19 @@ function AdminRifas() {
                           <div className="text-[10px] text-muted-foreground mt-0.5">{reservedCount} número(s)</div>
                         </div>
 
-                        <div className="bg-[#181818] border border-border/60 p-3 rounded-2xl">
+                        <div className="bg-card border border-border/80 p-3 rounded-2xl">
                           <div className="text-[10px] uppercase font-bold text-primary tracking-wider flex items-center justify-center gap-1">
                             <TrendingUp className="h-3 w-3" /> Potencial Total
                           </div>
-                          <div className="text-lg font-black text-white mt-1">R$ {maxPotentialTotal.toFixed(2)}</div>
+                          <div className="text-lg font-black text-foreground mt-1">R$ {maxPotentialTotal.toFixed(2)}</div>
                           <div className="text-[10px] text-muted-foreground mt-0.5">{selectedRaffle.total_numbers} números</div>
                         </div>
 
-                        <div className="bg-[#181818] border border-border/60 p-3 rounded-2xl">
-                          <div className="text-[10px] uppercase font-bold text-blue-400 tracking-wider flex items-center justify-center gap-1">
+                        <div className="bg-card border border-border/80 p-3 rounded-2xl">
+                          <div className="text-[10px] uppercase font-bold text-blue-500 tracking-wider flex items-center justify-center gap-1">
                             <Percent className="h-3 w-3" /> Preenchimento
                           </div>
-                          <div className="text-lg font-black text-blue-400 mt-1">{fillPercentage}%</div>
+                          <div className="text-lg font-black text-blue-500 mt-1">{fillPercentage}%</div>
                           <div className="text-[10px] text-muted-foreground mt-0.5">{freeCount} livre(s)</div>
                         </div>
                       </div>
@@ -947,11 +960,11 @@ function AdminRifas() {
                 {/* Main Content */}
                 <div className="p-6 space-y-6">
                   {/* Quick Tip Alert */}
-                  <div className="flex items-center justify-between gap-3 bg-[#121212] border border-border/80 p-4 rounded-2xl">
+                  <div className="flex items-center justify-between gap-3 bg-card border border-border p-4 rounded-2xl">
                     <div className="flex items-center gap-3">
                       <Info className="h-5 w-5 text-primary shrink-0" />
                       <div className="text-xs text-muted-foreground">
-                        <strong className="text-white">Seleção Inteligente Múltipla:</strong> Clique em um número reservado para selecionar automaticamente todos os números daquele cliente e confirmar o PIX em 1 clique!
+                        <strong className="text-foreground">Seleção Inteligente Múltipla:</strong> Clique em um número reservado para selecionar automaticamente todos os números daquele cliente e confirmar o PIX em 1 clique!
                       </div>
                     </div>
                     {selectedNumbers.length > 0 && (
@@ -959,7 +972,7 @@ function AdminRifas() {
                         variant="ghost"
                         size="sm"
                         onClick={() => setSelectedNumbers([])}
-                        className="text-xs text-muted-foreground hover:text-white shrink-0"
+                        className="text-xs text-muted-foreground hover:text-foreground shrink-0"
                       >
                         Limpar seleção
                       </Button>
@@ -982,9 +995,9 @@ function AdminRifas() {
                     const unitPrice = Number(selectedRaffle.price_per_number);
 
                     return (
-                      <div className="bg-[#141414] border border-yellow-500/40 rounded-2xl p-4 space-y-3">
+                      <div className="bg-card border border-yellow-500/40 rounded-2xl p-4 space-y-3">
                         <div className="flex justify-between items-center">
-                          <div className="flex items-center gap-2 font-black text-xs uppercase tracking-wider text-yellow-400">
+                          <div className="flex items-center gap-2 font-black text-xs uppercase tracking-wider text-yellow-500">
                             <Clock className="h-4 w-4 text-yellow-500 animate-pulse" /> Reservas Aguardando Confirmação PIX ({groupsMap.size} cliente(s))
                           </div>
                           <span className="text-[10px] text-muted-foreground font-semibold">1-Clique para aprovar o pagamento</span>
@@ -997,10 +1010,10 @@ function AdminRifas() {
                             const firstUserId = groupTickets[0]?.user_id || null;
 
                             return (
-                              <div key={clientName} className="bg-[#1a1a1a] border border-border/80 p-3 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-3">
+                              <div key={clientName} className="bg-muted/40 border border-border p-3 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-3">
                                 <div>
                                   <div className="flex items-center gap-2">
-                                    <span className="font-black text-white text-sm">{clientName}</span>
+                                    <span className="font-black text-foreground text-sm">{clientName}</span>
                                     <Badge variant="outline" className="bg-yellow-500/10 text-yellow-500 border-yellow-500/30 text-[10px] font-bold">
                                       {numbers.length} número(s)
                                     </Badge>

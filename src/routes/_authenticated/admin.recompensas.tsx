@@ -120,7 +120,7 @@ function AdminRewards() {
           <Label>URL da imagem</Label>
           <Input value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} placeholder="https://..." />
         </div>
-        <Button type="submit" disabled={save.isPending} className="w-full hw-gradient-blue text-secondary-foreground font-bold">
+        <Button type="submit" disabled={save.isPending} className="w-full hw-gradient-orange text-white font-bold">
           {form.id ? "Salvar alterações" : "Criar recompensa"}
         </Button>
       </form>
