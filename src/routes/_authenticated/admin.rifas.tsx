@@ -253,16 +253,20 @@ function AdminRifas() {
 
   // Track prize images that have already been chosen/claimed by a winner
   const claimedPrizeImages = useMemo(() => {
-    const storeCarImages = new Set((storeCars || []).map((c) => c.image_url).filter(Boolean));
+    if (!selectedRaffle) return new Set<string>();
+    const raffleCars = (storeCars || []).filter(
+      (c) => c.name?.toLowerCase().includes(selectedRaffle.title.toLowerCase())
+    );
+    const storeCarImages = new Set(raffleCars.map((c) => c.image_url).filter(Boolean));
     const result = new Set<string>();
     
-    if (selectedRaffle?.image_urls) {
+    if (selectedRaffle.image_urls) {
       selectedRaffle.image_urls.forEach((url) => {
         if (storeCarImages.has(url) || claimedPrizes.includes(url)) {
           result.add(url);
         }
       });
-    } else if (selectedRaffle?.image_url) {
+    } else if (selectedRaffle.image_url) {
       if (storeCarImages.has(selectedRaffle.image_url) || claimedPrizes.includes(selectedRaffle.image_url)) {
         result.add(selectedRaffle.image_url);
       }
@@ -1293,9 +1297,15 @@ function AdminRifas() {
 
                       <div className="grid gap-2.5">
                         {parsedWinnersList.map((w) => {
-                          const isWinnerClaimed = (storeCars || []).some(
-                            (c) => c.user_id === w.userId && ((c.image_url && selectedRaffle.image_urls?.includes(c.image_url)) || c.image_url === selectedRaffle.image_url)
-                          );
+                          const isWinnerClaimed = (storeCars || []).some((c) => {
+                            if (c.user_id !== w.userId) return false;
+                            const matchesRaffleTitle = c.name?.toLowerCase().includes(selectedRaffle.title.toLowerCase());
+                            if (!matchesRaffleTitle) return false;
+                            if (parsedWinnersList.length > 1) {
+                              return c.name.includes(`${w.position}º`);
+                            }
+                            return true;
+                          });
 
                           return (
                             <div key={w.position} className="bg-card border border-border p-3.5 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md hover:border-primary/40 transition-all">
