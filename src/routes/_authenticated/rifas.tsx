@@ -77,6 +77,65 @@ function ClientRifas() {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [clientTab, setClientTab] = useState<"active" | "hall_of_fame">("active");
 
+  // Paste-selection support: allow users to paste a list or ranges (e.g. "1,2,5-8;10\n12")
+  const [pasteText, setPasteText] = useState<string>("");
+  const [isParsing, setIsParsing] = useState<boolean>(false);
+
+  const parseNumbersFromText = (text: string, maxNumber?: number) => {
+    const nums = new Set<number>();
+    // Keep digits and common separators; replace other chars with space
+    const cleaned = (text || "").replace(/[^0-9,;\-–—\s]/g, " ");
+    const parts = cleaned.split(/[,;\s]+/).map((p) => p.trim()).filter(Boolean);
+    for (const part of parts) {
+      const rangeMatch = part.match(/^(\d+)[-–—](\d+)$/);
+      if (rangeMatch) {
+        let a = Number(rangeMatch[1]);
+        let b = Number(rangeMatch[2]);
+        if (Number.isNaN(a) || Number.isNaN(b)) continue;
+        if (a > b) [a, b] = [b, a];
+        for (let i = a; i <= b; i++) {
+          if (!maxNumber || (i >= 1 && i <= maxNumber)) nums.add(i);
+        }
+      } else {
+        const n = Number(part);
+        if (!Number.isNaN(n) && n >= 1 && (!maxNumber || n <= maxNumber)) nums.add(n);
+      }
+    }
+    return Array.from(nums).sort((a, b) => a - b);
+  };
+
+  const pasteFromClipboard = async () => {
+    try {
+      const txt = await navigator.clipboard.readText();
+      setPasteText(txt);
+      toast.success("Conteúdo colado da área de transferência.");
+    } catch (e) {
+      toast.error("Não foi possível ler a área de transferência.");
+    }
+  };
+
+  const handlePasteSelect = () => {
+    if (!selectedRaffle) return toast.error("Selecione uma rifa primeiro.");
+    setIsParsing(true);
+    try {
+      const parsed = parseNumbersFromText(pasteText, selectedRaffle.total_numbers);
+      if (parsed.length === 0) {
+        toast.error("Nenhum número válido encontrado no texto colado.");
+        return;
+      }
+      const taken = new Set((tickets || []).filter((t) => t.status === "paid" || t.status === "reserved").map((t) => t.number));
+      const toReserve = parsed.filter((n) => !taken.has(n));
+      if (toReserve.length === 0) {
+        toast.error("Nenhum dos números selecionados está disponível.");
+        return;
+      }
+      // Batch reserve available numbers
+      batchReserve.mutate(toReserve);
+    } finally {
+      setIsParsing(false);
+    }
+  };
+
   // Fetch active store owner's whatsapp for copy PIX contact
   const { data: ownerProfile } = useQuery({
     queryKey: ["store-owner-profile", activeStore?.owner_id],
@@ -608,6 +667,36 @@ function ClientRifas() {
                         <div className="flex items-center gap-1 text-muted-foreground"><span className="h-2.5 w-2.5 rounded bg-muted border border-border"></span> Livre</div>
                         <div className="flex items-center gap-1 text-yellow-500"><span className="h-2.5 w-2.5 rounded bg-yellow-500/20 border border-yellow-500/30"></span> Reservado</div>
                         <div className="flex items-center gap-1 text-green-400"><span className="h-2.5 w-2.5 rounded bg-green-500/20 border border-green-500/30"></span> Pago</div>
+                      </div>
+                    </div>
+
+                    {/* Paste / Select UI: allows mobile users to paste numbers copied from the app */}
+                    <div className="mt-3 bg-[#0b0b0b] border border-border rounded-2xl p-3 flex flex-col sm:flex-row gap-2 items-start">
+                      <input
+                        type="text"
+                        placeholder="Cole aqui os números (ex: 1,2,5-8;10)"
+                        value={pasteText}
+                        onChange={(e) => setPasteText(e.target.value)}
+                        className="flex-1 bg-muted/40 border border-border rounded-xl text-xs px-3 h-10 text-white font-mono"
+                      />
+
+                      <div className="flex gap-2">
+                        <Button type="button" variant="outline" onClick={pasteFromClipboard} className="h-10 text-xs font-bold border-border hover:border-primary hover:bg-primary/10 text-white">
+                          <Copy className="h-4 w-4 mr-1" /> Colar
+                        </Button>
+
+                        <Button
+                          type="button"
+                          onClick={handlePasteSelect}
+                          disabled={isParsing || batchReserve.isPending}
+                          className="h-10 text-xs font-bold hw-gradient-orange text-white"
+                        >
+                          <Ticket className="h-4 w-4 mr-1" /> Selecionar Números
+                        </Button>
+                      </div>
+
+                      <div className="text-[11px] text-muted-foreground mt-2 sm:mt-0">
+                        Ex.: 1,2,5-8;10 — aceita ranges e listas separados por vírgula, espaço ou ponto-e-vírgula.
                       </div>
                     </div>
 
