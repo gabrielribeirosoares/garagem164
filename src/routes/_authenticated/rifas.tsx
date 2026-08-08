@@ -207,47 +207,82 @@ function ClientRifas() {
   }, [raffles, selectedRaffleId]);
 
   // Mutations
+  const [pendingNumbers, setPendingNumbers] = useState<number[]>([]);
+
   const reserveTicket = useMutation({
     mutationFn: async (number: number) => {
       if (!user) throw new Error("Você precisa estar logado.");
-      const { error } = await supabase.from("raffle_tickets").insert({
-        raffle_id: selectedRaffleId!,
-        number,
-        participant_name: profile?.full_name || profile?.email || "Cliente",
-        user_id: user.id,
-        status: "reserved",
+      const participant = profile?.full_name || profile?.email || "Cliente";
+      // mark as pending locally
+      setPendingNumbers((p) => Array.from(new Set([...p, number])));
+
+      const { data, error } = await supabase.rpc("reserve_tickets_batch", {
+        p_raffle_id: selectedRaffleId,
+        p_user_id: user.id,
+        p_participant_name: participant,
+        p_numbers: [number],
       });
+
       if (error) throw error;
+      return data;
     },
-    onSuccess: () => {
-      toast.success("Número reservado! Efetue o pagamento PIX para confirmar.");
+    onSuccess: (data) => {
+      const resp = data || [];
+      const reserved = resp.filter((r: any) => r.status === "reserved").map((r: any) => r.number);
+      const taken = resp.filter((r: any) => r.status !== "reserved").map((r: any) => r.number);
+      if (reserved.length > 0) {
+        toast.success("Número reservado! Efetue o pagamento PIX para confirmar.");
+      }
+      if (taken.length > 0) {
+        toast.error(`Os seguintes números já estavam ocupados: ${taken.join(", ")}`);
+      }
       qc.invalidateQueries({ queryKey: ["raffle-tickets", selectedRaffleId] });
     },
-    onError: (e: any) => {
+    onError: (e: any, _vars) => {
       toast.error(e.message || "Este número já foi reservado ou ocorreu um erro.");
+    },
+    onSettled: (_data, _error, vars) => {
+      // vars is the number for reserveTicket
+      const num = vars as number;
+      setPendingNumbers((p) => p.filter((n) => n !== num));
     },
   });
 
   const batchReserve = useMutation({
     mutationFn: async (numbers: number[]) => {
       if (!user) throw new Error("Você precisa estar logado.");
-      const rows = numbers.map((n) => ({
-        raffle_id: selectedRaffleId!,
-        number: n,
-        participant_name: profile?.full_name || profile?.email || "Cliente",
-        user_id: user.id,
-        status: "reserved",
-      }));
+      const participant = profile?.full_name || profile?.email || "Cliente";
+      // mark as pending locally
+      setPendingNumbers((p) => Array.from(new Set([...p, ...numbers])));
 
-      const { error } = await supabase.from("raffle_tickets").insert(rows);
+      const { data, error } = await supabase.rpc("reserve_tickets_batch", {
+        p_raffle_id: selectedRaffleId,
+        p_user_id: user.id,
+        p_participant_name: participant,
+        p_numbers: numbers,
+      });
+
       if (error) throw error;
+      return data;
     },
-    onSuccess: (_, vars) => {
-      toast.success(`${vars.length} número(s) reservado(s) com sucesso! Realize o PIX para confirmar.`);
+    onSuccess: (data, vars) => {
+      const resp = data || [];
+      const reserved = resp.filter((r: any) => r.status === "reserved").map((r: any) => r.number);
+      const taken = resp.filter((r: any) => r.status !== "reserved").map((r: any) => r.number);
+      if (reserved.length > 0) {
+        toast.success(`${reserved.length} número(s) reservado(s) com sucesso! Realize o PIX para confirmar.`);
+      }
+      if (taken.length > 0) {
+        toast.error(`Os seguintes números já estavam ocupados: ${taken.join(", ")}`);
+      }
       qc.invalidateQueries({ queryKey: ["raffle-tickets", selectedRaffleId] });
     },
-    onError: (e: any) => {
+    onError: (e: any, vars) => {
       toast.error(e.message || "Erro ao reservar números.");
+    },
+    onSettled: (_data, _error, vars) => {
+      const nums = vars as number[];
+      setPendingNumbers((p) => p.filter((n) => !nums.includes(n)));
     },
   });
 
@@ -726,25 +761,33 @@ function ClientRifas() {
                           titleText = `Número ${String(num).padStart(2, "0")} - Reservado por ${ticket.participant_name}`;
                         }
 
+                        const isPending = pendingNumbers.includes(num);
+                        const isDisabled = disabled || isPending || reserveTicket.isPending || batchReserve.isPending;
+
                         return (
                           <button
                             key={num}
                             type="button"
-                            disabled={disabled || reserveTicket.isPending}
+                            disabled={isDisabled}
                             title={titleText}
                             onClick={() => {
                               if (isMine && isReserved) {
                                 cancelReservation.mutate(ticket.id);
-                              } else if (!isReserved && !isPaid) {
+                              } else if (!isReserved && !isPaid && !isPending) {
                                 reserveTicket.mutate(num);
                               }
                             }}
-                            className={`h-11 rounded-xl border flex flex-col items-center justify-center text-xs font-black transition-all cursor-pointer ${bgClass} select-none`}
+                            className={`h-11 rounded-xl border flex flex-col items-center justify-center text-xs font-black transition-all ${bgClass} ${isPending ? 'opacity-70 cursor-wait' : 'cursor-pointer'} select-none`}
                           >
                             <span>{String(num).padStart(2, "0")}</span>
                             {isMine && isReserved && (
                               <span className="text-[7px] text-zinc-900 leading-none">Desmarcar</span>
                             )}
+
+                            {isPending && (
+                              <span className="text-[9px] text-muted-foreground mt-1">Aguardando...</span>
+                            )}
+
                           </button>
                         );
                       })}
