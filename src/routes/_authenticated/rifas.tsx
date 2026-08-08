@@ -182,20 +182,64 @@ function ClientRifas() {
     },
   });
 
-  // Realtime subscription for raffle tickets
+  // Realtime subscription for raffle tickets - update cache on INSERT/UPDATE/DELETE for immediate UI updates
   useEffect(() => {
     if (!selectedRaffleId) return;
-    const ch = supabase
-      .channel(`raffle-tickets-realtime-${selectedRaffleId}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "raffle_tickets", filter: `raffle_id=eq.${selectedRaffleId}` }, () => {
+
+    const channel = supabase.channel(`raffle-tickets-realtime-${selectedRaffleId}`);
+
+    // INSERT handler: append new ticket to cache if not present
+    channel.on("postgres_changes", { event: "INSERT", schema: "public", table: "raffle_tickets", filter: `raffle_id=eq.${selectedRaffleId}` }, (payload: any) => {
+      try {
+        const newRow = payload.new ?? payload.record ?? payload;
+        qc.setQueryData(["raffle-tickets", selectedRaffleId], (old: any[] | undefined) => {
+          if (!old) return [newRow];
+          if (old.some((r) => r.id === newRow.id)) return old;
+          return [...old, newRow];
+        });
+      } catch (e) {
         qc.invalidateQueries({ queryKey: ["raffle-tickets", selectedRaffleId] });
-      })
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "raffles", filter: `id=eq.${selectedRaffleId}` }, () => {
-        qc.invalidateQueries({ queryKey: ["store-raffles", activeStore?.id] });
-      })
-      .subscribe();
+      }
+    });
+
+    // UPDATE handler: replace existing ticket in cache
+    channel.on("postgres_changes", { event: "UPDATE", schema: "public", table: "raffle_tickets", filter: `raffle_id=eq.${selectedRaffleId}` }, (payload: any) => {
+      try {
+        const newRow = payload.new ?? payload.record ?? payload;
+        qc.setQueryData(["raffle-tickets", selectedRaffleId], (old: any[] | undefined) => {
+          if (!old) return [newRow];
+          return old.map((r) => (r.id === newRow.id ? newRow : r));
+        });
+      } catch (e) {
+        qc.invalidateQueries({ queryKey: ["raffle-tickets", selectedRaffleId] });
+      }
+    });
+
+    // DELETE handler: remove ticket from cache
+    channel.on("postgres_changes", { event: "DELETE", schema: "public", table: "raffle_tickets", filter: `raffle_id=eq.${selectedRaffleId}` }, (payload: any) => {
+      try {
+        const oldRow = payload.old ?? payload.record ?? payload;
+        qc.setQueryData(["raffle-tickets", selectedRaffleId], (old: any[] | undefined) => {
+          if (!old) return [];
+          return old.filter((r) => r.id !== oldRow.id);
+        });
+      } catch (e) {
+        qc.invalidateQueries({ queryKey: ["raffle-tickets", selectedRaffleId] });
+      }
+    });
+
+    // Also listen for raffle updates (metadata)
+    channel.on("postgres_changes", { event: "UPDATE", schema: "public", table: "raffles", filter: `id=eq.${selectedRaffleId}` }, () => {
+      qc.invalidateQueries({ queryKey: ["store-raffles", activeStore?.id] });
+    });
+
+    channel.subscribe();
+
+    // Force initial sync
+    qc.invalidateQueries({ queryKey: ["raffle-tickets", selectedRaffleId] });
+
     return () => {
-      supabase.removeChannel(ch);
+      supabase.removeChannel(channel);
     };
   }, [selectedRaffleId, activeStore?.id, qc]);
 
