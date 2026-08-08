@@ -121,6 +121,9 @@ function ClientRifas() {
       if (error) throw error;
       return data ?? [];
     },
+    // Fallback polling so the grid stays in sync even if Realtime events
+    // are not delivered (e.g. RLS policy not yet fixed in the database).
+    refetchInterval: 5000,
   });
 
   // Realtime subscription for raffle tickets
@@ -128,7 +131,11 @@ function ClientRifas() {
     if (!selectedRaffleId) return;
     const ch = supabase
       .channel(`raffle-tickets-realtime-${selectedRaffleId}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "raffle_tickets", filter: `raffle_id=eq.${selectedRaffleId}` }, () => {
+      .on("postgres_changes", { event: "*", schema: "public", table: "raffle_tickets" }, (payload) => {
+        // No server-side filter: DELETE events only carry the ticket id (not raffle_id),
+        // so the filter cannot be evaluated server-side. Filter manually here.
+        const eventRaffleId = (payload.new as any)?.raffle_id ?? (payload.old as any)?.raffle_id;
+        if (eventRaffleId && eventRaffleId !== selectedRaffleId) return;
         qc.invalidateQueries({ queryKey: ["raffle-tickets", selectedRaffleId] });
       })
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "raffles", filter: `id=eq.${selectedRaffleId}` }, () => {

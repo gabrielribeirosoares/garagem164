@@ -47,7 +47,8 @@ import {
   Dices,
   Zap,
   Flame,
-  Gift
+  Gift,
+  MessageCircle
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/rifas")({
@@ -206,11 +207,14 @@ function AdminRifas() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("raffle_tickets")
-        .select("*, profiles(full_name, email)")
+        .select("*, profiles(full_name, email, whatsapp)")
         .eq("raffle_id", selectedRaffleId!);
       if (error) throw error;
       return data ?? [];
     },
+    // Fallback polling so the grid stays in sync even if Realtime events
+    // are not delivered (e.g. RLS policy not yet fixed in the database).
+    refetchInterval: 5000,
   });
 
   // Parse winners list in exact order (1º Lugar, 2º Lugar, 3º Lugar...)
@@ -279,7 +283,11 @@ function AdminRifas() {
     if (!selectedRaffleId) return;
     const ch = supabase
       .channel(`admin-raffle-tickets-realtime-${selectedRaffleId}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "raffle_tickets", filter: `raffle_id=eq.${selectedRaffleId}` }, () => {
+      .on("postgres_changes", { event: "*", schema: "public", table: "raffle_tickets" }, (payload) => {
+        // No server-side filter: DELETE events only carry the ticket id (not raffle_id),
+        // so the filter cannot be evaluated server-side. Filter manually here.
+        const eventRaffleId = (payload.new as any)?.raffle_id ?? (payload.old as any)?.raffle_id;
+        if (eventRaffleId && eventRaffleId !== selectedRaffleId) return;
         qc.invalidateQueries({ queryKey: ["raffle-tickets", selectedRaffleId] });
         qc.invalidateQueries({ queryKey: ["admin-customers", storeId] });
       })
@@ -1221,16 +1229,28 @@ function AdminRifas() {
                         </div>
 
                         <div className="space-y-2">
-                          {Array.from(groupsMap.entries()).map(([clientName, groupTickets]) => {
+                          {Array.from(groupsMap.entries()).map(([groupName, groupTickets]) => {
                             const numbers = groupTickets.map((t) => t.number).sort((a, b) => a - b);
                             const totalPrice = numbers.length * unitPrice;
                             const firstUserId = groupTickets[0]?.user_id || null;
+                            const firstWhatsapp = (groupTickets[0] as any)?.profiles?.whatsapp || null;
 
                             return (
-                              <div key={clientName} className="bg-muted/40 border border-border p-3 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-3">
+                              <div key={groupName} className="bg-muted/40 border border-border p-3 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-3">
                                 <div>
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-black text-foreground text-sm">{clientName}</span>
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="font-black text-foreground text-sm">{groupName}</span>
+                                    {firstWhatsapp && (
+                                      <a
+                                        href={`https://wa.me/${firstWhatsapp.replace(/\D/g, "")}`}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="inline-flex items-center gap-1 text-[11px] font-bold text-green-400 hover:text-green-300 bg-green-500/10 border border-green-500/30 rounded-full px-2 py-0.5 transition-colors"
+                                        title={`WhatsApp: ${firstWhatsapp}`}
+                                      >
+                                        <MessageCircle className="h-3 w-3" /> {firstWhatsapp}
+                                      </a>
+                                    )}
                                     <Badge variant="outline" className="bg-yellow-500/10 text-yellow-500 border-yellow-500/30 text-[10px] font-bold">
                                       {numbers.length} número(s)
                                     </Badge>
@@ -1249,7 +1269,7 @@ function AdminRifas() {
                                       batchUpdateTickets.mutate({
                                         numbers,
                                         status: "paid",
-                                        participantName: clientName,
+                                        participantName: groupName,
                                         userId: firstUserId,
                                       });
                                     }}

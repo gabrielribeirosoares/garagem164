@@ -1030,18 +1030,11 @@ BEGIN
   RETURN NEW;
 END; $$;
 
--- 3) Restrict raffle_tickets SELECT to own tickets or store owner
+-- 3) Allow all authenticated users to read raffle_tickets (needed for Realtime)
 DROP POLICY IF EXISTS "tickets_user_read" ON public.raffle_tickets;
 CREATE POLICY "tickets_user_read" ON public.raffle_tickets
 FOR SELECT TO authenticated
-USING (
-  user_id = auth.uid()
-  OR EXISTS (
-    SELECT 1 FROM public.raffles r
-    WHERE r.id = raffle_tickets.raffle_id
-      AND public.is_store_owner(r.store_id, auth.uid())
-  )
-);
+USING (TRUE); -- Let customers see who took which numbers (needed for Realtime)
 
 -- Public view exposing only non-PII fields so UIs can still display taken numbers
 CREATE OR REPLACE VIEW public.raffle_ticket_numbers
@@ -1214,4 +1207,27 @@ DROP POLICY IF EXISTS "owners_update_stores" ON public.stores;
 CREATE POLICY "owners_update_stores" ON public.stores FOR UPDATE TO authenticated 
 USING (owner_id = auth.uid() OR public.has_role(auth.uid(), 'admin')) 
 WITH CHECK (owner_id = auth.uid() OR public.has_role(auth.uid(), 'admin'));
+
+
+-- ==============================================
+-- MIGRATION: 20260724000000_fix_raffle_tickets_realtime.sql
+-- ==============================================
+-- PROBLEM:
+--   Migration 20260722143336 restricted SELECT on public.raffle_tickets to
+--   own tickets or store owner. Supabase Realtime respects RLS policies, so
+--   when user A reserves a number, user B never receives the realtime event
+--   (B cannot read A's row). The number only appears as taken when B tries
+--   to click it and gets "Os seguintes números já estavam ocupados".
+--
+-- SOLUTION:
+--   Restore SELECT for all authenticated users (as originally designed with
+--   the comment "Let customers see who took which numbers"). This makes the
+--   realtime subscription deliver events to every user viewing the raffle,
+--   so the grid updates in real time and users cannot click taken numbers.
+-- ==============================================
+
+DROP POLICY IF EXISTS "tickets_user_read" ON public.raffle_tickets;
+CREATE POLICY "tickets_user_read" ON public.raffle_tickets
+FOR SELECT TO authenticated
+USING (TRUE); -- Let customers see who took which numbers (needed for Realtime)
 
