@@ -48,7 +48,8 @@ import {
   Zap,
   Flame,
   Gift,
-  MessageCircle
+  MessageCircle,
+  ClipboardPaste
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/rifas")({
@@ -75,6 +76,68 @@ function AdminRifas() {
 
   // Multi-select state
   const [selectedNumbers, setSelectedNumbers] = useState<number[]>([]);
+  const [batchInputText, setBatchInputText] = useState("");
+
+  const parseNumbersInput = (input: string, maxTotal: number): number[] => {
+    const result = new Set<number>();
+    const parts = input.split(/[,;\s\n]+/);
+
+    for (const part of parts) {
+      const trimmed = part.trim();
+      if (!trimmed) continue;
+
+      if (trimmed.includes("-") || trimmed.includes("..")) {
+        const rangeParts = trimmed.split(/-|\.\./);
+        if (rangeParts.length === 2) {
+          const start = parseInt(rangeParts[0], 10);
+          const end = parseInt(rangeParts[1], 10);
+          if (!isNaN(start) && !isNaN(end)) {
+            const min = Math.min(start, end);
+            const max = Math.max(start, end);
+            for (let i = min; i <= max; i++) {
+              if (i >= 1 && i <= maxTotal) {
+                result.add(i);
+              }
+            }
+          }
+        }
+      } else {
+        const num = parseInt(trimmed, 10);
+        if (!isNaN(num) && num >= 1 && num <= maxTotal) {
+          result.add(num);
+        }
+      }
+    }
+
+    return Array.from(result).sort((a, b) => a - b);
+  };
+
+  const handleApplyBatchInput = () => {
+    if (!batchInputText.trim() || !selectedRaffle) return;
+    const parsed = parseNumbersInput(batchInputText, selectedRaffle.total_numbers);
+    if (parsed.length === 0) {
+      toast.error("Nenhum número válido encontrado no texto informado.");
+      return;
+    }
+    setSelectedNumbers((prev) => Array.from(new Set([...prev, ...parsed])));
+    toast.success(`${parsed.length} número(s) selecionado(s)!`);
+  };
+
+  const handlePasteFromClipboard = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text) {
+        setBatchInputText(text);
+        const parsed = parseNumbersInput(text, selectedRaffle?.total_numbers || 100);
+        if (parsed.length > 0) {
+          setSelectedNumbers((prev) => Array.from(new Set([...prev, ...parsed])));
+          toast.success(`${parsed.length} número(s) selecionado(s) a partir do texto colado!`);
+        }
+      }
+    } catch (e) {
+      toast.error("Não foi possível ler a área de transferência.");
+    }
+  };
 
   // Form states for creating raffle
   const [title, setTitle] = useState("");
@@ -1432,16 +1495,81 @@ function AdminRifas() {
                   )}
 
                   {/* Numbers Grid */}
-                  <div data-tour="admin-rifa-grid" className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <h3 className="font-bold text-sm text-white">Painel de Números</h3>
-                      <div className="text-xs text-muted-foreground">
-                        {selectedNumbers.length > 0 ? (
-                          <span className="font-bold text-primary">{selectedNumbers.length} número(s) selecionado(s)</span>
-                        ) : (
-                          "Clique nos números para selecionar"
-                        )}
+                  <div data-tour="admin-rifa-grid" className="space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <h3 className="font-black text-sm text-white uppercase tracking-wider">Escolha seus números</h3>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {selectedNumbers.length > 0 ? (
+                            <span className="font-bold text-primary">{selectedNumbers.length} número(s) selecionado(s)</span>
+                          ) : (
+                            "Clique nos números para selecionar individualmente ou use a cola em lote abaixo"
+                          )}
+                        </p>
                       </div>
+
+                      {/* Status Legends */}
+                      <div className="flex flex-wrap items-center gap-3 text-[11px]">
+                        <div className="flex items-center gap-1.5 text-muted-foreground font-semibold">
+                          <span className="h-2.5 w-2.5 rounded bg-muted border border-border"></span> Livre
+                        </div>
+                        <div className="flex items-center gap-1.5 text-yellow-500 font-semibold">
+                          <span className="h-2.5 w-2.5 rounded bg-yellow-500/20 border border-yellow-500/30"></span> Reservado
+                        </div>
+                        <div className="flex items-center gap-1.5 text-green-400 font-semibold">
+                          <span className="h-2.5 w-2.5 rounded bg-green-500/20 border border-green-500/30"></span> Pago
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Batch Range Selection Input */}
+                    <div className="bg-card border border-border p-3.5 rounded-2xl space-y-2 shadow-sm">
+                      <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
+                        <div className="relative flex-1">
+                          <Input
+                            value={batchInputText}
+                            onChange={(e) => setBatchInputText(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                handleApplyBatchInput();
+                              }
+                            }}
+                            placeholder="Cole aqui os números (ex: 1,2,5-8;10)"
+                            className="bg-background border-border text-foreground text-xs h-10 rounded-xl pr-16"
+                          />
+                          {batchInputText && (
+                            <button
+                              type="button"
+                              onClick={() => setBatchInputText("")}
+                              className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground hover:text-foreground px-2 py-1"
+                            >
+                              Limpar
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <Button
+                            type="button"
+                            onClick={handlePasteFromClipboard}
+                            variant="outline"
+                            className="h-10 text-xs font-bold border-border hover:bg-muted shrink-0"
+                          >
+                            <ClipboardPaste className="h-3.5 w-3.5 mr-1.5 text-primary" /> Colar
+                          </Button>
+                          <Button
+                            type="button"
+                            onClick={handleApplyBatchInput}
+                            className="h-10 text-xs font-bold hw-gradient-orange text-white shrink-0"
+                          >
+                            <Check className="h-3.5 w-3.5 mr-1.5" /> Selecionar Números
+                          </Button>
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground">
+                        Ex.: 1,2,5-8;10 — aceita ranges e listas separados por vírgula, espaço ou ponto-e-vírgula.
+                      </p>
                     </div>
 
                     <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-2">

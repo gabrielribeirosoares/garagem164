@@ -16,7 +16,7 @@ export const Route = createFileRoute("/_authenticated/admin/assinaturas")({
   component: AdminAssinaturas,
 });
 
-export function AdminAssinaturas() {
+function AdminAssinaturas() {
   const user = useSession();
   const { data: ownedStore } = useOwnedStore();
   const qc = useQueryClient();

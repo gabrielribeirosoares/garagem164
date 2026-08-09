@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { Ticket, Truck, Star, Gift, Sparkles, Clock, CheckCircle2 } from "lucide-react";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { LazyImage } from "@/components/ui/lazy-image";
 
 export const Route = createFileRoute("/_authenticated/recompensas")({
   component: RecompensasPage,
@@ -117,11 +118,15 @@ function RecompensasPage() {
                   <div key={r.id} className="rounded-2xl border border-border bg-card overflow-hidden group hover:border-primary/60 transition-all flex flex-col justify-between">
                     <div>
                       <div className="h-32 bg-[#141414] border-b border-border/30 relative flex items-center justify-center overflow-hidden">
-                        {r.image_url ? (
-                          <img src={r.image_url} alt={r.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                        ) : (
-                          <meta.icon className="h-12 w-12 text-muted-foreground/45" />
-                        )}
+                        <LazyImage
+                          src={r.image_url || ""}
+                          alt={r.title}
+                          loading="lazy"
+                          decoding="async"
+                          containerClassName="w-full h-full"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                          fallbackIcon={<meta.icon className="h-12 w-12 text-muted-foreground/45" />}
+                        />
                         
                         {/* Category Badge */}
                         <div className="absolute top-2 left-2">

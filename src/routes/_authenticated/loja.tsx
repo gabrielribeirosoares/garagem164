@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
+import { LazyImage } from "@/components/ui/lazy-image";
 import { ShoppingBag, Search, Sparkles, MessageSquare, Car, ShieldCheck, Tag } from "lucide-react";
 import { toast } from "sonner";
 
@@ -145,11 +146,15 @@ function ClientLoja() {
             return (
               <Card key={item.id} className="border-border bg-card overflow-hidden rounded-2xl flex flex-col hover:border-primary/50 transition-all hover:shadow-xl group">
                 <div className="h-44 bg-muted/40 relative overflow-hidden flex items-center justify-center border-b border-border">
-                  {item.image_url ? (
-                    <img src={item.image_url} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                  ) : (
-                    <Car className="h-12 w-12 text-muted-foreground/30" />
-                  )}
+                  <LazyImage
+                    src={item.image_url || ""}
+                    alt={item.name}
+                    loading="lazy"
+                    decoding="async"
+                    containerClassName="w-full h-full"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    fallbackIcon={<Car className="h-12 w-12 text-muted-foreground/30" />}
+                  />
                   <Badge variant="outline" className={`absolute top-3 right-3 text-[10px] ${categoryBadge}`}>
                     {item.category}
                   </Badge>

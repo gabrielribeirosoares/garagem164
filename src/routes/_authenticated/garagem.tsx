@@ -8,6 +8,7 @@ import { Car, Trophy, Sparkles, Share2, Copy, Users, MessageSquare, Award, Shiel
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { LazyImage } from "@/components/ui/lazy-image";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/garagem")({
@@ -216,11 +217,15 @@ function Garagem() {
               style={{ animationDelay: `${i * 40}ms`, animationFillMode: "backwards" }}
             >
               <div className="aspect-square bg-muted flex items-center justify-center overflow-hidden">
-                {c.image_url ? (
-                  <img src={c.image_url} alt={c.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" loading="lazy" />
-                ) : (
-                  <Car className="h-12 w-12 text-muted-foreground" />
-                )}
+                <LazyImage
+                  src={c.image_url || ""}
+                  alt={c.name}
+                  loading="lazy"
+                  decoding="async"
+                  containerClassName="w-full h-full"
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  fallbackIcon={<Car className="h-12 w-12 text-muted-foreground" />}
+                />
               </div>
               <div className="p-3 space-y-2">
                 <div className="font-bold text-sm line-clamp-2 min-h-[2.5rem]">{c.name}</div>

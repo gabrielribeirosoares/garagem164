@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { LazyImage } from "@/components/ui/lazy-image";
 import { Boxes, Plus, Trash2, Edit3, ShoppingCart, Sparkles, ChevronDown, Car, Tag, Upload, X } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/estoque")({
@@ -236,11 +237,15 @@ function AdminEstoque() {
           inventory.map((item) => (
             <div key={item.id} className="rounded-2xl border border-border bg-card overflow-hidden flex flex-col justify-between shadow-xl">
               <div className="h-40 bg-muted/30 relative flex items-center justify-center border-b border-border">
-                {item.image_url ? (
-                  <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
-                ) : (
-                  <Car className="h-10 w-10 text-muted-foreground/30" />
-                )}
+                <LazyImage
+                  src={item.image_url || ""}
+                  alt={item.name}
+                  loading="lazy"
+                  decoding="async"
+                  containerClassName="w-full h-full"
+                  className="w-full h-full object-cover"
+                  fallbackIcon={<Car className="h-10 w-10 text-muted-foreground/30" />}
+                />
                 <Badge variant="outline" className="absolute top-3 right-3 bg-zinc-900/80 text-white border-border text-[10px]">
                   {item.category}
                 </Badge>

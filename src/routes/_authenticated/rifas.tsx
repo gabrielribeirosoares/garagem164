@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { LazyImage } from "@/components/ui/lazy-image";
 import { toast } from "sonner";
 import { Ticket, Sparkles, Copy, MessageSquare, Info, Trophy, Calendar, CheckCircle2, X, Image as ImageIcon, ExternalLink, ZoomIn, Flame, Zap, Dices, Clock, Truck, Tag } from "lucide-react";
 
@@ -466,56 +467,6 @@ function ClientRifas() {
                     );
                   })()}
 
-                  {/* Quick Pick Buttons (Surpresinha / 1-Clique) */}
-                  {selectedRaffle.status === "active" && (
-                    <div data-tour="client-rifa-surpresinha" className="bg-gradient-to-r from-[#181818] via-[#121212] to-[#181818] border border-border p-4 rounded-2xl space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-                          <Zap className="h-4 w-4 text-primary fill-primary/20" /> Compra Rápida em 1-Clique (Surpresinha)
-                        </span>
-                        <span className="text-[10px] text-muted-foreground font-semibold">Seleção automática aleatória</span>
-                      </div>
-
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => handleQuickPick(1)}
-                          disabled={batchReserve.isPending}
-                          className="h-10 text-xs font-bold border-border hover:border-primary hover:bg-primary/10 text-white"
-                        >
-                          <Dices className="h-3.5 w-3.5 mr-1 text-primary" /> +1 Nº da Sorte
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => handleQuickPick(3)}
-                          disabled={batchReserve.isPending}
-                          className="h-10 text-xs font-bold border-border hover:border-primary hover:bg-primary/10 text-white"
-                        >
-                          <Zap className="h-3.5 w-3.5 mr-1 text-yellow-400" /> 3 Números
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => handleQuickPick(5)}
-                          disabled={batchReserve.isPending}
-                          className="h-10 text-xs font-bold border-border hover:border-primary hover:bg-primary/10 text-white"
-                        >
-                          <Flame className="h-3.5 w-3.5 mr-1 text-orange-400" /> Combo 5 Nºs
-                        </Button>
-                        <Button
-                          type="button"
-                          onClick={() => handleQuickPick(10)}
-                          disabled={batchReserve.isPending}
-                          className="h-10 text-xs font-bold hw-gradient-orange text-white"
-                        >
-                          <Sparkles className="h-3.5 w-3.5 mr-1" /> Mega 10 Nºs
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-
                   {/* Prize Images Section in Client View */}
                   {(() => {
                     const images = (selectedRaffle.image_urls && selectedRaffle.image_urls.length > 0)
@@ -540,12 +491,15 @@ function ClientRifas() {
                           className="relative rounded-xl overflow-hidden bg-black aspect-video max-h-80 cursor-pointer group border border-border/60"
                           onClick={() => setPreviewImage(currentImg)}
                         >
-                          <img
+                          <LazyImage
                             src={currentImg}
                             alt={selectedRaffle.title}
+                            loading="eager"
+                            decoding="async"
+                            containerClassName="w-full h-full"
                             className="w-full h-full object-contain bg-black/90 transition-transform duration-300 group-hover:scale-105"
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-between p-4">
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-between p-4 pointer-events-none">
                             <span className="text-xs text-white font-bold flex items-center gap-1">
                               <ZoomIn className="h-4 w-4 text-primary" /> Clique para ampliar
                             </span>
@@ -569,7 +523,7 @@ function ClientRifas() {
                                     : "border-border/60 opacity-60 hover:opacity-100"
                                 }`}
                               >
-                                <img src={img} alt={`Miniatura ${idx + 1}`} className="w-full h-full object-cover" />
+                                <LazyImage src={img} alt={`Miniatura ${idx + 1}`} loading="lazy" decoding="async" containerClassName="w-full h-full" className="w-full h-full object-cover" />
                               </button>
                             ))}
                           </div>
@@ -604,6 +558,56 @@ function ClientRifas() {
                           Sorteado em: {new Date(selectedRaffle.drawn_at).toLocaleString("pt-BR")}
                         </div>
                       )}
+                    </div>
+                  )}
+
+                  {/* Compra Rápida em 1-Clique (Surpresinha) */}
+                  {selectedRaffle.status === "active" && (
+                    <div data-tour="client-rifa-surpresinha" className="bg-card border border-border p-4 rounded-2xl space-y-3 shadow-md">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                        <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-foreground">
+                          <Zap className="h-4 w-4 text-primary animate-pulse" /> COMPRA RÁPIDA EM 1-CLIQUE (SURPRESINHA)
+                        </div>
+                        <span className="text-[10px] text-muted-foreground font-semibold">Seleção automática aleatória de números livres</span>
+                      </div>
+
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => handleQuickPick(1)}
+                          disabled={batchReserve.isPending}
+                          className="h-10 text-xs font-bold border-border hover:border-primary hover:bg-primary/10 text-foreground"
+                        >
+                          <Dices className="h-3.5 w-3.5 mr-1.5 text-primary" /> +1 Nº da Sorte
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => handleQuickPick(3)}
+                          disabled={batchReserve.isPending}
+                          className="h-10 text-xs font-bold border-border hover:border-primary hover:bg-primary/10 text-foreground"
+                        >
+                          <Zap className="h-3.5 w-3.5 mr-1.5 text-yellow-500" /> 3 Números
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => handleQuickPick(5)}
+                          disabled={batchReserve.isPending}
+                          className="h-10 text-xs font-bold border-border hover:border-primary hover:bg-primary/10 text-foreground"
+                        >
+                          <Flame className="h-3.5 w-3.5 mr-1.5 text-orange-500" /> Combo 5 Nºs
+                        </Button>
+                        <Button
+                          type="button"
+                          onClick={() => handleQuickPick(10)}
+                          disabled={batchReserve.isPending}
+                          className="h-10 text-xs font-bold hw-gradient-orange text-white"
+                        >
+                          <Sparkles className="h-3.5 w-3.5 mr-1.5" /> Mega 10 Nºs
+                        </Button>
+                      </div>
                     </div>
                   )}
 

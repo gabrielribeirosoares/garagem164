@@ -6,11 +6,21 @@ import { supabase } from "@/integrations/supabase/client";
 export function useSession() {
   const [user, setUser] = useState<User | null | undefined>(undefined);
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUser(data.user ?? null));
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
-      setUser(session?.user ?? null);
+    let isMounted = true;
+    supabase.auth.getUser().then(({ data }) => {
+      if (isMounted) setUser(data.user ?? null);
     });
-    return () => sub.subscription.unsubscribe();
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      if (isMounted) {
+        queueMicrotask(() => {
+          if (isMounted) setUser(session?.user ?? null);
+        });
+      }
+    });
+    return () => {
+      isMounted = false;
+      sub.subscription.unsubscribe();
+    };
   }, []);
   return user;
 }

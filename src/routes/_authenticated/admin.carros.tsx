@@ -12,6 +12,7 @@ import { RAW } from "@/components/ui/data";
 import { useOwnedStore } from "@/hooks/useStore";
 import { useStoreCustomers } from "@/hooks/useStoreCustomers";
 import { compressImage } from "@/lib/imageCompression";
+import { LazyImage } from "@/components/ui/lazy-image";
 
 export const Route = createFileRoute("/_authenticated/admin/carros")({
   component: AddCarros,
@@ -441,7 +442,15 @@ function AddCarros() {
             {recentCars?.map((c) => (
               <div key={c.id} className="p-4 flex items-center gap-3">
                 <div className="h-14 w-14 rounded-lg bg-muted overflow-hidden flex items-center justify-center shrink-0">
-                  {c.image_url ? <img src={c.image_url} alt={c.name} className="w-full h-full object-cover" /> : <Car className="h-6 w-6 text-muted-foreground" />}
+                  <LazyImage
+                    src={c.image_url || ""}
+                    alt={c.name}
+                    loading="lazy"
+                    decoding="async"
+                    containerClassName="w-full h-full"
+                    className="w-full h-full object-cover"
+                    fallbackIcon={<Car className="h-6 w-6 text-muted-foreground" />}
+                  />
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="font-bold text-sm truncate">{c.name}</div>
