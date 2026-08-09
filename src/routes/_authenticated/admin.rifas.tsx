@@ -49,7 +49,8 @@ import {
   Flame,
   Gift,
   MessageCircle,
-  ClipboardPaste
+  ClipboardPaste,
+  AlertTriangle
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/rifas")({
@@ -112,15 +113,52 @@ function AdminRifas() {
     return Array.from(result).sort((a, b) => a - b);
   };
 
-  const handleApplyBatchInput = () => {
-    if (!batchInputText.trim() || !selectedRaffle) return;
-    const parsed = parseNumbersInput(batchInputText, selectedRaffle.total_numbers);
+  const processBatchSelection = (parsed: number[]) => {
     if (parsed.length === 0) {
       toast.error("Nenhum número válido encontrado no texto informado.");
       return;
     }
-    setSelectedNumbers((prev) => Array.from(new Set([...prev, ...parsed])));
-    toast.success(`${parsed.length} número(s) selecionado(s)!`);
+
+    const freeNumbers: number[] = [];
+    const blockedDetails: string[] = [];
+
+    for (const num of parsed) {
+      const t = tickets?.find((ticket) => ticket.number === num);
+      if (t) {
+        const statusLabel = t.status === "paid" ? "Pago" : "Reservado";
+        const name = t.participant_name?.split(" ")[0] || "Cliente";
+        blockedDetails.push(`Nº ${String(num).padStart(2, "0")} (${name} - ${statusLabel})`);
+      } else {
+        freeNumbers.push(num);
+      }
+    }
+
+    if (freeNumbers.length > 0) {
+      setSelectedNumbers((prev) => Array.from(new Set([...prev, ...freeNumbers])));
+    }
+
+    if (blockedDetails.length > 0) {
+      const blockedText = blockedDetails.join(", ");
+      if (freeNumbers.length === 0) {
+        toast.error(
+          `Bloqueado! Todos os números informados (${blockedText}) já foram reservados ou pagos por clientes.`,
+          { duration: 8000 }
+        );
+      } else {
+        toast.warning(
+          `${freeNumbers.length} número(s) livre(s) selecionado(s). O(s) número(s) ${blockedText} já estava(m) ocupado(s) e foi(ram) bloqueado(s)!`,
+          { duration: 8000 }
+        );
+      }
+    } else {
+      toast.success(`${freeNumbers.length} número(s) livre(s) selecionado(s) com sucesso!`);
+    }
+  };
+
+  const handleApplyBatchInput = () => {
+    if (!batchInputText.trim() || !selectedRaffle) return;
+    const parsed = parseNumbersInput(batchInputText, selectedRaffle.total_numbers);
+    processBatchSelection(parsed);
   };
 
   const handlePasteFromClipboard = async () => {
@@ -129,10 +167,7 @@ function AdminRifas() {
       if (text) {
         setBatchInputText(text);
         const parsed = parseNumbersInput(text, selectedRaffle?.total_numbers || 100);
-        if (parsed.length > 0) {
-          setSelectedNumbers((prev) => Array.from(new Set([...prev, ...parsed])));
-          toast.success(`${parsed.length} número(s) selecionado(s) a partir do texto colado!`);
-        }
+        processBatchSelection(parsed);
       }
     } catch (e) {
       toast.error("Não foi possível ler a área de transferência.");
@@ -533,13 +568,18 @@ function AdminRifas() {
       } else {
         const rows = numbers.map((num) => {
           const existingTicket = tickets?.find((t) => t.number === num);
+          const finalName = (participantName && participantName !== "Comprador")
+            ? participantName.trim()
+            : (existingTicket?.participant_name || participantName.trim() || "Comprador");
+          const finalUserId = userId ? userId : (existingTicket?.user_id || null);
+
           return {
             ...(existingTicket ? { id: existingTicket.id } : {}),
             raffle_id: selectedRaffleId!,
             number: num,
             status,
-            participant_name: participantName.trim() || "Comprador",
-            user_id: userId || null,
+            participant_name: finalName,
+            user_id: finalUserId,
           };
         });
         const { error } = await supabase
@@ -1631,10 +1671,19 @@ function AdminRifas() {
       {/* Floating Action Bar when numbers are selected */}
       {selectedNumbers.length > 0 && selectedRaffle?.status === "active" && (
         <div className="fixed bottom-6 inset-x-4 md:inset-x-auto md:left-1/2 md:-translate-x-1/2 z-50 bg-[#161616] border border-primary/40 rounded-2xl p-4 shadow-2xl backdrop-blur-lg hw-glow-orange flex flex-col sm:flex-row items-center justify-between gap-4 animate-in slide-in-from-bottom-5 duration-300">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <Badge className="bg-primary text-primary-foreground font-black px-2.5 py-1 text-xs">
               {selectedNumbers.length} selecionado(s)
             </Badge>
+            {(() => {
+              const takenCount = selectedNumbers.filter((n) => tickets?.some((t) => t.number === n)).length;
+              if (takenCount === 0) return null;
+              return (
+                <Badge variant="outline" className="border-yellow-500/50 bg-yellow-500/10 text-yellow-400 text-[10px] gap-1 animate-pulse">
+                  <AlertTriangle className="h-3 w-3 shrink-0" /> {takenCount} com dono prévio
+                </Badge>
+              );
+            })()}
             <span className="text-xs text-white font-mono font-bold truncate max-w-[200px] sm:max-w-xs">
               {selectedNumbers.map((n) => String(n).padStart(2, "0")).join(", ")}
             </span>
