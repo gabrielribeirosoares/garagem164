@@ -96,7 +96,7 @@ function AddCarros() {
         .select("*")
         .eq("store_id", storeId!)
         .order("created_at", { ascending: false })
-        .limit(20);
+        .limit(3);
       if (error) throw error;
       return data as any[];
     },
@@ -439,7 +439,7 @@ function AddCarros() {
           </header>
           <div className="divide-y divide-border">
             {!recentCars?.length && <div className="p-6 text-sm text-muted-foreground">Nenhum carro adicionado ainda.</div>}
-            {recentCars?.map((c) => (
+            {recentCars?.slice(0, 3).map((c) => (
               <div key={c.id} className="p-4 flex items-center gap-3">
                 <div className="h-14 w-14 rounded-lg bg-muted overflow-hidden flex items-center justify-center shrink-0">
                   <LazyImage
