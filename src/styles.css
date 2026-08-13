@@ -137,6 +137,34 @@
     background-image: radial-gradient(circle at 50% 50%, oklch(0.55 0.22 25 / 0.05), transparent 70%);
     background-attachment: fixed;
   }
+
+  /* Custom Sleek Scrollbar Styles */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: rgba(18, 18, 21, 0.6);
+    border-radius: 9999px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(161, 161, 170, 0.25);
+    border-radius: 9999px;
+    transition: all 0.2s ease-in-out;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--store-primary, #f97316);
+    box-shadow: 0 0 10px var(--store-primary, #f97316);
+  }
+
+  /* Firefox Custom Scrollbar */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(161, 161, 170, 0.3) rgba(18, 18, 21, 0.6);
+  }
 }
 
 @utility hw-gradient-orange {

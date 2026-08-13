@@ -1,14 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useActiveClientStore } from "@/hooks/useStore";
+import { useSession } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { LazyImage } from "@/components/ui/lazy-image";
-import { ShoppingBag, Search, Sparkles, MessageSquare, Car, ShieldCheck, Tag } from "lucide-react";
+import { ShoppingBag, Search, Sparkles, MessageSquare, Car, ShieldCheck, Tag, Copy, Check, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/loja")({
@@ -16,9 +17,65 @@ export const Route = createFileRoute("/_authenticated/loja")({
 });
 
 function ClientLoja() {
+  const qc = useQueryClient();
+  const user = useSession();
   const { data: activeStore } = useActiveClientStore();
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Todos");
+
+  // Check if current user is following/linked to this store
+  const { data: customerPointsRow } = useQuery({
+    queryKey: ["is-following-store", user?.id, activeStore?.id],
+    enabled: !!user?.id && !!activeStore?.id,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("customer_points")
+        .select("id")
+        .eq("user_id", user!.id)
+        .eq("store_id", activeStore!.id)
+        .maybeSingle();
+      return data;
+    },
+  });
+
+  const isFollowing = !!customerPointsRow;
+
+  // Mutation to follow / link to store
+  const followMutation = useMutation({
+    mutationFn: async () => {
+      if (!user?.id || !activeStore?.id) throw new Error("Usuário ou loja não identificados.");
+
+      if (isFollowing) {
+        toast.info(`Você já está seguindo a ${activeStore.name}!`);
+        return;
+      }
+
+      const { error: rpcErr } = await supabase.rpc("link_user_to_store", { _store_id: activeStore.id });
+      if (rpcErr) {
+        const { error } = await supabase.from("customer_points").upsert({
+          user_id: user.id,
+          store_id: activeStore.id,
+          points: 0,
+        }, { onConflict: "user_id,store_id" });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      toast.success(`Você agora está seguindo ${activeStore.name}! 🚀`);
+      qc.invalidateQueries({ queryKey: ["is-following-store", user?.id, activeStore?.id] });
+      qc.invalidateQueries({ queryKey: ["my-stores", user?.id] });
+      qc.invalidateQueries({ queryKey: ["active-client-store"] });
+      qc.invalidateQueries({ queryKey: ["customer-points"] });
+    },
+    onError: (e: any) => toast.error(e.message || "Erro ao seguir a loja."),
+  });
+
+  const handleCopyInviteLink = () => {
+    if (!activeStore) return;
+    const link = `${window.location.origin}/loja?store=${activeStore.slug}`;
+    navigator.clipboard.writeText(link);
+    toast.success("Link de convite copiado para a área de transferência! 📋");
+  };
 
   // Fetch store owner whatsapp
   const { data: ownerProfile } = useQuery({
@@ -29,7 +86,7 @@ function ClientLoja() {
         .from("profiles")
         .select("whatsapp, full_name")
         .eq("id", activeStore!.owner_id)
-        .single();
+        .maybeSingle();
       if (error) throw error;
       return data;
     },
@@ -45,6 +102,7 @@ function ClientLoja() {
         .select("*")
         .eq("store_id", activeStore!.id)
         .eq("status", "available")
+        .gt("price", 0)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
@@ -54,9 +112,10 @@ function ClientLoja() {
   const categories = ["Todos", "Mainline", "Premium", "TH", "STH", "Custom"];
 
   const filteredItems = (inventory ?? []).filter((item) => {
+    const hasPrice = Number(item.price) > 0;
     const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase().trim());
     const matchesCategory = selectedCategory === "Todos" || item.category === selectedCategory;
-    return matchesSearch && matchesCategory;
+    return hasPrice && matchesSearch && matchesCategory;
   });
 
   const handleBuyWhatsApp = (item: any) => {

@@ -1,10 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession, useProfile } from "@/hooks/useAuth";
-import { useActiveClientStore, useCustomerPoints } from "@/hooks/useStore";
-import { Car, Trophy, Sparkles, Share2, Copy, Users, MessageSquare, Award, ShieldCheck, Flame } from "lucide-react";
+import { useActiveClientStore, useCustomerPoints, setActiveStoreSlug } from "@/hooks/useStore";
+import { Car, Trophy, Sparkles, Share2, Copy, Users, MessageSquare, Award, ShieldCheck, Flame, Check, UserPlus, UserX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -24,6 +24,84 @@ function Garagem() {
   const qc = useQueryClient();
 
   const [shareOpen, setShareOpen] = useState(false);
+
+  // Check if user is following this store
+  const { data: customerPointsRow } = useQuery({
+    queryKey: ["is-following-store", user?.id, storeId],
+    enabled: !!user?.id && !!storeId,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("customer_points")
+        .select("id")
+        .eq("user_id", user!.id)
+        .eq("store_id", storeId!)
+        .maybeSingle();
+      return data;
+    },
+  });
+
+  const isFollowing = !!customerPointsRow;
+
+  // Toggle follow/unfollow store
+  const toggleFollowMutation = useMutation({
+    mutationFn: async () => {
+      if (!user?.id || !storeId) throw new Error("Usuário ou loja não identificados.");
+
+      if (isFollowing) {
+        // 1. Delete from customer_points
+        const { error } = await supabase
+          .from("customer_points")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("store_id", storeId);
+
+        if (error) throw error;
+
+        // 2. Find next store user is following, if any
+        const { data: remainingCp } = await supabase
+          .from("customer_points")
+          .select("store_id, stores:stores!customer_points_store_id_fkey(slug)")
+          .eq("user_id", user.id)
+          .neq("store_id", storeId)
+          .limit(1)
+          .maybeSingle();
+
+        const nextSlug = (remainingCp as any)?.stores?.slug || "";
+        setActiveStoreSlug(nextSlug);
+
+        return "unfollowed";
+      } else {
+        const { error } = await supabase
+          .from("customer_points")
+          .upsert({
+            user_id: user.id,
+            store_id: storeId,
+            points: 0,
+          }, { onConflict: "user_id,store_id" });
+
+        if (error) throw error;
+
+        if (store?.slug) {
+          setActiveStoreSlug(store.slug);
+        }
+
+        return "followed";
+      }
+    },
+    onSuccess: (action) => {
+      if (action === "unfollowed") {
+        toast.info(`Você deixou de seguir a ${store?.name || "loja"}.`);
+      } else {
+        toast.success(`Você agora está seguindo ${store?.name || "a loja"}! 🚀`);
+      }
+      qc.invalidateQueries({ queryKey: ["is-following-store"] });
+      qc.invalidateQueries({ queryKey: ["my-stores"] });
+      qc.invalidateQueries({ queryKey: ["active-client-store"] });
+      qc.invalidateQueries({ queryKey: ["customer-points"] });
+      qc.invalidateQueries({ queryKey: ["cars"] });
+    },
+    onError: (e: any) => toast.error(e.message || "Erro ao atualizar status."),
+  });
 
   const { data: cars, isLoading } = useQuery({
     queryKey: ["cars", user?.id, storeId],
@@ -89,10 +167,94 @@ function Garagem() {
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   };
 
-  const shareText = `🚗 Minha Garagem na ${store?.name || "MinisHub"}:\n• ${carCount} miniaturas na coleção\n• ${pointsBalance ?? 0} pontos acumulados\n• Nível: ${vipTier}\n\nVenha conhecer minha coleção!`;
+  if (!store) {
+    return (
+      <div className="flex flex-col items-center justify-center space-y-4 py-16 text-center max-w-md mx-auto">
+        <div className="h-16 w-16 rounded-full bg-muted/30 border border-border flex items-center justify-center text-muted-foreground">
+          <Car className="h-8 w-8 text-primary" />
+        </div>
+        <div className="space-y-1">
+          <h3 className="font-black text-xl text-white">Você não está seguindo nenhuma garagem</h3>
+          <p className="text-xs text-muted-foreground">
+            Acesse a vitrine para conferir miniaturas e seguir uma loja parceira!
+          </p>
+        </div>
+        <Link to="/loja">
+          <Button className="hw-gradient-orange text-white font-bold text-xs h-10 px-5">
+            Explorar Vitrine de Miniaturas
+          </Button>
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
+      {/* Store Header Banner Card & Follow/Unfollow Button */}
+      {store && (
+        <div className="bg-[#121215] border border-border/80 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
+          <div className="flex items-center gap-3.5">
+            <div className="h-12 w-12 rounded-full overflow-hidden bg-black border border-primary/40 flex items-center justify-center shrink-0 shadow-inner">
+              {store.logo_url ? (
+                <img src={store.logo_url} alt={store.name} className="h-full w-full object-cover" />
+              ) : (
+                <Car className="h-6 w-6 text-primary" />
+              )}
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="font-black text-xl text-white leading-tight">{store.name}</h2>
+                <Badge className="bg-amber-500/10 text-amber-400 border border-amber-500/30 text-[10px] font-bold gap-1 px-2 py-0.5">
+                  <Sparkles className="h-3 w-3 text-amber-400" /> Loja Oficial
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Garagem vinculada ao seu perfil de colecionador
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2.5 shrink-0 self-end sm:self-center">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                const link = `${window.location.origin}/loja?store=${store.slug}`;
+                navigator.clipboard.writeText(link);
+                toast.success("Link de convite copiado para a área de transferência! 📋");
+              }}
+              className="bg-card border border-border/80 hover:bg-muted text-xs font-bold h-9 px-3 text-foreground rounded-xl"
+            >
+              <Copy className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" /> Link de convite
+            </Button>
+
+            <Button
+              type="button"
+              onClick={() => toggleFollowMutation.mutate()}
+              disabled={toggleFollowMutation.isPending}
+              className={
+                isFollowing
+                  ? "bg-green-500/10 border border-green-500/40 text-green-400 font-bold hover:bg-red-500/20 hover:text-red-400 hover:border-red-500/40 text-xs h-9 px-3.5 rounded-xl transition-colors group"
+                  : "hw-gradient-orange text-white font-bold hover:opacity-90 text-xs h-9 px-3.5 rounded-xl shadow-md"
+              }
+            >
+              {isFollowing ? (
+                <>
+                  <Check className="h-3.5 w-3.5 mr-1.5 stroke-[3] text-green-400 group-hover:hidden" />
+                  <UserX className="h-3.5 w-3.5 mr-1.5 hidden group-hover:inline text-red-400" />
+                  <span className="group-hover:hidden">Seguindo</span>
+                  <span className="hidden group-hover:inline">Deixar de seguir</span>
+                </>
+              ) : (
+                <>
+                  <UserPlus className="h-3.5 w-3.5 mr-1.5" /> Seguir Garagem
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Hero Header */}
       <section data-tour="client-garagem-hero" className="rounded-3xl border border-border overflow-hidden relative shadow-2xl">
         <div className="absolute inset-0 hw-gradient-orange opacity-90" />

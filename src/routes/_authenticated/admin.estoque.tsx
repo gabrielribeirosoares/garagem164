@@ -246,9 +246,16 @@ function AdminEstoque() {
                   className="w-full h-full object-cover"
                   fallbackIcon={<Car className="h-10 w-10 text-muted-foreground/30" />}
                 />
-                <Badge variant="outline" className="absolute top-3 right-3 bg-zinc-900/80 text-white border-border text-[10px]">
-                  {item.category}
-                </Badge>
+                <div className="absolute top-3 right-3 flex flex-col gap-1 items-end">
+                  <Badge variant="outline" className="bg-zinc-900/80 text-white border-border text-[10px]">
+                    {item.category}
+                  </Badge>
+                  {Number(item.price) === 0 && (
+                    <Badge className="bg-purple-500/20 text-purple-400 border border-purple-500/40 text-[10px] font-black">
+                      Exclusivo Rifa
+                    </Badge>
+                  )}
+                </div>
                 {item.status === "sold" && (
                   <div className="absolute inset-0 bg-black/70 backdrop-blur-xs flex items-center justify-center font-black text-red-500 uppercase tracking-widest text-sm">
                     Esgotado
@@ -260,7 +267,13 @@ function AdminEstoque() {
                 <div>
                   <h3 className="font-black text-white text-base leading-tight">{item.name}</h3>
                   <div className="flex items-center justify-between text-xs text-muted-foreground mt-2">
-                    <span className="font-bold text-white text-base">R$ {Number(item.price).toFixed(2)}</span>
+                    {Number(item.price) === 0 ? (
+                      <span className="font-bold text-purple-400 text-xs flex items-center gap-1">
+                        R$ 0,00 <span className="text-[10px] font-semibold text-muted-foreground">(Apenas Rifa)</span>
+                      </span>
+                    ) : (
+                      <span className="font-bold text-white text-base">R$ {Number(item.price).toFixed(2)}</span>
+                    )}
                     <span className="font-bold text-secondary flex items-center gap-1">
                       <Sparkles className="h-3 w-3" /> +{item.points_reward} pts
                     </span>
@@ -306,7 +319,7 @@ function AdminEstoque() {
 
       {/* Dialog: Create Product */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="sm:max-w-[480px] bg-card border-border text-foreground">
+        <DialogContent className="sm:max-w-[480px] w-[94vw] sm:w-full bg-card border-border text-foreground max-h-[90vh] overflow-y-auto p-4 sm:p-6 rounded-2xl sm:rounded-3xl">
           <DialogHeader>
             <DialogTitle className="text-2xl font-black flex items-center gap-2">
               <Boxes className="h-6 w-6 text-primary" /> Novo Produto no Estoque
@@ -344,11 +357,15 @@ function AdminEstoque() {
                 <Input
                   type="number"
                   step="0.01"
+                  min="0"
                   value={price}
                   onChange={(e) => setPrice(Number(e.target.value))}
                   required
                   className="bg-[#121212] border-border text-white"
                 />
+                <p className="text-[10px] text-muted-foreground">
+                  Use <strong>0,00</strong> para itens exclusivos de rifa (não visíveis na loja do cliente).
+                </p>
               </div>
               <div className="space-y-2">
                 <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Pontos Gerados</Label>

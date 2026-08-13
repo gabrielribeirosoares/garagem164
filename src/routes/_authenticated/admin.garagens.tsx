@@ -21,27 +21,7 @@ function AdminGaragens() {
   const { data: store } = useOwnedStore();
   const storeId = store?.id;
   const [userId, setUserId] = useState<string>("");
-  const [linkEmail, setLinkEmail] = useState("");
-  const [linking, setLinking] = useState(false);
   const [removedCustomerIds, setRemovedCustomerIds] = useState<string[]>([]);
-
-  async function handleLinkCustomer(e: React.FormEvent) {
-    e.preventDefault();
-    if (!storeId) return toast.error("Loja não encontrada.");
-    setLinking(true);
-    const { error } = await supabase.rpc("link_customer_by_email", {
-      _email: linkEmail.trim(),
-      _store_id: storeId,
-    });
-    setLinking(false);
-    if (error) {
-      toast.error(error.message);
-    } else {
-      toast.success("Cliente vinculado com sucesso!");
-      setLinkEmail("");
-      qc.invalidateQueries({ queryKey: ["admin-customers", storeId] });
-    }
-  }
 
   const { data: customers } = useStoreCustomers(storeId);
 
@@ -176,8 +156,8 @@ function AdminGaragens() {
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 max-w-4xl">
-        <div data-tour="admin-garagens-select" className="rounded-3xl border border-border p-6 bg-card space-y-4">
+      <div className="max-w-2xl">
+        <div data-tour="admin-garagens-select" className="rounded-3xl border border-border p-6 bg-card space-y-4 shadow-xl">
           <label className="text-sm font-bold text-muted-foreground uppercase tracking-wider block">
             Selecionar Garagem por Cliente
           </label>
@@ -188,28 +168,6 @@ function AdminGaragens() {
             placeholder="Pesquise por nome, e-mail ou whatsapp..."
           />
         </div>
-
-        <form data-tour="admin-garagens-link" onSubmit={handleLinkCustomer} className="rounded-3xl border border-border p-6 bg-card space-y-4">
-          <div>
-            <label className="text-sm font-bold text-muted-foreground uppercase tracking-wider block">
-              Vincular Cliente por E-mail
-            </label>
-            <p className="text-xs text-muted-foreground mt-0.5">Associe um cliente cadastrado à sua loja.</p>
-          </div>
-          <div className="flex gap-2">
-            <Input
-              type="email"
-              value={linkEmail}
-              onChange={(e) => setLinkEmail(e.target.value)}
-              placeholder="cliente@email.com"
-              required
-              className="bg-background border-border text-foreground h-11"
-            />
-            <Button type="submit" disabled={linking} className="hw-gradient-orange text-white font-bold h-11 px-4 shrink-0">
-              {linking ? "Vinculando..." : "Vincular"}
-            </Button>
-          </div>
-        </form>
       </div>
 
       {userId ? (

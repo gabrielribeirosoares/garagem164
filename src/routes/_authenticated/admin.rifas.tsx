@@ -50,7 +50,8 @@ import {
   Gift,
   MessageCircle,
   ClipboardPaste,
-  AlertTriangle
+  AlertTriangle,
+  Boxes
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/rifas")({
@@ -72,6 +73,7 @@ function AdminRifas() {
   const [sendGarageTargetWinner, setSendGarageTargetWinner] = useState<{ userId: string | null; name: string; ticketNumber: number; position?: number } | null>(null);
   const [sendGarageCarName, setSendGarageCarName] = useState("");
   const [sendGarageCarImage, setSendGarageCarImage] = useState("");
+  const [sendGarageInventoryId, setSendGarageInventoryId] = useState<string>("");
   const [sendGaragePoints, setSendGaragePoints] = useState(10);
   const [claimedPrizes, setClaimedPrizes] = useState<string[]>([]);
 
@@ -188,6 +190,9 @@ function AdminRifas() {
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [newImageUrl, setNewImageUrl] = useState("");
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [selectedStockItems, setSelectedStockItems] = useState<
+    Array<{ id: string; name: string; quantity: number; stock_quantity: number; image_url: string | null }>
+  >([]);
 
   // Filter state for raffles list
   const [filterStatus, setFilterStatus] = useState<"all" | "active" | "drawn">("all");
@@ -280,6 +285,21 @@ function AdminRifas() {
 
   // Get store customers
   const { data: customers } = useStoreCustomers(storeId);
+
+  // Fetch inventory for store (to link items as raffle prizes)
+  const { data: inventory } = useQuery({
+    queryKey: ["admin-inventory", storeId],
+    enabled: !!storeId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("store_inventory")
+        .select("*")
+        .eq("store_id", storeId!)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
 
   // Get raffles
   const { data: raffles } = useQuery({
@@ -447,10 +467,11 @@ function AdminRifas() {
         .insert(payload)
         .select()
         .single();
-      
+
+      let createdRaffle = data;
+
       if (error) {
         if (error.message?.includes("image_url") || error.message?.includes("draw_date") || error.message?.includes("max_winners") || error.message?.includes("column")) {
-          // Schema cache hasn't updated on server yet or column missing -> retry without extra fields
           delete payload.max_winners;
           delete payload.image_url;
           delete payload.image_urls;
@@ -459,16 +480,18 @@ function AdminRifas() {
           delete payload.item_condition;
           const retry = await supabase.from("raffles").insert(payload).select().single();
           if (retry.error) throw retry.error;
-          return retry.data;
+          createdRaffle = retry.data;
+        } else {
+          throw error;
         }
-        throw error;
       }
-      return data;
+
+      return createdRaffle;
     },
     onSuccess: (data) => {
       toast.success("Rifa criada com sucesso!");
       qc.invalidateQueries({ queryKey: ["store-raffles", storeId] });
-      setSelectedRaffleId(data.id);
+      if (data?.id) setSelectedRaffleId(data.id);
       setCreateOpen(false);
       setTitle("");
       setDescription("");
@@ -481,6 +504,7 @@ function AdminRifas() {
       setItemCondition("Lacrado na Cartela (Mint)");
       setImageUrls([]);
       setNewImageUrl("");
+      setSelectedStockItems([]);
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -664,14 +688,29 @@ function AdminRifas() {
           .eq("number", sendGarageTargetWinner.ticketNumber);
       }
 
+      // 3. Deduct 1 unit of stock from store_inventory for the matching miniature image/name
+      const targetStockItem = inventory?.find(
+        (i) => (imageUrl && i.image_url === imageUrl) || (i.name && carName.toLowerCase().includes(i.name.toLowerCase()))
+      );
+
+      if (targetStockItem && targetStockItem.stock_quantity > 0) {
+        const newQty = Math.max(0, targetStockItem.stock_quantity - 1);
+        const newStatus = newQty === 0 ? "out_of_stock" : "available";
+        await supabase
+          .from("store_inventory")
+          .update({ stock_quantity: newQty, status: newStatus })
+          .eq("id", targetStockItem.id);
+      }
+
       return imageUrl;
     },
     onSuccess: (imgUrl) => {
-      toast.success("Prêmio enviado para a Garagem e status da rifa marcado como PAGO! 🏆");
+      toast.success("Prêmio enviado para a Garagem, baixa no estoque efetuada e status marcado como PAGO! 🏆");
       if (imgUrl) {
         setClaimedPrizes((prev) => [...prev, imgUrl]);
       }
       setSendGarageModalOpen(false);
+      qc.invalidateQueries({ queryKey: ["admin-inventory", storeId] });
       qc.invalidateQueries({ queryKey: ["admin-store-cars", storeId] });
       qc.invalidateQueries({ queryKey: ["raffle-tickets", selectedRaffleId] });
       qc.invalidateQueries({ queryKey: ["admin-recent-cars"] });
@@ -1743,7 +1782,7 @@ function AdminRifas() {
 
       {/* Dialog: Create Raffle */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="sm:max-w-[540px] bg-card border-border text-foreground max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[540px] w-[94vw] sm:w-full bg-card border-border text-foreground max-h-[90vh] overflow-y-auto p-4 sm:p-6 rounded-2xl sm:rounded-3xl">
           <DialogHeader>
             <DialogTitle className="text-2xl font-black flex items-center gap-2">
               <Ticket className="h-6 w-6 text-primary" /> Criar Nova Rifa
@@ -1771,6 +1810,113 @@ function AdminRifas() {
             }}
             className="space-y-4 pt-4"
           >
+            {/* Stock Items Selection Section */}
+            <div className="bg-muted/30 border border-primary/30 rounded-2xl p-4 space-y-3 shadow-inner">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-black text-primary uppercase tracking-wider flex items-center gap-1.5">
+                  <Boxes className="h-4 w-4 text-primary" /> Vincular Miniatura do Estoque como Prêmio
+                </Label>
+                <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 text-[10px] font-bold">
+                  Baixa Automática
+                </Badge>
+              </div>
+
+              <div className="space-y-2">
+                <select
+                  defaultValue=""
+                  onChange={(e) => {
+                    const selectedId = e.target.value;
+                    if (!selectedId) return;
+                    const item = inventory?.find((i) => i.id === selectedId);
+                    if (!item) return;
+
+                    // Add to selectedStockItems if not present
+                    setSelectedStockItems((prev) => {
+                      if (prev.some((p) => p.id === item.id)) return prev;
+                      return [
+                        ...prev,
+                        {
+                          id: item.id,
+                          name: item.name,
+                          quantity: 1,
+                          stock_quantity: item.stock_quantity,
+                          image_url: item.image_url,
+                        },
+                      ];
+                    });
+
+                    // Add image to imageUrls if present and not already added
+                    if (item.image_url && !imageUrls.includes(item.image_url)) {
+                      setImageUrls((prev) => [...prev, item.image_url!]);
+                    }
+
+                    // Auto suggest title if empty
+                    if (!title.trim()) {
+                      setTitle(item.name);
+                    }
+
+                    // Reset select dropdown
+                    e.target.value = "";
+                  }}
+                  className="w-full bg-[#121212] border border-border text-white h-10 px-3 rounded-xl text-xs focus-visible:outline-none focus:border-primary"
+                >
+                  <option value="">-- Selecionar item do Estoque ({inventory?.filter((i) => i.stock_quantity > 0).length || 0} disponíveis) --</option>
+                  {inventory
+                    ?.filter((item) => item.stock_quantity > 0)
+                    .map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.name} ({item.stock_quantity} un. em estoque - R$ {Number(item.price).toFixed(2)})
+                      </option>
+                    ))}
+                </select>
+              </div>
+
+              {selectedStockItems.length > 0 && (
+                <div className="space-y-2 pt-1 border-t border-border/40">
+                  <div className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Itens do estoque vinculados a esta rifa (baixa no envio do prêmio):</div>
+                  <div className="space-y-2">
+                    {selectedStockItems.map((item) => (
+                      <div key={item.id} className="bg-card border border-border p-2.5 rounded-xl flex items-center justify-between gap-2 text-xs">
+                        <div className="flex items-center gap-2 overflow-hidden">
+                          {item.image_url && (
+                            <img src={item.image_url} alt={item.name} className="h-9 w-9 rounded-lg object-cover shrink-0 bg-black border border-border" />
+                          )}
+                          <div className="truncate">
+                            <div className="font-bold text-white truncate">{item.name}</div>
+                            <div className="text-[10px] text-muted-foreground">Disponível: {item.stock_quantity} un.</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-[10px] text-muted-foreground font-medium">Qtd a baixar:</span>
+                          <Input
+                            type="number"
+                            min={1}
+                            max={item.stock_quantity}
+                            value={item.quantity}
+                            onChange={(e) => {
+                              const val = Math.max(1, Math.min(item.stock_quantity, parseInt(e.target.value) || 1));
+                              setSelectedStockItems((prev) =>
+                                prev.map((p) => (p.id === item.id ? { ...p, quantity: val } : p))
+                              );
+                            }}
+                            className="w-14 h-8 text-xs bg-[#121212] text-center font-bold border-border"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setSelectedStockItems((prev) => prev.filter((p) => p.id !== item.id))}
+                            className="text-red-400 hover:text-red-300 p-1 bg-red-500/10 rounded-lg hover:bg-red-500/20 transition-colors"
+                            title="Remover item"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div className="space-y-2">
               <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Título do Sorteio</Label>
               <Input
@@ -2003,7 +2149,7 @@ function AdminRifas() {
 
       {/* Dialog: Edit Raffle */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="sm:max-w-[540px] bg-card border-border text-foreground max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[540px] w-[94vw] sm:w-full bg-card border-border text-foreground max-h-[90vh] overflow-y-auto p-4 sm:p-6 rounded-2xl sm:rounded-3xl">
           <DialogHeader>
             <DialogTitle className="text-2xl font-black flex items-center gap-2">
               <Edit3 className="h-6 w-6 text-primary" /> Editar Rifa
@@ -2398,7 +2544,7 @@ function AdminRifas() {
 
       {/* Dialog: Send Specific Prize to Garage */}
       <Dialog open={sendGarageModalOpen} onOpenChange={setSendGarageModalOpen}>
-        <DialogContent className="sm:max-w-[500px] bg-card border border-border text-foreground">
+        <DialogContent className="sm:max-w-[500px] w-[94vw] sm:w-full bg-card border border-border text-foreground max-h-[90vh] overflow-y-auto p-4 sm:p-6 rounded-2xl sm:rounded-3xl">
           <DialogHeader>
             <DialogTitle className="text-xl font-black flex items-center gap-2 text-white">
               <Gift className="h-5 w-5 text-primary" /> Enviar Prêmio para Garagem do Ganhador
@@ -2472,7 +2618,15 @@ function AdminRifas() {
                         key={idx}
                         type="button"
                         disabled={isClaimed}
-                        onClick={() => !isClaimed && setSendGarageCarImage(url)}
+                        onClick={() => {
+                          if (!isClaimed) {
+                            setSendGarageCarImage(url);
+                            const matchingItem = inventory?.find((i) => i.image_url === url);
+                            if (matchingItem) {
+                              setSendGarageCarName(matchingItem.name);
+                            }
+                          }
+                        }}
                         className={`relative rounded-xl overflow-hidden border-2 aspect-square bg-black transition-all ${
                           isClaimed
                             ? "opacity-30 border-red-500/40 grayscale cursor-not-allowed"
@@ -2510,7 +2664,7 @@ function AdminRifas() {
             </div>
 
             <div className="space-y-2">
-              <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">URL da Imagem (Caso deseje alterar)</Label>
+              <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">URL da Imagem do Prêmio</Label>
               <Input
                 value={sendGarageCarImage}
                 onChange={(e) => setSendGarageCarImage(e.target.value)}
@@ -2518,6 +2672,43 @@ function AdminRifas() {
                 className="bg-background border-border text-foreground text-xs"
               />
             </div>
+
+            {/* Automatic Stock Deduction Info Box based on Selected Miniature Image */}
+            {(() => {
+              const matchingItem = inventory?.find(
+                (item) => item.image_url === sendGarageCarImage || (item.name && sendGarageCarName.toLowerCase().includes(item.name.toLowerCase()))
+              );
+
+              if (!matchingItem) {
+                return (
+                  <div className="bg-muted/30 border border-border p-3.5 rounded-xl flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Boxes className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <span>Nenhuma miniatura cadastrada no estoque para esta imagem.</span>
+                    </div>
+                  </div>
+                );
+              }
+
+              return (
+                <div className="bg-primary/10 border border-primary/30 p-3.5 rounded-xl space-y-1.5 text-xs">
+                  <div className="flex items-center justify-between font-bold text-primary">
+                    <span className="flex items-center gap-1.5 uppercase tracking-wider text-[11px] font-black">
+                      <Boxes className="h-4 w-4 text-primary" /> Baixa Automática no Estoque
+                    </span>
+                    <Badge className="bg-primary text-black font-black text-[10px] px-2 py-0.5">
+                      -1 un. ao confirmar
+                    </Badge>
+                  </div>
+                  <div className="text-white font-bold flex flex-col sm:flex-row sm:items-center justify-between pt-1 gap-1">
+                    <span className="truncate">Miniatura: <strong className="text-primary">{matchingItem.name}</strong></span>
+                    <span className="text-[11px] text-muted-foreground shrink-0">
+                      Saldo Estoque: <strong className="text-white">{matchingItem.stock_quantity} un.</strong> &rarr; <strong className="text-green-400">{Math.max(0, matchingItem.stock_quantity - 1)} un.</strong>
+                    </span>
+                  </div>
+                </div>
+              );
+            })()}
 
             <div className="space-y-2">
               <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Pontos Bônus no Cadastro</Label>
