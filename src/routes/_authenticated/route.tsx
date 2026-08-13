@@ -33,7 +33,7 @@ export const Route = createFileRoute("/_authenticated")({
     if (error || !data.user) {
       // Clear local session on auth failure to prevent infinite redirect loops
       await supabase.auth.signOut().catch(() => {});
-      throw redirect({ to: "/auth" });
+      throw redirect({ to: "/auth", search: {} as any });
     }
     return { user: data.user };
   },
@@ -348,7 +348,7 @@ function AuthedLayout() {
     await qc.cancelQueries();
     qc.clear();
     await supabase.auth.signOut();
-    navigate({ to: "/auth", replace: true });
+    navigate({ to: "/auth", replace: true, search: {} as any });
   }
 
   const brand = isAdminView ? ownedStore : activeStore;

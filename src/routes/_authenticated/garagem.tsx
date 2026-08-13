@@ -167,6 +167,8 @@ function Garagem() {
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   };
 
+  const shareText = `🚗 Minha Garagem na ${store?.name || "MinisHub"}:\n• ${carCount} miniaturas na coleção\n• ${pointsBalance ?? 0} pontos acumulados\n• Nível: ${vipTier}\n\nVenha conhecer minha coleção!`;
+
   if (!store) {
     return (
       <div className="flex flex-col items-center justify-center space-y-4 py-16 text-center max-w-md mx-auto">
