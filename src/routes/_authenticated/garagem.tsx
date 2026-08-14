@@ -198,7 +198,7 @@ function Garagem() {
           <div className="flex items-center gap-3.5">
             <div className="h-12 w-12 rounded-full overflow-hidden bg-black border border-primary/40 flex items-center justify-center shrink-0 shadow-inner">
               {store.logo_url ? (
-                <img src={store.logo_url} alt={store.name} className="h-full w-full object-cover" />
+                <img src={store.logo_url} alt={store.name} className="h-full w-full object-cover" loading="lazy" decoding="async" />
               ) : (
                 <Car className="h-6 w-6 text-primary" />
               )}

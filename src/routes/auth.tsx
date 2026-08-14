@@ -20,8 +20,12 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 
+type AuthSearch = {
+  next?: string;
+};
+
 export const Route = createFileRoute("/auth")({
-  validateSearch: (s: Record<string, unknown>) => ({
+  validateSearch: (s: Record<string, unknown>): AuthSearch => ({
     next: typeof s.next === "string" ? s.next : undefined,
   }),
   component: AuthPage,

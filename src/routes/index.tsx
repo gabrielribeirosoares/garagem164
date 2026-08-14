@@ -102,7 +102,7 @@ function Landing() {
                 >
                   <div className="flex items-center gap-3">
                     {store.logo_url ? (
-                      <img src={store.logo_url} alt={store.name} className="h-8 w-8 rounded object-cover" />
+                      <img src={store.logo_url} alt={store.name} className="h-8 w-8 rounded object-cover" loading="lazy" decoding="async" />
                     ) : (
                       <div className="h-8 w-8 rounded bg-primary/10 flex items-center justify-center text-primary">
                         <Store className="h-4 w-4" />
